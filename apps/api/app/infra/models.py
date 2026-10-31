@@ -24,7 +24,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from app.domain.enums import ExerciseType, LessonType, NodeKind
 
@@ -69,6 +69,7 @@ class Module(Base):
     title: Mapped[str] = mapped_column(String(120))
     description: Mapped[str] = mapped_column(Text)
     published: Mapped[bool] = mapped_column(Boolean, default=True)
+    nodes: Mapped[list[Node]] = relationship(order_by="Node.order", viewonly=True)
 
 
 class Node(Base):
@@ -79,6 +80,7 @@ class Node(Base):
     order: Mapped[int]
     title: Mapped[str] = mapped_column(String(120))
     kind: Mapped[NodeKind] = mapped_column(_enum(NodeKind, "node_kind"), default=NodeKind.STANDARD)
+    lessons: Mapped[list[Lesson]] = relationship(order_by="Lesson.order", viewonly=True)
 
 
 class Lesson(Base):

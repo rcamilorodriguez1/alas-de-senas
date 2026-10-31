@@ -61,10 +61,10 @@
 
 ## Grupo 4 — Ruta de aprendizaje
 
-- [ ] **4.1** `GET /learning-path` y `GET /nodes/{id}` con `compute_progress` (carga con `selectinload`, sin N+1). _R3_
-- [ ] **4.2** Layout de escritorio y pantalla «solo computador» para < 1024 px. _R10.1_
-- [ ] **4.3** `HomePage` con nodos en zigzag, estados (🔒 + texto), popover y módulo «Próximamente». _R3.1, R3.5, R3.6_
-- [ ] **4.4** Componente `Mascot` (Tomi SVG) con estados de ánimo y movimiento reducido. _R5.12_
+- [x] **4.1** `GET /learning-path` y `GET /nodes/{id}` con `compute_progress` (carga con `selectinload`, sin N+1). _R3_
+- [x] **4.2** Layout de escritorio y pantalla «solo computador» para < 1024 px. _R10.1_
+- [x] **4.3** `HomePage` con nodos en zigzag, estados (🔒 + texto), popover y módulo «Próximamente». _R3.1, R3.5, R3.6_
+- [x] **4.4** Componente `Mascot` (Tomi SVG) con estados de ánimo y movimiento reducido. _R5.12_
   **Verificar:** usuario nuevo solo ve disponible M1-N1-L1.
 
 ## Grupo 5 — Lecciones

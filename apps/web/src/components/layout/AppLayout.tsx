@@ -1,0 +1,85 @@
+import {
+  BarChart3,
+  BookOpen,
+  Camera,
+  Home,
+  RotateCcw,
+  Trophy,
+  User,
+  type LucideIcon,
+} from "lucide-react";
+import type { ReactNode } from "react";
+import { NavLink, useNavigate } from "react-router";
+import { logout } from "../../lib/api";
+import { useSessionStore } from "../../lib/session-store";
+import { TomiSvg } from "../mascot/Tomi";
+
+const NAV: { to: string; label: string; icon: LucideIcon }[] = [
+  { to: "/aprender", label: "Aprender", icon: Home },
+  { to: "/diccionario", label: "Diccionario", icon: BookOpen },
+  { to: "/camara", label: "Cámara beta", icon: Camera },
+  { to: "/repaso", label: "Repasar", icon: RotateCcw },
+  { to: "/progreso", label: "Progreso", icon: BarChart3 },
+  { to: "/logros", label: "Logros", icon: Trophy },
+  { to: "/perfil", label: "Perfil", icon: User },
+];
+
+/**
+ * Escritorio (§9.7): barra lateral fija de 240 px, contenido central de 720 px como máximo y
+ * panel derecho de 320 px, que se oculta por debajo de 1280 px (nunca hay scroll horizontal).
+ */
+export function AppLayout({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
+  const navigate = useNavigate();
+  const user = useSessionStore((state) => state.user);
+  const onLogout = async () => {
+    await logout();
+    await navigate("/ingresar", { replace: true });
+  };
+  return (
+    <div className="flex min-h-screen bg-[#F5FAF7] font-sans text-[#0E2A2F]">
+      <nav
+        aria-label="Principal"
+        className="sticky top-0 flex h-screen w-60 shrink-0 flex-col gap-1 border-r border-slate-200 bg-white p-4"
+      >
+        <div className="mb-6 flex items-center gap-2 px-2">
+          <TomiSvg size={40} />
+          <span className="font-display text-lg font-extrabold leading-tight text-[#047857]">
+            Alas de Señas
+          </span>
+        </div>
+        {NAV.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-xl px-3 py-2 font-semibold ${
+                isActive ? "bg-emerald-100 text-[#047857]" : "text-[#45606A] hover:bg-slate-100"
+              }`
+            }
+          >
+            <Icon aria-hidden="true" size={20} />
+            {label}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-end gap-4 border-b border-slate-200 bg-white px-6 py-3">
+          <span className="font-semibold">{user?.name}</span>
+          <button
+            type="button"
+            onClick={() => void onLogout()}
+            className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-semibold hover:bg-slate-50"
+          >
+            Cerrar sesión
+          </button>
+        </header>
+        <div className="flex flex-1 justify-center gap-6 px-6 py-8">
+          <main className="w-full max-w-[720px] min-w-0">{children}</main>
+          <aside aria-label="Panel lateral" className="hidden w-80 shrink-0 xl:block">
+            {aside}
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}

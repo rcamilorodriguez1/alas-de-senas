@@ -1,7 +1,7 @@
 import type { RouteObject } from "react-router";
 import { LoginPage } from "../features/auth/LoginPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
-import { LearnPage } from "../pages/LearnPage";
+import { LearnPage } from "../features/learn/LearnPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { RootRedirect } from "../pages/RootRedirect";
 import { GuestOnly, RequireAuth } from "./guards";

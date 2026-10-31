@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from app.api import auth, health
+from app.api import auth, curriculum, health
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.core.security_headers import SecurityHeadersMiddleware
@@ -28,6 +28,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware)
     app.include_router(health.router, prefix="/api")
     app.include_router(auth.router, prefix="/api")
+    app.include_router(curriculum.router, prefix="/api")
     return app
 
 

@@ -5,6 +5,7 @@ import { setSessionExpiredHandler } from "../lib/api";
 import { createQueryClient } from "../lib/query-client";
 import { safeReturnPath } from "../lib/navigation";
 import { useSessionStore } from "../lib/session-store";
+import { SmallScreenGate } from "../components/layout/SmallScreenGate";
 import { AuthBootstrap } from "./AuthBootstrap";
 import { appRoutes } from "./routes";
 
@@ -31,9 +32,11 @@ export function App() {
   );
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthBootstrap>
-        <RouterProvider router={router} />
-      </AuthBootstrap>
+      <SmallScreenGate>
+        <AuthBootstrap>
+          <RouterProvider router={router} />
+        </AuthBootstrap>
+      </SmallScreenGate>
     </QueryClientProvider>
   );
 }

@@ -115,3 +115,12 @@
   9. **La renovación solo cierra la sesión ante 401/403;** un 5xx o un corte de red no sacan al usuario de una lección (al arrancar, sí pasa a anónimo). Un 401 tardío con el token ya renovado reintenta sin volver a rotar.
   10. **`volver`** solo acepta rutas del mismo origen (sin `\`, caracteres de control ni las pantallas de ingreso). Un refresh fallido borra la cookie `rt`. La caché de TanStack Query se vacía al perder la sesión.
   11. **Pendientes conscientes:** dos pestañas que recargan a la vez pueden rotar el token al mismo tiempo y la segunda quedar en `/ingresar` (el `FOR UPDATE` evita tokens dobles; coordinar pestañas o dar un margen de gracia queda como mejora). No se revoca toda la familia de tokens al detectar reutilización (§11 no lo exige). **Grupo 11:** arrancar uvicorn con `--proxy-headers --forwarded-allow-ips=<IP del proxy de Render>` (nunca `*`) para que los límites usen la IP real.
+
+## D-011 · Detalles de la ruta de aprendizaje (Grupo 4) · 31/10/2026
+- Decisiones:
+  1. **Estados en la API con los enums del dominio** (`ProgressStatus`, `NodeKind`, `LessonType`); cada nivel usa el subconjunto de §7.4.
+  2. **`estimatedXp`** = XP de aprobar con 100 % según `RewardPolicy` (20 en L1–L3, 30 en el reto; la mitad si ya la aprobó).
+  3. **`progress`** del módulo = round_half_up(aprobadas·100, lecciones del módulo); 0 en módulos no publicados, cuyos nodos llegan con `COMING_SOON` y sin lecciones.
+  4. **Movimiento reducido** con un hook propio (`lib/motion.ts`) que lee `matchMedia` y escucha cambios: el de Framer Motion guarda el valor una sola vez.
+  5. **Panel derecho** oculto por debajo de 1280 px (§9.7); aviso «solo computador» por debajo de 1024 px para toda la app.
+  6. **Barra superior provisional** (nombre y «Cerrar sesión»); racha, XP, néctar y vidas llegan en el Grupo 6.

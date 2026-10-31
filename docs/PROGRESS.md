@@ -92,3 +92,5 @@ Para retomar (en este orden):
   - 4.3 `LearnPage` con módulos, nodos en zigzag, estados con ícono + texto (🔒 «Bloqueada»), popover de lección con «Empezar», sello «Próximamente».
   - 4.4 `Mascot`/`TomiSvg` (§9.6) con moods happy·cheer·sad·thinking·sleeping, burbuja de mensaje y `prefers-reduced-motion`.
   - Pruebas: API (usuario nuevo → solo M1-N1-L1, cadena tras aprobar, dorado, M4 «Próximamente» sin contar en %, 404, una sola tanda de consultas) y Vitest (estados con texto, popover, Próximamente, aviso < 1024 px, Tomi sin animación con movimiento reducido).
+- Hecho: 4.1–4.4. 41 pruebas de API (estados, desbloqueo en cadena, dorado, progreso con redondeo, aislamiento por usuario, conteo de consultas constante ≤ 8) y 70 de Vitest (Tomi y moods, movimiento reducido, aviso < 1024 px, layout, ruta con popover y «Próximamente»). `alas check` en verde (1236 Python, 168 Vitest). Verificación visual con Playwright a 1366×768: usuario nuevo solo con M1-N1-L1 disponible, popover «+20 XP · Empezar», aviso a 900 px. Decisiones: D-011.
+- Nota: las pruebas se escribieron en paralelo con la implementación (mismo contrato); no se vieron fallar antes.

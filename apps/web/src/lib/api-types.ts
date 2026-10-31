@@ -107,6 +107,40 @@ export interface paths {
         patch: operations["update_me_api_me_patch"];
         trace?: never;
     };
+    "/api/learning-path": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Learning Path */
+        get: operations["learning_path_api_learning_path_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/nodes/{node_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Node Detail */
+        get: operations["node_detail_api_nodes__node_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -142,6 +176,31 @@ export interface components {
             /** Db */
             db: boolean;
         };
+        /** LearningPathOut */
+        LearningPathOut: {
+            /** Modules */
+            modules: components["schemas"]["ModuleOut"][];
+        };
+        /** LessonSummaryOut */
+        LessonSummaryOut: {
+            /** Id */
+            id: string;
+            /** Order */
+            order: number;
+            type: components["schemas"]["LessonType"];
+            /** Title */
+            title: string;
+            status: components["schemas"]["ProgressStatus"];
+            /** Bestscore */
+            bestScore: number | null;
+            /** Estimatedxp */
+            estimatedXp: number;
+        };
+        /**
+         * LessonType
+         * @enum {string}
+         */
+        LessonType: "LEARN" | "RECOGNIZE" | "PRACTICE" | "CHALLENGE";
         /** LoginIn */
         LoginIn: {
             /** Email */
@@ -158,6 +217,75 @@ export interface components {
             /** Dominanthand */
             dominantHand?: ("right" | "left") | null;
         };
+        /** ModuleOut */
+        ModuleOut: {
+            /** Id */
+            id: string;
+            /** Order */
+            order: number;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Published */
+            published: boolean;
+            status: components["schemas"]["ProgressStatus"];
+            /** Progress */
+            progress: number;
+            /** Nodes */
+            nodes: components["schemas"]["NodeSummaryOut"][];
+        };
+        /** NodeDetailOut */
+        NodeDetailOut: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            kind: components["schemas"]["NodeKind"];
+            status: components["schemas"]["ProgressStatus"];
+            /** Moduleid */
+            moduleId: string;
+            /** Moduletitle */
+            moduleTitle: string;
+            /** Lessons */
+            lessons: components["schemas"]["LessonSummaryOut"][];
+            /** Signs */
+            signs: components["schemas"]["NodeSignOut"][];
+        };
+        /**
+         * NodeKind
+         * @enum {string}
+         */
+        NodeKind: "STANDARD" | "ALPHABET" | "NUMBERS";
+        /** NodeSignOut */
+        NodeSignOut: {
+            /** Slug */
+            slug: string;
+            /** Word */
+            word: string;
+            /** Poster */
+            poster: string;
+            /** Introducedinlessonid */
+            introducedInLessonId: string | null;
+        };
+        /** NodeSummaryOut */
+        NodeSummaryOut: {
+            /** Id */
+            id: string;
+            /** Order */
+            order: number;
+            /** Title */
+            title: string;
+            kind: components["schemas"]["NodeKind"];
+            status: components["schemas"]["ProgressStatus"];
+            /** Lessons */
+            lessons: components["schemas"]["LessonSummaryOut"][];
+        };
+        /**
+         * ProgressStatus
+         * @enum {string}
+         */
+        ProgressStatus: "LOCKED" | "AVAILABLE" | "IN_PROGRESS" | "COMPLETED" | "GOLDEN" | "COMING_SOON";
         /** RegisterIn */
         RegisterIn: {
             /** Email */
@@ -476,6 +604,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    learning_path_api_learning_path_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearningPathOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    node_detail_api_nodes__node_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                node_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NodeDetailOut"];
                 };
             };
             /** @description Error de la petición */

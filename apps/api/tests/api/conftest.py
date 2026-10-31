@@ -14,11 +14,15 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
-from sqlalchemy import make_url, text
+from sqlalchemy import make_url, select, text
+from sqlalchemy.orm import Session
 
+from app.content.seed import seed_content
 from app.core.config import Settings, get_settings
 from app.infra.db import get_engine
+from app.infra.models import Module
 from app.main import create_app
+from tests.unit.content.real_content import CONTENT_DIR, make_media
 
 API_DIR = Path(__file__).resolve().parents[2]
 ALEMBIC_INI = API_DIR / "alembic.ini"
@@ -81,3 +85,19 @@ def truncate_user_tables() -> Iterator[None]:
 def client() -> Iterator[TestClient]:
     with TestClient(create_app()) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def seeded_content(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """Garantiza que el contenido REAL de `content/` está sembrado en `alas_test`.
+
+    `tests/api/test_seed.py` trunca las tablas de contenido, así que se comprueba en cada prueba
+    y, si `modules` está vacía, se vuelve a sembrar con un `media_dir` temporal.
+    """
+    with Session(get_engine()) as session:
+        if session.execute(select(Module.id).limit(1)).first() is not None:
+            return
+        media_dir = tmp_path_factory.mktemp("seeded-media")
+        make_media(media_dir, CONTENT_DIR)
+        seed_content(session, CONTENT_DIR, media_dir)
+        session.commit()
