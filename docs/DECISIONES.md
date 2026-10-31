@@ -52,3 +52,8 @@
   8. **FastAPI 0.162** ya no expone las rutas incluidas en `app.routes` (usa un `_IncludedRouter` interno): la prueba de `test_main.py` comprueba la ruta de salud con `app.url_path_for("health")`.
   9. Todas las dependencias de §3 se agregaron en el Grupo 0 (incluidas las de grupos posteriores: PyJWT, bcrypt, slowapi, PyYAML, imageio-ffmpeg, Pillow, pytest-playwright) para no pedir permisos en cada fase.
 - Consecuencias: ninguna sobre el diseño; el contrato de errores queda fijado para el Grupo 3 (páginas de registro).
+
+## D-006 · Sin repositorio remoto por ahora · 30/10/2026
+- Contexto / problema: el equipo quiere ver la aplicación funcionando antes de subir el código a GitHub.
+- Decisión: la parte de la tarea 0.8 que exige subir el repositorio y ver el CI en verde queda **pospuesta**. El trabajo continúa solo con git local; la parte local de 0.8 (fixture de migraciones, lockfiles) ya está hecha.
+- Consecuencias: R10.8 (CI automática) no se verifica hasta que se suba el repositorio; antes de la entrega hay que hacer `git push` y confirmar el job «alas check».

@@ -30,7 +30,7 @@
 - Revisión: `verificador-fase` APROBADO; `revisor-codigo` 1 bloqueante (tipo de error escrito a mano → `ErrorOut` generado) y mejoras aplicadas (500 con cabeceras, 503 en el contrato, `extra` no pisa el formato, consulta movida a `infra/repositories`, `db reset` solo en local, guarda `*_test` en pruebas, zona horaria y plazos validados, ESLint contra `as unknown as` y `@ts-expect-error`, proxy a 127.0.0.1).
 - Verificación manual: ✅ `alas dev` levantó ambos servidores y `http://localhost:5173/api/health` respondió `{"ok":true,"db":true}` (con CSP); al detenerlo, los puertos 8000 y 5173 quedaron libres. Pendiente del equipo: repetirlo y probar Ctrl+C en su terminal.
 - Pendiente / riesgos:
-  - **0.8 sin marcar**: falta crear el repositorio en GitHub, hacer `git push` y confirmar que el job «alas check» de Actions pasa (el fixture de migraciones y los lockfiles con binarios de Linux ya están).
+  - **0.8 sin marcar (pospuesta por el equipo, D-006)**: falta crear el repositorio en GitHub, hacer `git push` y confirmar que el job «alas check» de Actions pasa (el fixture de migraciones y los lockfiles con binarios de Linux ya están).
   - Grupo 2: con la primera migración, agregar una prueba que aplique todas las migraciones sobre una BD temporal vacía y luego `alembic check` (B47); el harness no permite bajar todas las migraciones. Llenar `USER_TABLES` en `tests/api/conftest.py`.
   - `alas dev` en Windows: si Ctrl+C deja Vite vivo (puerto 5173 ocupado), terminar el árbol de procesos con `taskkill /T`.
   - Aviso de Starlette (httpx en `TestClient`): no afecta; revisar al actualizar dependencias.
