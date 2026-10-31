@@ -1,0 +1,110 @@
+slug,word,meaning,how_to,usage_example,category,node,order,motion
+hola,Hola,Saludo informal para empezar una conversación.,,Al llegar al salón saludas a tus compañeros: «Hola».,saludos,M1-N1,1,
+buenos-dias,Buenos días,Saludo que se usa en la mañana.,,Al entrar a la oficina a las 8 a. m. dices «Buenos días».,saludos,M1-N1,2,
+buenas-tardes,Buenas tardes,Saludo que se usa después del mediodía.,,Al llegar a clase a las 3 p. m. dices «Buenas tardes».,saludos,M1-N1,3,
+buenas-noches,Buenas noches,Saludo o despedida que se usa en la noche.,,Antes de dormir le dices a tu familia «Buenas noches».,saludos,M1-N1,4,
+como-estas,¿Cómo estás?,Pregunta para saber cómo se siente la otra persona.,,Después de saludar a una amiga le preguntas «¿Cómo estás?».,saludos,M1-N1,5,
+adios,Adiós,Despedida al terminar una conversación.,,Al salir de la reunión te despides con «Adiós».,saludos,M1-N1,6,
+gracias,Gracias,Expresión para agradecer algo.,,Cuando te prestan un lápiz respondes «Gracias».,cortesia,M1-N1,7,
+por-favor,Por favor,Expresión amable para pedir algo.,,"Pides agua en la tienda: «Agua, por favor».",cortesia,M1-N1,8,
+de-nada,De nada,Respuesta amable cuando alguien da las gracias.,,Tu compañero te agradece la ayuda y respondes «De nada».,cortesia,M1-N1,9,
+nombre,Nombre,Palabra con la que se identifica a una persona.,,Para presentarte dices «Mi nombre es Ana».,presentaciones,M1-N2,1,
+yo,Yo,Se refiere a la persona que habla.,,«Yo estudio en la universidad».,presentaciones,M1-N2,2,
+tu,Tú,Se refiere a la persona con la que se habla.,,«¿Tú eres sordo u oyente?».,presentaciones,M1-N2,3,
+mucho-gusto,Mucho gusto,Expresión de cortesía al conocer a alguien.,,Al conocer a la profesora le dices «Mucho gusto».,presentaciones,M1-N2,4,
+sordo,Sordo,Persona que no oye y puede comunicarse en lengua de señas.,,«Mi primo es sordo y usa la LSC».,presentaciones,M1-N2,5,
+oyente,Oyente,Persona que puede oír.,,«Yo soy oyente y estoy aprendiendo LSC».,presentaciones,M1-N2,6,
+si,Sí,Respuesta afirmativa.,,Te preguntan si quieres café y respondes «Sí».,presentaciones,M1-N2,7,
+no,No,Respuesta negativa.,,Te preguntan si tienes frío y respondes «No».,presentaciones,M1-N2,8,
+perdon,Perdón,Expresión para disculparse.,,Si tropiezas con alguien dices «Perdón».,cortesia,M1-N2,9,
+letra-a,A,Letra A del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «árbol».,alfabeto,M1-N3,1,static
+letra-b,B,Letra B del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «bus».,alfabeto,M1-N3,2,static
+letra-c,C,Letra C del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «casa».,alfabeto,M1-N3,3,static
+letra-d,D,Letra D del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «dedo».,alfabeto,M1-N3,4,static
+letra-e,E,Letra E del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «escuela».,alfabeto,M1-N3,5,static
+letra-f,F,Letra F del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «familia».,alfabeto,M1-N3,6,static
+letra-g,G,Letra G del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «gato».,alfabeto,M1-N3,7,static
+letra-h,H,Letra H del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «hola».,alfabeto,M1-N3,8,static
+letra-i,I,Letra I del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «iglesia».,alfabeto,M1-N3,9,static
+letra-j,J,Letra J del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «jugar».,alfabeto,M1-N3,10,dynamic
+letra-k,K,Letra K del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «kilo».,alfabeto,M1-N3,11,static
+letra-l,L,Letra L del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «luna».,alfabeto,M1-N3,12,static
+letra-m,M,Letra M del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «mamá».,alfabeto,M1-N3,13,static
+letra-n,N,Letra N del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «nombre».,alfabeto,M1-N4,1,static
+letra-n-tilde,Ñ,Letra Ñ del alfabeto manual colombiano.,,"Se usa para deletrear palabras como «niño», que la lleva en medio de la palabra.",alfabeto,M1-N4,2,dynamic
+letra-o,O,Letra O del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «oso».,alfabeto,M1-N4,3,static
+letra-p,P,Letra P del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «pan».,alfabeto,M1-N4,4,static
+letra-q,Q,Letra Q del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «queso».,alfabeto,M1-N4,5,static
+letra-r,R,Letra R del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «ratón».,alfabeto,M1-N4,6,static
+letra-s,S,Letra S del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «sol».,alfabeto,M1-N4,7,static
+letra-t,T,Letra T del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «tienda».,alfabeto,M1-N4,8,static
+letra-u,U,Letra U del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «uva».,alfabeto,M1-N4,9,static
+letra-v,V,Letra V del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «vaso».,alfabeto,M1-N4,10,static
+letra-w,W,Letra W del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «wifi».,alfabeto,M1-N4,11,static
+letra-x,X,Letra X del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «xilófono».,alfabeto,M1-N4,12,static
+letra-y,Y,Letra Y del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «yuca».,alfabeto,M1-N4,13,static
+letra-z,Z,Letra Z del alfabeto manual colombiano.,,Se usa para deletrear nombres y palabras como «zapato».,alfabeto,M1-N4,14,dynamic
+familia,Familia,Grupo de personas unidas por parentesco.,,«Mi familia vive en Valledupar».,familia,M2-N1,1,
+mama,Mamá,Madre.,,«Mi mamá cocina muy rico».,familia,M2-N1,2,
+papa,Papá,Padre.,,«Mi papá trabaja en un taller».,familia,M2-N1,3,
+hermano,Hermano,Hijo de los mismos padres que otra persona.,,«Mi hermano juega fútbol».,familia,M2-N1,4,
+hermana,Hermana,Hija de los mismos padres que otra persona.,,«Mi hermana estudia medicina».,familia,M2-N1,5,
+hijo,Hijo,Persona respecto a sus padres.,,«Su hijo tiene cinco años».,familia,M2-N1,6,
+abuelo,Abuelo,Padre del papá o de la mamá.,,«Mi abuelo cuenta historias».,familia,M2-N1,7,
+feliz,Feliz,Que siente alegría.,,«Estoy feliz porque aprobé el examen».,emociones,M2-N2,1,
+triste,Triste,Que siente tristeza.,,«Está triste porque perdió su perro».,emociones,M2-N2,2,
+enojado,Enojado,Que siente rabia o molestia.,,«Mi hermano está enojado conmigo».,emociones,M2-N2,3,
+cansado,Cansado,Que necesita descansar.,,«Después del trabajo llego cansado».,emociones,M2-N2,4,
+miedo,Miedo,Sensación de peligro o temor.,,«Le tengo miedo a la oscuridad».,emociones,M2-N2,5,
+amor,Amor,Sentimiento de cariño profundo.,,«Siento mucho amor por mi familia».,emociones,M2-N2,6,
+numero-1,Uno,Número 1.,,«Tengo un hermano».,numeros,M2-N3,1,
+numero-2,Dos,Número 2.,,«Compré dos panes».,numeros,M2-N3,2,
+numero-3,Tres,Número 3.,,«Tengo tres primos».,numeros,M2-N3,3,
+numero-4,Cuatro,Número 4.,,«Somos cuatro en mi casa».,numeros,M2-N3,4,
+numero-5,Cinco,Número 5.,,«La clase empieza a las cinco».,numeros,M2-N3,5,
+numero-6,Seis,Número 6.,,«Me levanto a las seis».,numeros,M2-N3,6,
+numero-7,Siete,Número 7.,,«La semana tiene siete días».,numeros,M2-N3,7,
+numero-8,Ocho,Número 8.,,«Trabajo ocho horas».,numeros,M2-N3,8,
+numero-9,Nueve,Número 9.,,«Mi sobrino tiene nueve años».,numeros,M2-N3,9,
+numero-10,Diez,Número 10.,,«Tengo diez dedos en las manos».,numeros,M2-N3,10,
+comer,Comer,Tomar alimentos.,,«Vamos a comer a las doce».,actividades,M2-N4,1,
+beber,Beber,Tomar un líquido.,,«Hay que beber agua todos los días».,actividades,M2-N4,2,
+dormir,Dormir,Descansar con los ojos cerrados.,,«Me gusta dormir temprano».,actividades,M2-N4,3,
+trabajar,Trabajar,Realizar una labor u oficio.,,«Mi mamá va a trabajar en bus».,actividades,M2-N4,4,
+estudiar,Estudiar,Aprender algo con dedicación.,,«Voy a estudiar para el examen».,actividades,M2-N4,5,
+jugar,Jugar,Divertirse con un juego o deporte.,,«Los niños salen a jugar al parque».,actividades,M2-N4,6,
+banarse,Bañarse,Lavarse el cuerpo con agua.,,«Me voy a bañar antes de salir».,actividades,M2-N4,7,
+agua,Agua,Líquido que tomamos para vivir.,,"«Por favor, un vaso de agua».",alimentos,M3-N1,1,
+pan,Pan,Alimento hecho con harina.,,«Desayuno pan con café».,alimentos,M3-N1,2,
+arroz,Arroz,Grano que se cocina como acompañante.,,«Almorzamos arroz con pollo».,alimentos,M3-N1,3,
+fruta,Fruta,Alimento dulce que dan las plantas.,,«La fruta que más me gusta es el mango».,alimentos,M3-N1,4,
+carne,Carne,Alimento que viene de los animales.,,«Hoy hay carne asada».,alimentos,M3-N1,5,
+cafe,Café,Bebida caliente hecha con granos de café.,,«En la mañana tomo café».,alimentos,M3-N1,6,
+leche,Leche,Bebida blanca que viene de la vaca.,,«El niño toma leche en el desayuno».,alimentos,M3-N1,7,
+casa,Casa,Lugar donde vive una persona o familia.,,«Mi casa queda cerca del parque».,lugares,M3-N2,1,
+colegio,Colegio,Lugar donde estudian niños y jóvenes.,,«Mi hermana va al colegio en la mañana».,lugares,M3-N2,2,
+universidad,Universidad,Institución de estudios superiores.,,«Estudio ingeniería en la universidad».,lugares,M3-N2,3,
+hospital,Hospital,Lugar donde atienden a los enfermos.,,«Llevaron a mi abuelo al hospital».,lugares,M3-N2,4,
+tienda,Tienda,Lugar donde se compran cosas.,,«Voy a la tienda a comprar pan».,lugares,M3-N2,5,
+parque,Parque,Espacio al aire libre para descansar o jugar.,,«Los domingos vamos al parque».,lugares,M3-N2,6,
+bano,Baño,Lugar de la casa para el aseo personal.,,«¿Dónde queda el baño?».,lugares,M3-N2,7,
+bus,Bus,Vehículo grande de transporte público.,,«Tomo el bus para ir a la universidad».,transporte,M3-N3,1,
+carro,Carro,Vehículo de cuatro ruedas.,,«Mi papá lava el carro los sábados».,transporte,M3-N3,2,
+moto,Moto,Vehículo de dos ruedas con motor.,,«Mi hermano llega en moto».,transporte,M3-N3,3,
+bicicleta,Bicicleta,Vehículo de dos ruedas que se mueve con pedales.,,«Voy al parque en bicicleta».,transporte,M3-N3,4,
+celular,Celular,Teléfono que se lleva a todas partes.,,«Te escribo por el celular».,transporte,M3-N3,5,
+dinero,Dinero,Billetes y monedas para pagar.,,«No tengo dinero para el bus».,transporte,M3-N3,6,
+computador,Computador,"Máquina para trabajar, estudiar o comunicarse.",,«Hago la tarea en el computador».,transporte,M3-N3,7,
+ayuda,Ayuda,Apoyo que se pide o se da a alguien.,,«Necesito ayuda con esta caja».,necesidades,M3-N4,1,
+hambre,Hambre,Ganas de comer.,,"«Tengo hambre, vamos a almorzar».",necesidades,M3-N4,2,
+sed,Sed,Ganas de beber.,,"«Tengo sed, ¿hay agua?».",necesidades,M3-N4,3,
+dolor,Dolor,Sensación de malestar en el cuerpo.,,«Tengo dolor de cabeza».,necesidades,M3-N4,4,
+medico,Médico,Profesional que cura a los enfermos.,,«Hoy tengo cita con el médico».,necesidades,M3-N4,5,
+emergencia,Emergencia,Situación urgente que necesita ayuda inmediata.,,«En una emergencia llama al 123».,necesidades,M3-N4,6,
+con-permiso,Con permiso,Expresión para pedir paso o permiso.,,Para pasar entre dos personas dices «Con permiso».,cortesia,,0,
+perro,Perro,Animal doméstico que ladra.,,«Mi perro se llama Max».,animales,,0,
+gato,Gato,Animal doméstico que maúlla.,,«El gato duerme en el sofá».,animales,,0,
+pajaro,Pájaro,Animal con plumas que vuela.,,«Un pájaro canta en la ventana».,animales,,0,
+vaca,Vaca,Animal de granja que da leche.,,«La vaca come pasto en la finca».,animales,,0,
+caballo,Caballo,Animal grande que se puede montar.,,«Montamos a caballo en el campo».,animales,,0,
+pez,Pez,Animal que vive en el agua.,,«En el acuario hay un pez naranja».,animales,,0,

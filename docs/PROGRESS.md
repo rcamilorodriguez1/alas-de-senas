@@ -55,3 +55,12 @@ Para retomar (en este orden):
 2. `uv run alas check` debe terminar en «✓ alas check en verde».
 3. (Hecho) Revisión del Grupo 1.
 4. Seguir con `/fase 2` (contenido y base de datos). Las conversaciones de `content/conversations.yaml` NO pueden responder una seña con ella misma (D-008). Pendientes anotados para el Grupo 2: prueba de migraciones sobre BD temporal vacía (B47); llenar `USER_TABLES` en `tests/api/conftest.py`; repetir la prueba anti-filtración de `to_public` y la de ≥ 4 ejercicios con puntaje sobre el contenido real de `content/`; que `alas content check` exija ≥ 4 palabras de deletreo por nodo ALPHABET (para tener 4 opciones).
+
+## Grupo 2 — Contenido y base de datos
+- Plan:
+  - 2.1 `infra/models.py` completo (§5) + primera migración Alembic revisada a mano; prueba que aplica todas las migraciones sobre una BD temporal vacía y luego `alembic check` (B47); `USER_TABLES` del conftest.
+  - 2.2 `content/`: `curriculum.json`, `signs.csv` (109 señas, `motion`, `meaning`/`usage_example` redactados), `conversations.yaml` (`# revisar`, sin responder una seña con ella misma — D-008), `intro.json`, `fonts/` (Nunito OFL).
+  - 2.3–2.4 `app/content/csv_reader.py` (utf-8-sig, mojibake), `loader.py` (JSON/CSV/YAML → specs del dominio), `validation.py` (§6.6 completo + reporte) y `alas content check [--skip-raw]`.
+  - 2.5–2.6b `app/content/media.py` (manifiesto D19, nombres por contenido), `placeholders.py` (Pillow + ffmpeg), `videos.py` (normalización, póster, caché, huérfanos, sugerencias), `images.py` (plan B: EXIF, thumbnail, lienzo 1280×720, fundido).
+  - 2.7 `app/content/seed.py` upsert idempotente (`ON CONFLICT DO UPDATE`) + `alas db seed` y `alas content all`.
+  - Pruebas: `tests/unit/content/` (lector, carga, validaciones, emparejamiento de nombres, imágenes generadas en la prueba, ffmpeg real con clips mínimos) y `tests/api/` (migraciones en BD vacía, seed ×2 = mismos conteos, progreso intacto).

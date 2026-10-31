@@ -1,0 +1,203 @@
+# Conversaciones de 2–3 turnos (§6.5). Cada turno: la Persona A muestra `prompt` y el usuario
+# elige `answer` entre 3 clips (answer + distractors).
+# Reglas: solo señas de este nodo o de nodos anteriores; la primera conversación de 2 turnos debe
+# usar solo señas de L1–L2 del nodo (o anteriores); una seña nunca se responde con ella misma ni
+# aparece entre sus propias opciones (D-008).
+# Todas son una PROPUESTA del equipo de desarrollo: revisar con el intérprete.
+# Los nodos ALPHABET no tienen conversaciones: usan `spelling` (palabras en MAYÚSCULAS, sin tildes).
+
+M1-N1:
+  - turns:  # revisar
+      - prompt: hola
+        answer: buenos-dias
+        distractors: [adios, buenas-noches]
+      - prompt: adios
+        answer: buenas-noches
+        distractors: [hola, como-estas]
+  - turns:  # revisar
+      - prompt: hola
+        answer: buenas-tardes
+        distractors: [adios, gracias]
+      - prompt: gracias
+        answer: de-nada
+        distractors: [por-favor, hola]
+      - prompt: adios
+        answer: buenas-noches
+        distractors: [como-estas, por-favor]
+
+M1-N2:
+  - turns:  # revisar
+      - prompt: hola
+        answer: mucho-gusto
+        distractors: [adios, gracias]
+      - prompt: sordo
+        answer: oyente
+        distractors: [yo, tu]
+  - turns:  # revisar
+      - prompt: nombre
+        answer: yo
+        distractors: [tu, sordo]
+      - prompt: perdon
+        answer: de-nada
+        distractors: [si, no]
+      - prompt: tu
+        answer: si
+        distractors: [no, oyente]
+
+M1-N3:
+  spelling: [CADA, BEBE, HADA, FE, DEBE, DIGA, CAMA, LIMA, MALA, DAME]  # revisar; L2 solo puede usar A–I
+
+M1-N4:
+  spelling: [SOL, LUNA, NIDO, OSO, PAN, NIÑO, SAPO, VASO, TAXI, ZAPATO]  # revisar
+
+M2-N1:
+  - turns:  # revisar
+      - prompt: familia
+        answer: mama
+        distractors: [papa, hermano]
+      - prompt: hermano
+        answer: hermana
+        distractors: [hijo, papa]
+  - turns:  # revisar
+      - prompt: hola
+        answer: buenos-dias
+        distractors: [adios, gracias]
+      - prompt: familia
+        answer: abuelo
+        distractors: [hijo, mama]
+      - prompt: gracias
+        answer: de-nada
+        distractors: [adios, hola]
+
+M2-N2:
+  - turns:  # revisar
+      - prompt: como-estas
+        answer: feliz
+        distractors: [triste, cansado]
+      - prompt: como-estas
+        answer: triste
+        distractors: [feliz, miedo]
+  - turns:  # revisar
+      - prompt: hola
+        answer: buenas-tardes
+        distractors: [adios, gracias]
+      - prompt: como-estas
+        answer: feliz
+        distractors: [triste, miedo]
+      - prompt: familia
+        answer: amor
+        distractors: [enojado, cansado]
+
+M2-N3:
+  - turns:  # revisar (secuencia: ¿qué número sigue?)
+      - prompt: numero-1
+        answer: numero-2
+        distractors: [numero-3, numero-4]
+      - prompt: numero-4
+        answer: numero-5
+        distractors: [numero-6, numero-1]
+  - turns:  # revisar
+      - prompt: numero-7
+        answer: numero-8
+        distractors: [numero-9, numero-10]
+      - prompt: numero-2
+        answer: numero-3
+        distractors: [numero-1, numero-5]
+      - prompt: numero-9
+        answer: numero-10
+        distractors: [numero-8, numero-6]
+
+M2-N4:
+  - turns:  # revisar
+      - prompt: comer
+        answer: beber
+        distractors: [dormir, jugar]
+      - prompt: trabajar
+        answer: estudiar
+        distractors: [jugar, comer]
+  - turns:  # revisar
+      - prompt: cansado
+        answer: dormir
+        distractors: [comer, jugar]
+      - prompt: feliz
+        answer: jugar
+        distractors: [trabajar, estudiar]
+      - prompt: dormir
+        answer: banarse
+        distractors: [beber, comer]
+
+M3-N1:
+  - turns:  # revisar
+      - prompt: beber
+        answer: agua
+        distractors: [pan, arroz]
+      - prompt: comer
+        answer: arroz
+        distractors: [agua, cafe]
+  - turns:  # revisar
+      - prompt: beber
+        answer: cafe
+        distractors: [pan, carne]
+      - prompt: comer
+        answer: fruta
+        distractors: [agua, leche]
+      - prompt: gracias
+        answer: de-nada
+        distractors: [por-favor, adios]
+
+M3-N2:
+  - turns:  # revisar
+      - prompt: estudiar
+        answer: universidad
+        distractors: [casa, tienda]
+      - prompt: jugar
+        answer: parque
+        distractors: [hospital, colegio]
+  - turns:  # revisar
+      - prompt: dormir
+        answer: casa
+        distractors: [parque, tienda]
+      - prompt: estudiar
+        answer: colegio
+        distractors: [hospital, bano]
+      - prompt: banarse
+        answer: bano
+        distractors: [casa, universidad]
+
+M3-N3:
+  - turns:  # revisar
+      - prompt: universidad
+        answer: bus
+        distractors: [carro, moto]
+      - prompt: tienda
+        answer: dinero
+        distractors: [celular, bicicleta]
+  - turns:  # revisar
+      - prompt: parque
+        answer: bicicleta
+        distractors: [bus, carro]
+      - prompt: estudiar
+        answer: computador
+        distractors: [celular, dinero]
+      - prompt: trabajar
+        answer: moto
+        distractors: [bus, dinero]
+
+M3-N4:
+  - turns:  # revisar
+      - prompt: hambre
+        answer: comer
+        distractors: [beber, dormir]
+      - prompt: sed
+        answer: agua
+        distractors: [pan, cafe]
+  - turns:  # revisar
+      - prompt: dolor
+        answer: medico
+        distractors: [ayuda, hambre]
+      - prompt: emergencia
+        answer: hospital
+        distractors: [casa, tienda]
+      - prompt: sed
+        answer: beber
+        distractors: [comer, dormir]

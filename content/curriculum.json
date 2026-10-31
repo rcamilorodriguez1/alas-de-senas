@@ -1,0 +1,44 @@
+{
+  "modules": [
+    {
+      "id": "M1", "order": 1, "title": "Fundamentos de la LSC",
+      "description": "Saludos, cortesía, presentaciones y alfabeto manual.", "published": true,
+      "nodes": [
+        { "id": "M1-N1", "order": 1, "title": "Saludos y cortesía", "kind": "STANDARD" },
+        { "id": "M1-N2", "order": 2, "title": "Presentaciones", "kind": "STANDARD" },
+        { "id": "M1-N3", "order": 3, "title": "Alfabeto A–M", "kind": "ALPHABET" },
+        { "id": "M1-N4", "order": 4, "title": "Alfabeto N–Z", "kind": "ALPHABET" }
+      ]
+    },
+    {
+      "id": "M2", "order": 2, "title": "Personas y vida cotidiana",
+      "description": "Familia, emociones, números y actividades diarias.", "published": true,
+      "nodes": [
+        { "id": "M2-N1", "order": 1, "title": "Familia", "kind": "STANDARD" },
+        { "id": "M2-N2", "order": 2, "title": "Emociones", "kind": "STANDARD" },
+        { "id": "M2-N3", "order": 3, "title": "Números", "kind": "NUMBERS" },
+        { "id": "M2-N4", "order": 4, "title": "Actividades diarias", "kind": "STANDARD" }
+      ]
+    },
+    {
+      "id": "M3", "order": 3, "title": "Entorno y necesidades",
+      "description": "Alimentos, lugares, transporte, objetos y necesidades básicas.", "published": true,
+      "nodes": [
+        { "id": "M3-N1", "order": 1, "title": "Alimentos", "kind": "STANDARD" },
+        { "id": "M3-N2", "order": 2, "title": "Lugares", "kind": "STANDARD" },
+        { "id": "M3-N3", "order": 3, "title": "Transporte y objetos", "kind": "STANDARD" },
+        { "id": "M3-N4", "order": 4, "title": "Necesidades básicas", "kind": "STANDARD" }
+      ]
+    },
+    {
+      "id": "M4", "order": 4, "title": "Primeras conversaciones",
+      "description": "Preguntas frecuentes, ubicación, actividades y diálogos.", "published": false,
+      "nodes": [
+        { "id": "M4-N1", "order": 1, "title": "Preguntas frecuentes", "kind": "STANDARD" },
+        { "id": "M4-N2", "order": 2, "title": "Ubicación", "kind": "STANDARD" },
+        { "id": "M4-N3", "order": 3, "title": "Actividades y diálogos", "kind": "STANDARD" },
+        { "id": "M4-N4", "order": 4, "title": "Comprensión visual", "kind": "STANDARD" }
+      ]
+    }
+  ]
+}

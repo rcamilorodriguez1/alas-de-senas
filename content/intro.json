@@ -1,0 +1,4 @@
+{
+  "cards": ["hola", "gracias", "por-favor", "si", "no", "adios"],
+  "quiz": [{ "sign": "gracias" }, { "sign": "hola" }, { "sign": "no" }]
+}
