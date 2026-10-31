@@ -32,5 +32,5 @@
 - Pendiente / riesgos:
   - **0.8 sin marcar (pospuesta por el equipo, D-006)**: falta crear el repositorio en GitHub, hacer `git push` y confirmar que el job «alas check» de Actions pasa (el fixture de migraciones y los lockfiles con binarios de Linux ya están).
   - Grupo 2: con la primera migración, agregar una prueba que aplique todas las migraciones sobre una BD temporal vacía y luego `alembic check` (B47); el harness no permite bajar todas las migraciones. Llenar `USER_TABLES` en `tests/api/conftest.py`.
-  - `alas dev` en Windows: si Ctrl+C deja Vite vivo (puerto 5173 ocupado), terminar el árbol de procesos con `taskkill /T`.
+  - `alas dev` en Windows dejaba procesos huérfanos (puertos 8000/5173 ocupados): corregido, ahora detiene el árbol completo con `taskkill /T` (probado con el puerto 5173 ocupado).
   - Aviso de Starlette (httpx en `TestClient`): no afecta; revisar al actualizar dependencias.

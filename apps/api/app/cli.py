@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import difflib
 import json
+import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -63,11 +65,26 @@ def _python(*args: str) -> list[str]:
 @app.command()
 def dev() -> None:
     """Inicia la API (puerto 8000, con recarga) y Vite (puerto 5173). Ctrl+C detiene ambos."""
+    # En Mac/Linux cada servidor va en su propio grupo de procesos para detenerlo completo.
+    new_session = sys.platform != "win32"
     api = subprocess.Popen(
-        _python("uvicorn", "app.main:app", "--reload", "--port", "8000", "--app-dir", str(API_DIR)),
+        _python(
+            "uvicorn",
+            "app.main:app",
+            "--reload",
+            "--reload-dir",
+            str(API_DIR / "app"),
+            "--port",
+            "8000",
+            "--app-dir",
+            str(API_DIR),
+        ),
         cwd=REPO_ROOT,
+        start_new_session=new_session,
     )
-    web = subprocess.Popen([_executable("npm"), "run", "dev"], cwd=WEB_DIR)
+    web = subprocess.Popen(
+        [_executable("npm"), "run", "dev"], cwd=WEB_DIR, start_new_session=new_session
+    )
     typer.echo("API en http://localhost:8000 · web en http://localhost:5173 (Ctrl+C para salir)")
     try:
         while api.poll() is None and web.poll() is None:
@@ -79,13 +96,25 @@ def dev() -> None:
         typer.echo("Deteniendo…")
     finally:
         for process in (api, web):
-            if process.poll() is None:
-                process.terminate()
-        for process in (api, web):
-            try:
-                process.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                process.kill()
+            _stop_tree(process)
+
+
+def _stop_tree(process: subprocess.Popen[bytes]) -> None:
+    """Detiene el proceso y sus hijos (el recargador de uvicorn, Vite bajo npm)."""
+    if process.poll() is not None:
+        return
+    if sys.platform == "win32":
+        # En Windows terminate() solo cierra el proceso directo y deja vivos a los hijos con el
+        # puerto ocupado; taskkill /T termina el árbol completo.
+        subprocess.run(
+            ["taskkill", "/T", "/F", "/PID", str(process.pid)], capture_output=True, check=False
+        )
+    else:
+        os.killpg(process.pid, signal.SIGTERM)
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
 
 
 @app.command()
