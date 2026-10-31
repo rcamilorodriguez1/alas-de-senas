@@ -24,8 +24,20 @@ API_DIR = Path(__file__).resolve().parents[2]
 ALEMBIC_INI = API_DIR / "alembic.ini"
 
 # Tablas con datos de usuario que se vacían después de cada prueba. El contenido (módulos,
-# lecciones, señas…) se carga una vez y no se trunca. Se completa en el Grupo 2 con los modelos.
-USER_TABLES: tuple[str, ...] = ()
+# lecciones, señas…) se carga una vez y no se trunca.
+USER_TABLES: tuple[str, ...] = (
+    "favorites",
+    "user_achievements",
+    "sign_reviews",
+    "streaks",
+    "daily_activity",
+    "review_answers",
+    "review_sessions",
+    "session_answers",
+    "lesson_sessions",
+    "refresh_tokens",
+    "users",
+)
 
 
 def alembic_config() -> Config:

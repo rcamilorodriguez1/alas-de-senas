@@ -41,14 +41,14 @@
 
 ## Grupo 2 — Contenido y base de datos
 
-- [ ] **2.1** `infra/models.py` (SQLAlchemy 2.0) y primera migración Alembic revisada a mano; prueba que aplica las migraciones sobre una BD vacía. _R9_
-- [ ] **2.2** `content/curriculum.json` (M1: Saludos y cortesía · Presentaciones · Alfabeto A–M · Alfabeto N–Z), `content/signs.csv` (prellenado con la columna `motion`; `meaning` y `usage_example` redactados; `how_to` vacío), `content/conversations.yaml` (`# revisar`; listas `spelling` de M1-N3 y M1-N4), `content/intro.json`, fuente en `content/fonts/`. _R1.2, R3.1, R9.1_
-- [ ] **2.3** Lector CSV (`utf-8-sig`, detección de mojibake). _R9.5_
-- [ ] **2.4** `alas content check` (con y sin `--skip-raw`) con todas las validaciones de §6.6 (incluidas `motion` y letras `dynamic` en `labels.json`) y reporte. _R9.6, R8.3a_
-- [ ] **2.5** `alas content placeholders` (Pillow + ffmpeg; nunca reemplaza videos reales) con nombres por contenido y `media/manifest.json` (D19). _R9.2_
-- [ ] **2.6** `alas content videos` (normalización, póster, nombre por contenido, manifiesto, limpieza de archivos huérfanos, caché local, sugerencia de slug parecido). _R9.3, R9.4_
-- [ ] **2.6b** Plan B de imágenes (§6.4.1): `app/content/images.py` (EXIF, reducción, lienzo 1280×720, fundido, ffmpeg), emparejamiento de nombres (`slug.jpg`, `slug__N.jpg`), prioridad video > imágenes > relleno, validaciones (huecos, máx. 4, `.heic`, resolución, `how_to` vacío) y `source`/`media_source` en manifiesto y BD; pruebas con imágenes generadas en la prueba (rotada por EXIF, 4000×3000, 1001×777, `numero-1.jpg`). _R9.12_
-- [ ] **2.7** `alas db seed` idempotente con `INSERT … ON CONFLICT DO UPDATE` (datos de video desde el manifiesto, módulos no publicados sin lecciones, ejercicios generados, logros y administrador opcional). Verificar que los videos procesados y el manifiesto quedan en git. _R9.7, R9.10_
+- [x] **2.1** `infra/models.py` (SQLAlchemy 2.0) y primera migración Alembic revisada a mano; prueba que aplica las migraciones sobre una BD vacía. _R9_
+- [x] **2.2** `content/curriculum.json` (M1: Saludos y cortesía · Presentaciones · Alfabeto A–M · Alfabeto N–Z), `content/signs.csv` (prellenado con la columna `motion`; `meaning` y `usage_example` redactados; `how_to` vacío), `content/conversations.yaml` (`# revisar`; listas `spelling` de M1-N3 y M1-N4), `content/intro.json`, fuente en `content/fonts/`. _R1.2, R3.1, R9.1_
+- [x] **2.3** Lector CSV (`utf-8-sig`, detección de mojibake). _R9.5_
+- [x] **2.4** `alas content check` (con y sin `--skip-raw`) con todas las validaciones de §6.6 (incluidas `motion` y letras `dynamic` en `labels.json`) y reporte. _R9.6, R8.3a_
+- [x] **2.5** `alas content placeholders` (Pillow + ffmpeg; nunca reemplaza videos reales) con nombres por contenido y `media/manifest.json` (D19). _R9.2_
+- [x] **2.6** `alas content videos` (normalización, póster, nombre por contenido, manifiesto, limpieza de archivos huérfanos, caché local, sugerencia de slug parecido). _R9.3, R9.4_
+- [x] **2.6b** Plan B de imágenes (§6.4.1): `app/content/images.py` (EXIF, reducción, lienzo 1280×720, fundido, ffmpeg), emparejamiento de nombres (`slug.jpg`, `slug__N.jpg`), prioridad video > imágenes > relleno, validaciones (huecos, máx. 4, `.heic`, resolución, `how_to` vacío) y `source`/`media_source` en manifiesto y BD; pruebas con imágenes generadas en la prueba (rotada por EXIF, 4000×3000, 1001×777, `numero-1.jpg`). _R9.12_
+- [x] **2.7** `alas db seed` idempotente con `INSERT … ON CONFLICT DO UPDATE` (datos de video desde el manifiesto, módulos no publicados sin lecciones, ejercicios generados, logros y administrador opcional). Verificar que los videos procesados y el manifiesto quedan en git. _R9.7, R9.10_
   **Verificar:** `uv run alas content all` sin errores; 109 videos de relleno; `alas db seed` dos veces deja los mismos conteos.
 
 ## Grupo 3 — Autenticación

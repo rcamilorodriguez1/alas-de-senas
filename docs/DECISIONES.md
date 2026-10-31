@@ -83,3 +83,16 @@
   3. El generador convierte el contenido mal escrito en `GenerationError` con mensaje en español: turnos con opciones repetidas, palabras de deletreo en minúsculas, menos de 2 palabras de deletreo, nodos con muy pocas señas para 3 lecciones.
 - Consecuencias: pruebas nuevas que simulan el ataque (semilla pública) y verifican que ya no acierta, que las columnas de MEMORY_MATCH no revelan las parejas y que ningún estímulo aparece entre sus opciones. Las pruebas de «barajado con rng» se reemplazaron por las de orden por token.
 - Secciones afectadas: §6.5, §7.6.
+
+## D-009 · Detalles del pipeline de contenido (Grupo 2) · 31/10/2026
+- Contexto / problema: puntos que §5–§6 no fijan o que aparecieron al implementar.
+- Decisiones:
+  1. **YAML sin booleanos implícitos:** en YAML 1.1 la seña `no` (sin comillas) se lee como `False`. `conversations.yaml` se lee con un `SafeLoader` que no resuelve booleanos; el equipo puede escribir `no` y `si` sin comillas.
+  2. **Manifiesto:** campo opcional `label` (palabra dibujada) en las entradas de relleno, para no regenerar los 109 rellenos en cada ejecución; `source_hash` (SHA-256 de los originales) en las entradas reales sirve de caché. `content/videos/.cache.json` es una copia local ignorada en git.
+  3. **Rellenos** con una sola imagen en bucle (`ffmpeg -loop 1`), fuente Nunito (OFL) incluida en `content/fonts/` (copiada de `@fontsource-variable/nunito`, se carga como woff2 con Pillow).
+  4. **`lesson_sessions.lesson_id` sin CASCADE** y el seed **nunca borra lecciones**: solo borra ejercicios que el generador ya no produce (sus respuestas caen por CASCADE, §5). Así recargar el contenido nunca borra progreso (R9.7).
+  5. **Categorías** definidas en código (`app/content/loader.py`, orden de §6.2), no en `curriculum.json`.
+  6. **Logros:** descripción e ícono (lucide-react) definidos en `app/content/seed.py`.
+  7. **Mensajes no dados por §6.6** redactados por analogía (máximos de señas por nodo, deletreo: ««SAL» usa la letra S, que aún no se ha enseñado en M1-N3-L4.»).
+  8. **`labels.json`** se busca por defecto en `public/models/lsc-alfabeto/labels.json` (al lado de `public/media`).
+- Consecuencias: las conversaciones de `content/conversations.yaml` son una propuesta marcada `# revisar` y no responden una seña con ella misma (D-008).

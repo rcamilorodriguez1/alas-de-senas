@@ -64,3 +64,4 @@ Para retomar (en este orden):
   - 2.5–2.6b `app/content/media.py` (manifiesto D19, nombres por contenido), `placeholders.py` (Pillow + ffmpeg), `videos.py` (normalización, póster, caché, huérfanos, sugerencias), `images.py` (plan B: EXIF, thumbnail, lienzo 1280×720, fundido).
   - 2.7 `app/content/seed.py` upsert idempotente (`ON CONFLICT DO UPDATE`) + `alas db seed` y `alas content all`.
   - Pruebas: `tests/unit/content/` (lector, carga, validaciones, emparejamiento de nombres, imágenes generadas en la prueba, ffmpeg real con clips mínimos) y `tests/api/` (migraciones en BD vacía, seed ×2 = mismos conteos, progreso intacto).
+- Hecho: 2.1–2.7. `alas content all` sin errores: 109 videos de relleno (4,8 MB, versionados en `apps/web/public/media/`), 549 ejercicios; `alas db seed` dos veces → mismos conteos. `alas check` en verde (1082 pruebas). Decisiones: D-009.

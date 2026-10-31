@@ -218,8 +218,34 @@ def db_migrate() -> None:
 
 @db_app.command("seed")
 def db_seed() -> None:
-    """Carga el contenido de forma idempotente."""
-    _pending(2)
+    """Valida el contenido (sin raw/) y lo carga de forma idempotente (§6.4)."""
+    from sqlalchemy.orm import Session
+
+    from app.content.errors import ContentError
+    from app.content.seed import seed_content
+    from app.infra.db import get_engine
+
+    settings = get_settings()
+    _run_check(skip_raw=True)
+    try:
+        with Session(get_engine()) as session:
+            counts = seed_content(
+                session,
+                settings.content_dir,
+                settings.media_dir,
+                admin_email=settings.admin_email,
+                admin_password=settings.admin_password,
+            )
+            session.commit()
+    except ContentError as exc:
+        typer.secho(str(exc), fg="red")
+        raise typer.Exit(code=1) from exc
+    typer.secho(
+        f"Contenido cargado: {counts.modules} módulos, {counts.nodes} nodos, "
+        f"{counts.lessons} lecciones, {counts.signs} señas, {counts.exercises} ejercicios, "
+        f"{counts.achievements} logros.",
+        fg="green",
+    )
 
 
 @db_app.command("seed-demo")
@@ -269,13 +295,36 @@ def db_reset(
 @content_app.command("placeholders")
 def content_placeholders() -> None:
     """Genera los videos de relleno y el manifiesto (D6, D19)."""
-    _pending(2)
+    from app.content.csv_reader import read_signs_csv
+    from app.content.placeholders import generate_placeholders
+    from app.content.raw_files import scan_raw
+
+    settings = get_settings()
+    slugs = [row.slug for row in read_signs_csv(settings.content_dir / "signs.csv")]
+    raw = scan_raw(settings.content_dir / "videos" / "raw", slugs)
+    result = generate_placeholders(settings.content_dir, settings.media_dir, set(raw.assets))
+    typer.echo(
+        f"Videos de relleno: {len(result.created)} generados, {len(result.kept)} sin cambios."
+    )
 
 
 @content_app.command("videos")
 def content_videos() -> None:
     """Normaliza los videos e imágenes de content/videos/raw (§6.4, D25)."""
-    _pending(2)
+    from app.content.videos import process_videos
+
+    settings = get_settings()
+    result = process_videos(settings.content_dir, settings.media_dir)
+    typer.echo(
+        f"Videos: {len(result.processed)} procesados, {len(result.unchanged)} sin cambios, "
+        f"{len(result.removed)} archivos viejos borrados."
+    )
+    for warning in result.warnings:
+        typer.secho(f"  ⚠ {warning}", fg="yellow")
+    for error in result.errors:
+        typer.secho(f"  ✗ {error}", fg="red")
+    if result.errors:
+        raise typer.Exit(code=1)
 
 
 @content_app.command("check")
@@ -284,14 +333,27 @@ def content_check(
         bool, typer.Option("--skip-raw", help="No revisa content/videos/raw (CI).")
     ] = False,
 ) -> None:
-    """Valida el contenido (§6.6)."""
-    _pending(2)
+    """Valida el contenido (§6.6) e imprime el reporte; código 1 si hay errores."""
+    _run_check(skip_raw=skip_raw)
+
+
+def _run_check(*, skip_raw: bool) -> None:
+    from app.content.validation import check_content
+
+    settings = get_settings()
+    report = check_content(settings.content_dir, settings.media_dir, skip_raw=skip_raw)
+    typer.echo(report.render())
+    if not report.ok:
+        raise typer.Exit(code=1)
 
 
 @content_app.command("all")
 def content_all() -> None:
-    """placeholders + videos + check."""
-    _pending(2)
+    """placeholders → videos → check → seed (§6.4)."""
+    content_placeholders()
+    content_videos()
+    _run_check(skip_raw=False)
+    db_seed()
 
 
 @app.command("camera-assets")

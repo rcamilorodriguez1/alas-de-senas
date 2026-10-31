@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from typer.testing import CliRunner
 
@@ -38,12 +40,7 @@ def test_content_help_lista_sus_subcomandos(command: str) -> None:
 @pytest.mark.parametrize(
     "args",
     [
-        ["db", "seed"],
         ["db", "seed-demo"],
-        ["content", "placeholders"],
-        ["content", "videos"],
-        ["content", "check"],
-        ["content", "all"],
         ["camera-assets"],
         ["e2e"],
         ["start-prod"],
@@ -74,3 +71,19 @@ def test_db_reset_se_niega_a_borrar_una_base_remota(monkeypatch: pytest.MonkeyPa
         get_settings.cache_clear()
     assert result.exit_code == 1
     assert "solo borra bases locales" in result.output
+
+
+def test_content_check_con_errores_sale_con_codigo_1(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Contenido real con un `media_dir` vacío: faltan todos los videos (Grupo 2)."""
+    from app.core.config import get_settings
+
+    monkeypatch.setenv("MEDIA_DIR", str(tmp_path / "media"))
+    get_settings.cache_clear()
+    try:
+        result = runner.invoke(app, ["content", "check", "--skip-raw"], env=WIDE)
+    finally:
+        get_settings.cache_clear()
+    assert result.exit_code == 1
+    assert "Falta el video de «hola». Ejecuta alas content all." in result.output

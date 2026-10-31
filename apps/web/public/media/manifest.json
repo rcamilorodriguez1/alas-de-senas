@@ -1,0 +1,877 @@
+{
+  "version": 1,
+  "signs": {
+    "abuelo": {
+      "video": "/media/v/8537659da8165d94.mp4",
+      "poster": "/media/p/8537659da8165d94.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Abuelo"
+    },
+    "adios": {
+      "video": "/media/v/d2769473ee0d0b15.mp4",
+      "poster": "/media/p/d2769473ee0d0b15.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Adiós"
+    },
+    "agua": {
+      "video": "/media/v/fe064acf165e0c8c.mp4",
+      "poster": "/media/p/fe064acf165e0c8c.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Agua"
+    },
+    "amor": {
+      "video": "/media/v/88ca20609830512f.mp4",
+      "poster": "/media/p/88ca20609830512f.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Amor"
+    },
+    "arroz": {
+      "video": "/media/v/ec01c0cae6265b9c.mp4",
+      "poster": "/media/p/ec01c0cae6265b9c.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Arroz"
+    },
+    "ayuda": {
+      "video": "/media/v/d63e7f74f82748e0.mp4",
+      "poster": "/media/p/d63e7f74f82748e0.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Ayuda"
+    },
+    "banarse": {
+      "video": "/media/v/6d1b0b3682913eb1.mp4",
+      "poster": "/media/p/6d1b0b3682913eb1.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Bañarse"
+    },
+    "bano": {
+      "video": "/media/v/4e4dfb95e42df6ea.mp4",
+      "poster": "/media/p/4e4dfb95e42df6ea.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Baño"
+    },
+    "beber": {
+      "video": "/media/v/14322148e54b2e03.mp4",
+      "poster": "/media/p/14322148e54b2e03.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Beber"
+    },
+    "bicicleta": {
+      "video": "/media/v/5bf141b4d940ec64.mp4",
+      "poster": "/media/p/5bf141b4d940ec64.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Bicicleta"
+    },
+    "buenas-noches": {
+      "video": "/media/v/8f92f9e807c7994e.mp4",
+      "poster": "/media/p/8f92f9e807c7994e.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Buenas noches"
+    },
+    "buenas-tardes": {
+      "video": "/media/v/30c3b3979bc1c526.mp4",
+      "poster": "/media/p/30c3b3979bc1c526.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Buenas tardes"
+    },
+    "buenos-dias": {
+      "video": "/media/v/5e906251c63100b6.mp4",
+      "poster": "/media/p/5e906251c63100b6.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Buenos días"
+    },
+    "bus": {
+      "video": "/media/v/c34749d8394f647a.mp4",
+      "poster": "/media/p/c34749d8394f647a.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Bus"
+    },
+    "caballo": {
+      "video": "/media/v/100479457c4587aa.mp4",
+      "poster": "/media/p/100479457c4587aa.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Caballo"
+    },
+    "cafe": {
+      "video": "/media/v/533d51ea08fd1205.mp4",
+      "poster": "/media/p/533d51ea08fd1205.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Café"
+    },
+    "cansado": {
+      "video": "/media/v/949981fa63ff3802.mp4",
+      "poster": "/media/p/949981fa63ff3802.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Cansado"
+    },
+    "carne": {
+      "video": "/media/v/2529c8c853c03054.mp4",
+      "poster": "/media/p/2529c8c853c03054.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Carne"
+    },
+    "carro": {
+      "video": "/media/v/03065da5f22ef741.mp4",
+      "poster": "/media/p/03065da5f22ef741.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Carro"
+    },
+    "casa": {
+      "video": "/media/v/5e72cb2ad36e3879.mp4",
+      "poster": "/media/p/5e72cb2ad36e3879.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Casa"
+    },
+    "celular": {
+      "video": "/media/v/24e435c5c1ee6a0e.mp4",
+      "poster": "/media/p/24e435c5c1ee6a0e.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Celular"
+    },
+    "colegio": {
+      "video": "/media/v/f0035decf5d8b257.mp4",
+      "poster": "/media/p/f0035decf5d8b257.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Colegio"
+    },
+    "comer": {
+      "video": "/media/v/ab46dcb07ae319d1.mp4",
+      "poster": "/media/p/ab46dcb07ae319d1.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Comer"
+    },
+    "como-estas": {
+      "video": "/media/v/ae1e3d45e6e2d7af.mp4",
+      "poster": "/media/p/ae1e3d45e6e2d7af.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "¿Cómo estás?"
+    },
+    "computador": {
+      "video": "/media/v/ea333a474d8c5392.mp4",
+      "poster": "/media/p/ea333a474d8c5392.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Computador"
+    },
+    "con-permiso": {
+      "video": "/media/v/4b5d870c29ba1a79.mp4",
+      "poster": "/media/p/4b5d870c29ba1a79.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Con permiso"
+    },
+    "de-nada": {
+      "video": "/media/v/7aca1d61b059512b.mp4",
+      "poster": "/media/p/7aca1d61b059512b.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "De nada"
+    },
+    "dinero": {
+      "video": "/media/v/dce228879cdc7314.mp4",
+      "poster": "/media/p/dce228879cdc7314.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Dinero"
+    },
+    "dolor": {
+      "video": "/media/v/2c1a39cde4519b5d.mp4",
+      "poster": "/media/p/2c1a39cde4519b5d.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Dolor"
+    },
+    "dormir": {
+      "video": "/media/v/f64d113fb693c2df.mp4",
+      "poster": "/media/p/f64d113fb693c2df.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Dormir"
+    },
+    "emergencia": {
+      "video": "/media/v/9e748b711f20626b.mp4",
+      "poster": "/media/p/9e748b711f20626b.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Emergencia"
+    },
+    "enojado": {
+      "video": "/media/v/560740371e7772f6.mp4",
+      "poster": "/media/p/560740371e7772f6.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Enojado"
+    },
+    "estudiar": {
+      "video": "/media/v/3267918622a71b56.mp4",
+      "poster": "/media/p/3267918622a71b56.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Estudiar"
+    },
+    "familia": {
+      "video": "/media/v/03d5cc4a34ff1911.mp4",
+      "poster": "/media/p/03d5cc4a34ff1911.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Familia"
+    },
+    "feliz": {
+      "video": "/media/v/a5ebdc74e0412b73.mp4",
+      "poster": "/media/p/a5ebdc74e0412b73.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Feliz"
+    },
+    "fruta": {
+      "video": "/media/v/efaa32a7c7519c6a.mp4",
+      "poster": "/media/p/efaa32a7c7519c6a.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Fruta"
+    },
+    "gato": {
+      "video": "/media/v/f83b57304af75912.mp4",
+      "poster": "/media/p/f83b57304af75912.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Gato"
+    },
+    "gracias": {
+      "video": "/media/v/0449b858dce2910a.mp4",
+      "poster": "/media/p/0449b858dce2910a.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Gracias"
+    },
+    "hambre": {
+      "video": "/media/v/7f6e324039594214.mp4",
+      "poster": "/media/p/7f6e324039594214.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Hambre"
+    },
+    "hermana": {
+      "video": "/media/v/f13aeff3ca611f5c.mp4",
+      "poster": "/media/p/f13aeff3ca611f5c.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Hermana"
+    },
+    "hermano": {
+      "video": "/media/v/8abcce4146a0295d.mp4",
+      "poster": "/media/p/8abcce4146a0295d.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Hermano"
+    },
+    "hijo": {
+      "video": "/media/v/14a15737d180aced.mp4",
+      "poster": "/media/p/14a15737d180aced.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Hijo"
+    },
+    "hola": {
+      "video": "/media/v/5db54a579422f17f.mp4",
+      "poster": "/media/p/5db54a579422f17f.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Hola"
+    },
+    "hospital": {
+      "video": "/media/v/08c13ae516bf5fc8.mp4",
+      "poster": "/media/p/08c13ae516bf5fc8.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Hospital"
+    },
+    "jugar": {
+      "video": "/media/v/8f3684376b694c38.mp4",
+      "poster": "/media/p/8f3684376b694c38.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Jugar"
+    },
+    "leche": {
+      "video": "/media/v/e9d4d7597b4cb6fd.mp4",
+      "poster": "/media/p/e9d4d7597b4cb6fd.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Leche"
+    },
+    "letra-a": {
+      "video": "/media/v/fc92424960f51851.mp4",
+      "poster": "/media/p/fc92424960f51851.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "A"
+    },
+    "letra-b": {
+      "video": "/media/v/82b8f7a79f858799.mp4",
+      "poster": "/media/p/82b8f7a79f858799.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "B"
+    },
+    "letra-c": {
+      "video": "/media/v/50a0e2c8c8aa47a0.mp4",
+      "poster": "/media/p/50a0e2c8c8aa47a0.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "C"
+    },
+    "letra-d": {
+      "video": "/media/v/10e9ba3b2ba4461e.mp4",
+      "poster": "/media/p/10e9ba3b2ba4461e.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "D"
+    },
+    "letra-e": {
+      "video": "/media/v/953d628dfbdb35e4.mp4",
+      "poster": "/media/p/953d628dfbdb35e4.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "E"
+    },
+    "letra-f": {
+      "video": "/media/v/cf207a18acd9a8f1.mp4",
+      "poster": "/media/p/cf207a18acd9a8f1.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "F"
+    },
+    "letra-g": {
+      "video": "/media/v/6218f63386515277.mp4",
+      "poster": "/media/p/6218f63386515277.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "G"
+    },
+    "letra-h": {
+      "video": "/media/v/86ca68599ac203da.mp4",
+      "poster": "/media/p/86ca68599ac203da.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "H"
+    },
+    "letra-i": {
+      "video": "/media/v/f09b885e9e3ba914.mp4",
+      "poster": "/media/p/f09b885e9e3ba914.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "I"
+    },
+    "letra-j": {
+      "video": "/media/v/316317b5e5896d3d.mp4",
+      "poster": "/media/p/316317b5e5896d3d.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "J"
+    },
+    "letra-k": {
+      "video": "/media/v/18874f612fbad938.mp4",
+      "poster": "/media/p/18874f612fbad938.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "K"
+    },
+    "letra-l": {
+      "video": "/media/v/745bb9da03684dd7.mp4",
+      "poster": "/media/p/745bb9da03684dd7.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "L"
+    },
+    "letra-m": {
+      "video": "/media/v/0a9e24dcb9dc5ea9.mp4",
+      "poster": "/media/p/0a9e24dcb9dc5ea9.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "M"
+    },
+    "letra-n": {
+      "video": "/media/v/6beb483457e4763c.mp4",
+      "poster": "/media/p/6beb483457e4763c.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "N"
+    },
+    "letra-n-tilde": {
+      "video": "/media/v/0f8c495d0c82c245.mp4",
+      "poster": "/media/p/0f8c495d0c82c245.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Ñ"
+    },
+    "letra-o": {
+      "video": "/media/v/cb9ddb13f00884a4.mp4",
+      "poster": "/media/p/cb9ddb13f00884a4.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "O"
+    },
+    "letra-p": {
+      "video": "/media/v/6b792e329dd97875.mp4",
+      "poster": "/media/p/6b792e329dd97875.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "P"
+    },
+    "letra-q": {
+      "video": "/media/v/f23e7697923b5dbb.mp4",
+      "poster": "/media/p/f23e7697923b5dbb.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Q"
+    },
+    "letra-r": {
+      "video": "/media/v/c23a4ddb320f50a3.mp4",
+      "poster": "/media/p/c23a4ddb320f50a3.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "R"
+    },
+    "letra-s": {
+      "video": "/media/v/12667b3fca34cf9a.mp4",
+      "poster": "/media/p/12667b3fca34cf9a.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "S"
+    },
+    "letra-t": {
+      "video": "/media/v/8fb3d49dc049cc15.mp4",
+      "poster": "/media/p/8fb3d49dc049cc15.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "T"
+    },
+    "letra-u": {
+      "video": "/media/v/cd6b787172630500.mp4",
+      "poster": "/media/p/cd6b787172630500.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "U"
+    },
+    "letra-v": {
+      "video": "/media/v/8e972ad43ef9fb26.mp4",
+      "poster": "/media/p/8e972ad43ef9fb26.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "V"
+    },
+    "letra-w": {
+      "video": "/media/v/51567e4250396762.mp4",
+      "poster": "/media/p/51567e4250396762.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "W"
+    },
+    "letra-x": {
+      "video": "/media/v/2dc32e4f78e694ed.mp4",
+      "poster": "/media/p/2dc32e4f78e694ed.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "X"
+    },
+    "letra-y": {
+      "video": "/media/v/89178d901d1c4056.mp4",
+      "poster": "/media/p/89178d901d1c4056.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Y"
+    },
+    "letra-z": {
+      "video": "/media/v/3c34d233abf68c00.mp4",
+      "poster": "/media/p/3c34d233abf68c00.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Z"
+    },
+    "mama": {
+      "video": "/media/v/3155a36c3fc97706.mp4",
+      "poster": "/media/p/3155a36c3fc97706.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Mamá"
+    },
+    "medico": {
+      "video": "/media/v/a3348821ef5f2594.mp4",
+      "poster": "/media/p/a3348821ef5f2594.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Médico"
+    },
+    "miedo": {
+      "video": "/media/v/635fb9d52af84d85.mp4",
+      "poster": "/media/p/635fb9d52af84d85.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Miedo"
+    },
+    "moto": {
+      "video": "/media/v/6ea84c0c879f3392.mp4",
+      "poster": "/media/p/6ea84c0c879f3392.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Moto"
+    },
+    "mucho-gusto": {
+      "video": "/media/v/a9628a7fc03a60a2.mp4",
+      "poster": "/media/p/a9628a7fc03a60a2.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Mucho gusto"
+    },
+    "no": {
+      "video": "/media/v/f7a01b844c0e5dba.mp4",
+      "poster": "/media/p/f7a01b844c0e5dba.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "No"
+    },
+    "nombre": {
+      "video": "/media/v/298780b69e5570da.mp4",
+      "poster": "/media/p/298780b69e5570da.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Nombre"
+    },
+    "numero-1": {
+      "video": "/media/v/ad37dec02abe10de.mp4",
+      "poster": "/media/p/ad37dec02abe10de.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Uno"
+    },
+    "numero-10": {
+      "video": "/media/v/262a3352cb194983.mp4",
+      "poster": "/media/p/262a3352cb194983.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Diez"
+    },
+    "numero-2": {
+      "video": "/media/v/e7de81ce4091fd0b.mp4",
+      "poster": "/media/p/e7de81ce4091fd0b.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Dos"
+    },
+    "numero-3": {
+      "video": "/media/v/5bdad7765fc2e320.mp4",
+      "poster": "/media/p/5bdad7765fc2e320.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Tres"
+    },
+    "numero-4": {
+      "video": "/media/v/a480a969014e5c45.mp4",
+      "poster": "/media/p/a480a969014e5c45.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Cuatro"
+    },
+    "numero-5": {
+      "video": "/media/v/a9d6c408d1c94e6c.mp4",
+      "poster": "/media/p/a9d6c408d1c94e6c.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Cinco"
+    },
+    "numero-6": {
+      "video": "/media/v/c3c2d03a86539e80.mp4",
+      "poster": "/media/p/c3c2d03a86539e80.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Seis"
+    },
+    "numero-7": {
+      "video": "/media/v/2447d999a6cd245f.mp4",
+      "poster": "/media/p/2447d999a6cd245f.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Siete"
+    },
+    "numero-8": {
+      "video": "/media/v/8a73fab08b3c20a2.mp4",
+      "poster": "/media/p/8a73fab08b3c20a2.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Ocho"
+    },
+    "numero-9": {
+      "video": "/media/v/2db70fbed2d1a34a.mp4",
+      "poster": "/media/p/2db70fbed2d1a34a.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Nueve"
+    },
+    "oyente": {
+      "video": "/media/v/b67cb2ad35f8adf6.mp4",
+      "poster": "/media/p/b67cb2ad35f8adf6.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Oyente"
+    },
+    "pajaro": {
+      "video": "/media/v/2fe9b6ffcbba2b85.mp4",
+      "poster": "/media/p/2fe9b6ffcbba2b85.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Pájaro"
+    },
+    "pan": {
+      "video": "/media/v/7377fa5998089622.mp4",
+      "poster": "/media/p/7377fa5998089622.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Pan"
+    },
+    "papa": {
+      "video": "/media/v/cd375f891ae6a513.mp4",
+      "poster": "/media/p/cd375f891ae6a513.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Papá"
+    },
+    "parque": {
+      "video": "/media/v/383e1ddcc935743e.mp4",
+      "poster": "/media/p/383e1ddcc935743e.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Parque"
+    },
+    "perdon": {
+      "video": "/media/v/667365378352b8e0.mp4",
+      "poster": "/media/p/667365378352b8e0.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Perdón"
+    },
+    "perro": {
+      "video": "/media/v/44a1369d75c500ac.mp4",
+      "poster": "/media/p/44a1369d75c500ac.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Perro"
+    },
+    "pez": {
+      "video": "/media/v/8e578225353c68fb.mp4",
+      "poster": "/media/p/8e578225353c68fb.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Pez"
+    },
+    "por-favor": {
+      "video": "/media/v/ec897fb9adb53a27.mp4",
+      "poster": "/media/p/ec897fb9adb53a27.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Por favor"
+    },
+    "sed": {
+      "video": "/media/v/e995088ea7a0ca16.mp4",
+      "poster": "/media/p/e995088ea7a0ca16.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Sed"
+    },
+    "si": {
+      "video": "/media/v/1d41af1ca1b5cfa8.mp4",
+      "poster": "/media/p/1d41af1ca1b5cfa8.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Sí"
+    },
+    "sordo": {
+      "video": "/media/v/860b82c0b41fdb41.mp4",
+      "poster": "/media/p/860b82c0b41fdb41.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Sordo"
+    },
+    "tienda": {
+      "video": "/media/v/ae10fca073831d0d.mp4",
+      "poster": "/media/p/ae10fca073831d0d.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Tienda"
+    },
+    "trabajar": {
+      "video": "/media/v/21552c2b3a1b30be.mp4",
+      "poster": "/media/p/21552c2b3a1b30be.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Trabajar"
+    },
+    "triste": {
+      "video": "/media/v/3f54237c65664fd4.mp4",
+      "poster": "/media/p/3f54237c65664fd4.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Triste"
+    },
+    "tu": {
+      "video": "/media/v/84d171d4aece4c41.mp4",
+      "poster": "/media/p/84d171d4aece4c41.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Tú"
+    },
+    "universidad": {
+      "video": "/media/v/1fa70dd0115bb390.mp4",
+      "poster": "/media/p/1fa70dd0115bb390.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Universidad"
+    },
+    "vaca": {
+      "video": "/media/v/da956b9ac83010b6.mp4",
+      "poster": "/media/p/da956b9ac83010b6.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Vaca"
+    },
+    "yo": {
+      "video": "/media/v/b2ea0e237f3a9cc4.mp4",
+      "poster": "/media/p/b2ea0e237f3a9cc4.jpg",
+      "placeholder": true,
+      "source": "placeholder",
+      "duration": 3.0,
+      "label": "Yo"
+    }
+  }
+}
