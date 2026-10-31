@@ -14,6 +14,7 @@ from app.content.ffmpeg import image_to_video, probe_duration
 from app.content.media import (
     ManifestEntry,
     load_manifest,
+    manifest_exists,
     remove_orphans,
     save_manifest,
     store_media,
@@ -76,6 +77,7 @@ def generate_placeholders(
     """
     rows = read_signs_csv(content_dir / "signs.csv")
     font_path = content_dir / FONT_FILE
+    had_manifest = manifest_exists(media_dir)
     manifest = load_manifest(media_dir)
     skip = raw_slugs or set()
     result = PlaceholderResult()
@@ -90,7 +92,8 @@ def generate_placeholders(
         manifest.signs[row.slug] = _make(row.word, font_path, media_dir)
         result.created.append(row.slug)
     save_manifest(media_dir, manifest)
-    remove_orphans(media_dir, manifest)
+    if had_manifest:  # sin manifiesto previo no se sabe qué archivos son huérfanos
+        remove_orphans(media_dir, manifest)
     return result
 
 

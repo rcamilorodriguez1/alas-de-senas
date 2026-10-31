@@ -96,3 +96,7 @@
   7. **Mensajes no dados por §6.6** redactados por analogía (máximos de señas por nodo, deletreo: ««SAL» usa la letra S, que aún no se ha enseñado en M1-N3-L4.»).
   8. **`labels.json`** se busca por defecto en `public/models/lsc-alfabeto/labels.json` (al lado de `public/media`).
 - Consecuencias: las conversaciones de `content/conversations.yaml` son una propuesta marcada `# revisar` y no responden una seña con ella misma (D-008).
+- Ajustes tras la revisión del Grupo 2 (D-009, continuación):
+  9. **Administrador:** el seed nunca asciende una cuenta existente (si `ADMIN_EMAIL` pertenece a un estudiante, falla con un mensaje claro); si ya es ADMIN, la contraseña del `.env` reemplaza la anterior. `ADMIN_EMAIL` y `ADMIN_PASSWORD` van juntos y la contraseña debe tener 8–72 bytes UTF-8.
+  10. **Manifiesto:** `video`/`poster` deben cumplir `^/media/v/<16 hex>.mp4$` y `^/media/p/<16 hex>.jpg$` (sin rutas fuera de `media/`). Si `manifest.json` no existía al empezar, no se borran «huérfanos» (podrían ser videos aún sin commit).
+  11. **Reordenar módulos o nodos** no rompe el seed: los `order` existentes se mueven a negativos antes del upsert.

@@ -8,7 +8,7 @@ import shutil
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 MANIFEST_NAME = "manifest.json"
 HASH_LENGTH = 16
@@ -19,8 +19,8 @@ MediaSource = Literal["video", "images", "placeholder"]
 class ManifestEntry(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    video: str  # "/media/v/<hash>.mp4"
-    poster: str  # "/media/p/<hash>.jpg"
+    video: str = Field(pattern=r"^/media/v/[0-9a-f]{16}\.mp4$")
+    poster: str = Field(pattern=r"^/media/p/[0-9a-f]{16}\.jpg$")
     placeholder: bool
     source: MediaSource
     duration: float  # segundos
@@ -80,6 +80,10 @@ def store_media(media_dir: Path, video: Path, poster: Path) -> tuple[str, str]:
         else:
             shutil.move(str(source), target)
     return f"/media/v/{digest}.mp4", f"/media/p/{digest}.jpg"
+
+
+def manifest_exists(media_dir: Path) -> bool:
+    return (media_dir / MANIFEST_NAME).is_file()
 
 
 def remove_orphans(media_dir: Path, manifest: Manifest) -> list[Path]:

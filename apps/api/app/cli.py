@@ -10,6 +10,8 @@ import signal
 import subprocess
 import sys
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated
 
@@ -39,6 +41,27 @@ def _utf8_output() -> None:
         reconfigure = getattr(stream, "reconfigure", None)
         if callable(reconfigure):
             reconfigure(encoding="utf-8", errors="replace")
+
+
+@contextmanager
+def _content_errors() -> Iterator[None]:
+    """Convierte los errores de contenido o de un manifiesto dañado en un mensaje en español."""
+    from pydantic import ValidationError
+
+    from app.content.errors import ContentError
+
+    try:
+        yield
+    except ContentError as exc:
+        typer.secho(str(exc), fg="red")
+        raise typer.Exit(code=1) from exc
+    except ValidationError as exc:
+        typer.secho(
+            "media/manifest.json está dañado. Restáuralo desde git o bórralo y ejecuta "
+            "alas content all.",
+            fg="red",
+        )
+        raise typer.Exit(code=1) from exc
 
 
 def _pending(group: int) -> None:
@@ -219,6 +242,12 @@ def db_migrate() -> None:
 @db_app.command("seed")
 def db_seed() -> None:
     """Valida el contenido (sin raw/) y lo carga de forma idempotente (§6.4)."""
+    _run_check(skip_raw=True)
+    _seed()
+
+
+def _seed() -> None:
+    from sqlalchemy.exc import IntegrityError
     from sqlalchemy.orm import Session
 
     from app.content.errors import ContentError
@@ -226,7 +255,6 @@ def db_seed() -> None:
     from app.infra.db import get_engine
 
     settings = get_settings()
-    _run_check(skip_raw=True)
     try:
         with Session(get_engine()) as session:
             counts = seed_content(
@@ -239,6 +267,13 @@ def db_seed() -> None:
             session.commit()
     except ContentError as exc:
         typer.secho(str(exc), fg="red")
+        raise typer.Exit(code=1) from exc
+    except IntegrityError as exc:
+        typer.secho(
+            "La carga del contenido chocó con datos existentes en la base de datos "
+            f"({type(exc.orig).__name__}). Nada se guardó.",
+            fg="red",
+        )
         raise typer.Exit(code=1) from exc
     typer.secho(
         f"Contenido cargado: {counts.modules} módulos, {counts.nodes} nodos, "
@@ -295,6 +330,11 @@ def db_reset(
 @content_app.command("placeholders")
 def content_placeholders() -> None:
     """Genera los videos de relleno y el manifiesto (D6, D19)."""
+    with _content_errors():
+        _placeholders()
+
+
+def _placeholders() -> None:
     from app.content.csv_reader import read_signs_csv
     from app.content.placeholders import generate_placeholders
     from app.content.raw_files import scan_raw
@@ -314,7 +354,8 @@ def content_videos() -> None:
     from app.content.videos import process_videos
 
     settings = get_settings()
-    result = process_videos(settings.content_dir, settings.media_dir)
+    with _content_errors():
+        result = process_videos(settings.content_dir, settings.media_dir)
     typer.echo(
         f"Videos: {len(result.processed)} procesados, {len(result.unchanged)} sin cambios, "
         f"{len(result.removed)} archivos viejos borrados."
@@ -353,7 +394,7 @@ def content_all() -> None:
     content_placeholders()
     content_videos()
     _run_check(skip_raw=False)
-    db_seed()
+    _seed()
 
 
 @app.command("camera-assets")

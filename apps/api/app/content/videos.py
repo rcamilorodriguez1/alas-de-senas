@@ -15,6 +15,7 @@ from app.content.media import (
     Manifest,
     ManifestEntry,
     load_manifest,
+    manifest_exists,
     remove_orphans,
     save_manifest,
     store_media,
@@ -61,6 +62,7 @@ def process_videos(content_dir: Path, media_dir: Path) -> VideosResult:
     scan = scan_raw(content_dir / "videos" / "raw", slugs)
     result.errors.extend(scan.errors)
     result.warnings.extend(scan.warnings)
+    had_manifest = manifest_exists(media_dir)
     manifest = load_manifest(media_dir)
     for slug in sorted(scan.assets):
         asset = scan.assets[slug]
@@ -86,7 +88,8 @@ def process_videos(content_dir: Path, media_dir: Path) -> VideosResult:
                 f"{MAX_SECONDS} s."
             )
     save_manifest(media_dir, manifest)
-    result.removed = remove_orphans(media_dir, manifest)
+    if had_manifest:  # sin manifiesto previo no se sabe qué archivos son huérfanos
+        result.removed = remove_orphans(media_dir, manifest)
     _save_cache(content_dir, manifest)
     return result
 

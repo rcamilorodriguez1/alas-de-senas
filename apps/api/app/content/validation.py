@@ -108,6 +108,7 @@ def check_content(
     _check_labels(bundle.signs, labels_path or media_dir.parent / DEFAULT_LABELS, report)
     _check_conversations(bundle, published_nodes, report)
     _check_spelling(bundle, published_nodes, report)
+    _check_intro(bundle, report)
     if not report.errors:
         _check_generation(bundle, report)
     _check_manifest(bundle, media_dir, report)
@@ -244,7 +245,13 @@ def _check_conversations(
 ) -> None:
     slugs = {row.slug for row in bundle.signs}
     taught = _taught_before(bundle.signs, published_nodes)
+    known_nodes = {node.id for record in bundle.modules for node in record.spec.nodes}
     for node_id, value in bundle.conversations.items():
+        if node_id not in known_nodes:
+            report.errors.append(
+                f'conversations.yaml: el nodo "{node_id}" no existe en curriculum.json.'
+            )
+            continue
         if node_id not in taught:
             continue
         previous, upto = taught[node_id]
@@ -319,6 +326,14 @@ def _check_spelling(
             )
 
 
+def _check_intro(bundle: ContentBundle, report: Report) -> None:
+    slugs = {row.slug for row in bundle.signs}
+    for where, values in (("cards", bundle.intro.cards), ("quiz", bundle.intro.quiz)):
+        for slug in values:
+            if slug not in slugs:
+                report.errors.append(f"intro.json ({where}): «{slug}» no existe en signs.csv.")
+
+
 def _check_generation(bundle: ContentBundle, report: Report) -> None:
     try:
         content = generate_content(
@@ -378,7 +393,7 @@ def _check_manifest(bundle: ContentBundle, media_dir: Path, report: Report) -> N
             )
         if entry.source == "images" and not row.how_to:
             report.warnings.append(
-                f"⚠ IMPORTANTE: «{row.slug}» se muestra con imágenes y no tiene «cómo se hace»: "
+                f"IMPORTANTE: «{row.slug}» se muestra con imágenes y no tiene «cómo se hace»: "
                 "sin movimiento visible, la descripción escrita es la que lo explica."
             )
     report.media_by_module = {mid: (real, fake) for mid, (real, fake) in counts.items()}

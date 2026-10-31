@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import bcrypt
-from sqlalchemy import Table, delete, func, select
+from sqlalchemy import Table, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -101,6 +101,11 @@ def seed_content(
         for sign_id in lesson.sign_ids
     }
 
+    # Los UNIQUE de `order` se revisan fila por fila: si el equipo reordena módulos o nodos,
+    # el upsert chocaría con el valor viejo de otra fila. Se mueven a negativos primero.
+    session.execute(update(Module).values(order=-Module.order).where(Module.order > 0))
+    session.execute(update(Node).values(order=-Node.order).where(Node.order > 0))
+    session.execute(update(Category).values(order=-Category.order).where(Category.order > 0))
     _upsert(
         session,
         Category,
@@ -234,17 +239,31 @@ def _upsert(session: Session, model: type[Base], rows: Sequence[Mapping[str, obj
 
 
 def _upsert_admin(session: Session, email: str, password: str) -> None:
+    """Crea el administrador o actualiza su contraseña. Nunca asciende una cuenta existente:
+    si alguien se registró con ADMIN_EMAIL, sería una escalada de privilegios (§11)."""
     normalized = email.strip().lower()
-    password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(BCRYPT_ROUNDS))
-    statement = insert(User).values(
-        name="Administrador",
-        email=normalized,
-        password_hash=password_hash.decode("utf-8"),
-        role=Role.ADMIN,
+    password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(BCRYPT_ROUNDS)).decode(
+        "utf-8"
     )
-    session.execute(
-        statement.on_conflict_do_update(index_elements=["email"], set_={"role": Role.ADMIN})
-    )
+    existing = session.execute(
+        select(User).where(User.email == normalized).with_for_update()
+    ).scalar_one_or_none()
+    if existing is None:
+        session.add(
+            User(
+                name="Administrador",
+                email=normalized,
+                password_hash=password_hash,
+                role=Role.ADMIN,
+            )
+        )
+        return
+    if existing.role is not Role.ADMIN:
+        raise ContentError(
+            f"Ya existe un usuario con el correo {normalized} y no es administrador. "
+            "Cambia ADMIN_EMAIL; por seguridad, el seed no le da permisos de administrador."
+        )
+    existing.password_hash = password_hash
 
 
 def _count(session: Session, model: type[Base]) -> int:

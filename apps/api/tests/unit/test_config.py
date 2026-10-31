@@ -87,6 +87,7 @@ def test_variables_de_entorno_sobrescriben_los_valores(monkeypatch: pytest.Monke
     monkeypatch.setenv("HEARTS_ENABLED", "false")
     monkeypatch.setenv("APP_TIMEZONE", "America/Bogota")
     monkeypatch.setenv("ADMIN_EMAIL", "admin@alasdesenas.co")
+    monkeypatch.setenv("ADMIN_PASSWORD", "Clave-Segura-1")  # van juntos (revisión Grupo 2)
 
     settings = Settings(_env_file=None)
 

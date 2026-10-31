@@ -14,6 +14,8 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 
 DEV_JWT_SECRET = "secreto-solo-para-desarrollo-local-no-usar-en-produccion"  # noqa: S105 — valor público solo para desarrollo; producción lo rechaza
 MIN_JWT_SECRET_LENGTH = 32
+MIN_PASSWORD_BYTES = 8
+MAX_PASSWORD_BYTES = 72  # límite de bcrypt (§11, B27)
 
 
 class Settings(BaseSettings):
@@ -61,6 +63,19 @@ class Settings(BaseSettings):
     @classmethod
     def _absolute_from_repo_root(cls, value: Path) -> Path:
         return value if value.is_absolute() else (REPO_ROOT / value).resolve()
+
+    @model_validator(mode="after")
+    def _check_admin(self) -> Self:
+        if (self.admin_email is None) != (self.admin_password is None):
+            raise ValueError("ADMIN_EMAIL y ADMIN_PASSWORD van juntos: define ambos o ninguno.")
+        if self.admin_password is not None:
+            size = len(self.admin_password.encode("utf-8"))
+            if not MIN_PASSWORD_BYTES <= size <= MAX_PASSWORD_BYTES:
+                raise ValueError(
+                    f"ADMIN_PASSWORD debe tener entre {MIN_PASSWORD_BYTES} y "
+                    f"{MAX_PASSWORD_BYTES} bytes (la ñ y las tildes ocupan 2)."
+                )
+        return self
 
     @model_validator(mode="after")
     def _check_production(self) -> Self:
