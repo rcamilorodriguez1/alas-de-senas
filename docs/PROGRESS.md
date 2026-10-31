@@ -80,3 +80,5 @@ Para retomar (en este orden):
   - 3.3 `alas gen-api`; `src/lib/api.ts` (token en memoria con Zustand, *single-flight* ante 401, `volver=`), arranque con refresh y pantalla de carga, guardas `RequireAuth`/`GuestOnly`.
   - 3.4 `/ingresar` y `/registro` (React Hook Form + Zod, errores por campo del servidor), `/aprender` provisional con «Cerrar sesión».
   - Vitest: refresh único con 3 peticiones simultáneas (B22), guardas, formularios con errores del servidor.
+- Hecho: 3.1–3.4. 91 pruebas de API (registro, login, rotación, logout, límites, /me, tiempos con FakeClock) y 87 de Vitest (store en memoria, refresh single-flight con 3 peticiones a la vez, arranque sin parpadeo, guardas, formularios con errores por campo del servidor). `alas check` en verde (1191 pruebas Python). Flujo real comprobado por el proxy de Vite con curl: registro → /me → refresh → logout → refresh revocado (401). Decisiones: D-010.
+- Nota honesta: los escritores de pruebas trabajaron en paralelo con la implementación (mismo contrato), así que no se vieron fallar antes; el de Vitest se cortó por el límite de uso, pero sus 7 archivos quedaron completos y pasan.

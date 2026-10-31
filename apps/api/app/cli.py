@@ -183,7 +183,15 @@ def _openapi_schema() -> str:
 
 def _generate_types(openapi_path: Path, output: Path) -> None:
     code = _run(
-        [_executable("npx"), "openapi-typescript", str(openapi_path), "-o", str(output)],
+        [
+            _executable("npx"),
+            "openapi-typescript",
+            str(openapi_path),
+            # Campos con valor por defecto = opcionales al enviar (p. ej. introCompleted).
+            "--default-non-nullable=false",
+            "-o",
+            str(output),
+        ],
         WEB_DIR,
     )
     if code != 0:

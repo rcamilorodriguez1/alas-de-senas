@@ -177,7 +177,7 @@ export interface components {
              * Introcompleted
              * @default false
              */
-            introCompleted: boolean;
+            introCompleted?: boolean;
         };
         /** UserOut */
         UserOut: {

@@ -100,3 +100,13 @@
   9. **Administrador:** el seed nunca asciende una cuenta existente (si `ADMIN_EMAIL` pertenece a un estudiante, falla con un mensaje claro); si ya es ADMIN, la contraseña del `.env` reemplaza la anterior. `ADMIN_EMAIL` y `ADMIN_PASSWORD` van juntos y la contraseña debe tener 8–72 bytes UTF-8.
   10. **Manifiesto:** `video`/`poster` deben cumplir `^/media/v/<16 hex>.mp4$` y `^/media/p/<16 hex>.jpg$` (sin rutas fuera de `media/`). Si `manifest.json` no existía al empezar, no se borran «huérfanos» (podrían ser videos aún sin commit).
   11. **Reordenar módulos o nodos** no rompe el seed: los `order` existentes se mueven a negativos antes del upsert.
+
+## D-010 · Detalles de la autenticación (Grupo 3) · 31/10/2026
+- Decisiones:
+  1. **Límites de peticiones con `limits`** (la librería sobre la que está construido slowapi), llamados desde el router y desde `current_user`: el límite de login necesita el correo del cuerpo, que el decorador de slowapi no ve. Almacenamiento en memoria (un solo proceso en Render); `reset_rate_limits()` para las pruebas.
+  2. **Correo validado con una expresión simple** (`x@y.z`) en vez de `email-validator`, para no agregar dependencias (§0.1 regla 5).
+  3. **Errores de validación personalizados:** los `ValueError` de los validadores propios (contraseña de 8–72 bytes, política de datos, correo) llegan tal cual a `fields`.
+  4. **Tipos generados** con `openapi-typescript --default-non-nullable=false`: los campos con valor por defecto (p. ej. `introCompleted`) son opcionales al enviar.
+  5. **`refreshSession` single-flight** sirve también para el arranque: el doble montaje de StrictMode comparte la petición (sin estado global aparte).
+  6. **429 en el login** siempre muestra «Demasiados intentos, espera un minuto» (R2.5), aunque el servidor envíe otro texto.
+  7. **`/`** lleva a `/aprender` con sesión y a `/ingresar` sin ella hasta que exista `/bienvenida` (Grupo 9). `/aprender` es provisional hasta el Grupo 4.

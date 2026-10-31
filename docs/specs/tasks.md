@@ -55,8 +55,8 @@
 
 - [x] **3.1** `AuthService` + router: registro (correo normalizado, bcrypt, 8–72 bytes, aceptación de datos), login (hash ficticio si el correo no existe), refresh rotativo con SHA-256, logout, `GET/PATCH /me`; slowapi: login 5/min por IP + correo, registro 10/min por IP, rutas autenticadas por usuario. _R2_
 - [x] **3.2** Pruebas de API: correo duplicado, credenciales inválidas, contraseña de 73 bytes, refresh rotado, refresh revocado tras logout, límite de intentos. _R2.3–2.7_
-- [ ] **3.3** `alas gen-api` + cliente HTTP tipado en `apps/web/src/lib/api.ts` con token en memoria y renovación *single-flight*; arranque con `refresh` y pantalla de carga; guardas de ruta. _R2.6, R10.4_
-- [ ] **3.4** Páginas `/ingresar` y `/registro` (React Hook Form + Zod en el cliente) con mensajes en español, mostrando también los errores por campo del servidor. _R2.1_
+- [x] **3.3** `alas gen-api` + cliente HTTP tipado en `apps/web/src/lib/api.ts` con token en memoria y renovación *single-flight*; arranque con `refresh` y pantalla de carga; guardas de ruta. _R2.6, R10.4_
+- [x] **3.4** Páginas `/ingresar` y `/registro` (React Hook Form + Zod en el cliente) con mensajes en español, mostrando también los errores por campo del servidor. _R2.1_
   **Verificar:** registrarse → `/aprender`; recargar mantiene la sesión; cerrar sesión obliga a volver a ingresar.
 
 ## Grupo 4 — Ruta de aprendizaje
