@@ -110,3 +110,8 @@
   5. **`refreshSession` single-flight** sirve también para el arranque: el doble montaje de StrictMode comparte la petición (sin estado global aparte).
   6. **429 en el login** siempre muestra «Demasiados intentos, espera un minuto» (R2.5), aunque el servidor envíe otro texto.
   7. **`/`** lleva a `/aprender` con sesión y a `/ingresar` sin ella hasta que exista `/bienvenida` (Grupo 9). `/aprender` es provisional hasta el Grupo 4.
+- Ajustes tras la revisión del Grupo 3 (D-010, continuación):
+  8. **Login sin truncar:** una contraseña de más de 72 bytes se compara contra el hash ficticio y se rechaza (antes «contraseña + cualquier cosa» abría la cuenta).
+  9. **La renovación solo cierra la sesión ante 401/403;** un 5xx o un corte de red no sacan al usuario de una lección (al arrancar, sí pasa a anónimo). Un 401 tardío con el token ya renovado reintenta sin volver a rotar.
+  10. **`volver`** solo acepta rutas del mismo origen (sin `\`, caracteres de control ni las pantallas de ingreso). Un refresh fallido borra la cookie `rt`. La caché de TanStack Query se vacía al perder la sesión.
+  11. **Pendientes conscientes:** dos pestañas que recargan a la vez pueden rotar el token al mismo tiempo y la segunda quedar en `/ingresar` (el `FOR UPDATE` evita tokens dobles; coordinar pestañas o dar un margen de gracia queda como mejora). No se revoca toda la familia de tokens al detectar reutilización (§11 no lo exige). **Grupo 11:** arrancar uvicorn con `--proxy-headers --forwarded-allow-ips=<IP del proxy de Render>` (nunca `*`) para que los límites usen la IP real.

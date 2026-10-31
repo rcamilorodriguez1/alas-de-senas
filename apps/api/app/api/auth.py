@@ -8,6 +8,7 @@ from fastapi import APIRouter, Cookie, Request, Response, status
 
 from app.api.deps import AuthServiceDep, CurrentUser, DbSession, client_ip
 from app.core import rate_limit
+from app.core.errors import AppError, error_response
 from app.schemas.auth import AuthOut, LoginIn, MeUpdateIn, RegisterIn, UserOut
 from app.services.auth_service import AuthResult
 
@@ -57,8 +58,14 @@ def login(
 @router.post("/auth/refresh", response_model=AuthOut)
 def refresh(
     response: Response, service: AuthServiceDep, db: DbSession, rt: RefreshCookie = None
-) -> AuthOut:
-    result = service.refresh(rt)
+) -> AuthOut | Response:
+    try:
+        result = service.refresh(rt)
+    except AppError as exc:
+        # Cookie inválida o vencida: se borra para que el navegador no la reenvíe en cada carga.
+        failed = error_response(exc.status_code, exc.code, exc.message, exc.extra)
+        _delete_cookie(failed, service)
+        return failed
     db.commit()
     return _respond(result, response, service)
 
@@ -70,6 +77,11 @@ def logout(
     service.logout(rt)
     db.commit()
     response.status_code = status.HTTP_204_NO_CONTENT
+    _delete_cookie(response, service)
+    return response
+
+
+def _delete_cookie(response: Response, service: AuthServiceDep) -> None:
     response.delete_cookie(
         REFRESH_COOKIE,
         path=REFRESH_COOKIE_PATH,
@@ -77,7 +89,6 @@ def logout(
         samesite="lax",
         secure=service.settings.is_production,
     )
-    return response
 
 
 @router.get("/me", response_model=UserOut)

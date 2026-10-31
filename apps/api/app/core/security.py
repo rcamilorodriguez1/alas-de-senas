@@ -34,11 +34,13 @@ def verify_password(password: str, password_hash: str | None) -> bool:
     """Compara siempre (contra el hash ficticio si no hay usuario) para no revelar por tiempo
     qué correos existen."""
     candidate = password.encode("utf-8")
-    if len(candidate) > MAX_PASSWORD_BYTES:
-        candidate = candidate[:MAX_PASSWORD_BYTES]  # bcrypt ≥ 5 lanza con más de 72 bytes
-    target = password_hash.encode("utf-8") if password_hash else _DUMMY_HASH
-    matches = bcrypt.checkpw(candidate, target)
-    return matches and password_hash is not None
+    too_long = len(candidate) > MAX_PASSWORD_BYTES
+    if too_long or not password_hash:
+        # Ninguna contraseña registrada pasa de 72 bytes: se compara contra el hash ficticio
+        # (mismo tiempo) y se rechaza. Truncar dejaría entrar con «contraseña + cualquier cosa».
+        bcrypt.checkpw(candidate[:MAX_PASSWORD_BYTES], _DUMMY_HASH)
+        return False
+    return bcrypt.checkpw(candidate, password_hash.encode("utf-8"))
 
 
 @dataclass(frozen=True, slots=True)

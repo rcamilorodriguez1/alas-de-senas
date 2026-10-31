@@ -19,7 +19,9 @@ interface RequestOptions {
   auth?: boolean;
 }
 
-let refreshInFlight: Promise<boolean> | null = null;
+type RefreshOutcome = "ok" | "rejected" | "error";
+
+let refreshInFlight: Promise<RefreshOutcome> | null = null;
 let onSessionExpired: (volver: string) => void = () => undefined;
 
 /** Qué hacer cuando la sesión no se puede renovar (la app redirige a /ingresar?volver=…). */
@@ -59,20 +61,35 @@ async function parse<T>(response: Response): Promise<T> {
  * Renueva la sesión con la cookie `rt`. Single-flight: las peticiones que reciben 401 a la
  * vez comparten una sola renovación (B22); si no, cada una rotaría el token y cerraría la sesión.
  */
-export function refreshSession(): Promise<boolean> {
-  refreshInFlight ??= (async () => {
+export async function refreshSession(): Promise<boolean> {
+  return (await renew()) === "ok";
+}
+
+/**
+ * Solo un 401/403 significa «la sesión terminó». Un 5xx o un corte de red no cierran la sesión
+ * a mitad de una lección; únicamente al arrancar (sin sesión todavía) se pasa a anónimo.
+ */
+function renew(): Promise<RefreshOutcome> {
+  refreshInFlight ??= (async (): Promise<RefreshOutcome> => {
+    const store = useSessionStore.getState();
     try {
       const response = await send("POST", "/auth/refresh", undefined, null);
-      if (!response.ok) {
-        useSessionStore.getState().clearSession();
-        return false;
+      if (response.ok) {
+        const data = (await response.json()) as AuthOut;
+        useSessionStore.getState().setSession(data.accessToken, data.user);
+        return "ok";
       }
-      const data = (await response.json()) as AuthOut;
-      useSessionStore.getState().setSession(data.accessToken, data.user);
-      return true;
+      if (response.status === 401 || response.status === 403) {
+        useSessionStore.getState().clearSession();
+        return "rejected";
+      }
+      if (store.status === "loading") useSessionStore.getState().clearSession();
+      return "error";
     } catch {
-      useSessionStore.getState().clearSession();
-      return false;
+      if (useSessionStore.getState().status === "loading") {
+        useSessionStore.getState().clearSession();
+      }
+      return "error";
     } finally {
       refreshInFlight = null;
     }
@@ -90,9 +107,14 @@ export async function apiRequest<T>(
   const response = await send(method, path, body, token);
   if (response.status !== 401 || !auth) return parse<T>(response);
 
-  if (await refreshSession()) {
+  // 401 tardío: otra petición ya renovó el token mientras esta iba; se reintenta sin rotar.
+  const current = useSessionStore.getState().accessToken;
+  const outcome = current !== null && current !== token ? "ok" : await renew();
+  if (outcome === "ok") {
     const retry = await send(method, path, body, useSessionStore.getState().accessToken);
     if (retry.status !== 401) return parse<T>(retry);
+  } else if (outcome === "error") {
+    throw new ApiError(503, "NETWORK_ERROR", "No pudimos conectarnos. Intenta de nuevo.");
   }
   useSessionStore.getState().clearSession();
   onSessionExpired(window.location.pathname + window.location.search);

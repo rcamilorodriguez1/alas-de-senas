@@ -71,7 +71,10 @@ def truncate_user_tables() -> Iterator[None]:
     preparer = get_engine().dialect.identifier_preparer
     quoted = ", ".join(preparer.quote(name) for name in USER_TABLES)
     with get_engine().begin() as conn:
-        conn.execute(text("TRUNCATE TABLE " + quoted + " RESTART IDENTITY CASCADE"))
+        # Todas las tablas de usuario dependen de `users` (FK): si está vacía no hay nada que
+        # limpiar y se evita un TRUNCATE lento por prueba (Docker en Windows).
+        if conn.execute(text("SELECT EXISTS (SELECT 1 FROM users)")).scalar_one():
+            conn.execute(text("TRUNCATE TABLE " + quoted + " RESTART IDENTITY CASCADE"))
 
 
 @pytest.fixture

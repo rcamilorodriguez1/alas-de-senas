@@ -827,3 +827,76 @@ def test_patch_me_sin_token_da_401(client: TestClient) -> None:
     register(client)
 
     assert_unauthorized(client.patch("/api/me", json={"name": "X"}))
+
+
+# ---------- Revisión del Grupo 3 ---------------------------------------------------------------
+
+
+def test_login_no_acepta_una_contrasena_que_solo_empieza_igual(client: TestClient) -> None:
+    """bcrypt solo mira 72 bytes: «a»*72 + «x» no debe abrir la cuenta de «a»*72."""
+    body = {
+        "name": "Ana",
+        "email": "prefijo@alasdesenas.test",
+        "password": "a" * 72,
+        "dailyGoalMinutes": 10,
+        "acceptedDataPolicy": True,
+    }
+    assert client.post("/api/auth/register", json=body).status_code == 201
+    client.cookies.clear()
+    wrong = client.post(
+        "/api/auth/login", json={"email": body["email"], "password": "a" * 72 + "x"}
+    )
+    assert wrong.status_code == 401
+    assert wrong.json()["code"] == "INVALID_CREDENTIALS"
+
+
+def test_patch_me_no_acepta_un_nombre_en_blanco(client: TestClient) -> None:
+    body = {
+        "name": "Ana",
+        "email": "blanco@alasdesenas.test",
+        "password": "Clave-Segura-1",
+        "dailyGoalMinutes": 10,
+        "acceptedDataPolicy": True,
+    }
+    token = client.post("/api/auth/register", json=body).json()["accessToken"]
+    response = client.patch(
+        "/api/me", json={"name": "   "}, headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 422
+    assert "name" in response.json()["fields"]
+
+
+def test_refresh_fallido_borra_la_cookie(client: TestClient) -> None:
+    client.cookies.clear()
+    response = client.post("/api/auth/refresh", headers={"Cookie": "rt=inventada"})
+    assert response.status_code == 401
+    set_cookie = response.headers.get("set-cookie", "")
+    assert "rt=" in set_cookie
+    assert "Max-Age=0" in set_cookie or "expires=" in set_cookie.lower()
+
+
+def test_cookie_secure_en_produccion(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.core.config import Settings, get_settings
+    from app.main import create_app
+
+    production = Settings(
+        _env_file=None,
+        app_env="production",
+        database_url=get_settings().database_url,
+        jwt_secret="secreto-de-produccion-con-mas-de-32-caracteres",
+    )
+    app = create_app(production)
+    app.dependency_overrides[get_settings] = lambda: production
+    client = TestClient(app, base_url="https://testserver")
+    body = {
+        "name": "Ana",
+        "email": "seguro@alasdesenas.test",
+        "password": "Clave-Segura-1",
+        "dailyGoalMinutes": 10,
+        "acceptedDataPolicy": True,
+    }
+    response = client.post("/api/auth/register", json=body)
+    assert response.status_code == 201
+    assert "Secure" in response.headers["set-cookie"]
+    logout = client.post("/api/auth/logout")
+    assert "Secure" in logout.headers["set-cookie"]

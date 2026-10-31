@@ -84,3 +84,13 @@ class MeUpdateIn(ApiModel):
     name: str | None = Field(default=None, min_length=1, max_length=80)
     daily_goal_minutes: DailyGoal | None = None
     dominant_hand: DominantHand | None = None
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def _strip_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("Escribe tu nombre.")
+        return value
