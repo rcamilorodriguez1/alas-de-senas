@@ -57,3 +57,18 @@
 - Contexto / problema: el equipo quiere ver la aplicación funcionando antes de subir el código a GitHub.
 - Decisión: la parte de la tarea 0.8 que exige subir el repositorio y ver el CI en verde queda **pospuesta**. El trabajo continúa solo con git local; la parte local de 0.8 (fixture de migraciones, lockfiles) ya está hecha.
 - Consecuencias: R10.8 (CI automática) no se verifica hasta que se suba el repositorio; antes de la entrega hay que hacer `git push` y confirmar el job «alas check».
+
+## D-007 · Reglas del dominio que la especificación no fija (Grupo 1) · 31/10/2026
+- Contexto / problema: §6.7, §7 y §8.5 dejan abiertos detalles necesarios para que el generador y las políticas sean deterministas y probables.
+- Decisiones:
+  1. **Actividad** de cada tipo: OBSERVE 1 · VIDEO_TO_MEANING, MEANING_TO_VIDEO y MEMORY_MATCH 2 · PRODUCE 3 · CONVERSATION y SPELLING 4.
+  2. **Reto final (L4):** las señas del nodo se barajan con el rng de la lección y se recorren en ciclo; las preguntas pares son VIDEO_TO_MEANING y las impares MEANING_TO_VIDEO.
+  3. **Conversaciones:** L2 y L3 usan la primera conversación de 2 turnos con señas ya enseñadas; L4 la primera de 3 turnos. Opciones de cada turno = respuesta + distractores del YAML.
+  4. **Deletreo:** L2 usa la primera palabra válida; L3 y L4 prefieren una no usada antes en el nodo. Las palabras deben estar en mayúsculas (una en minúsculas es un error de contenido).
+  5. **Distractores:** nivel 3 «misma categoría» = señas de otros nodos publicados de la misma categoría; dentro de cada nivel el orden lo decide el rng. Lógica compartida con el repaso (`domain/content/distractors.py`).
+  6. **MEMORY_MATCH:** señas del nodo enseñadas hasta esa lección; si son más de 6, 6 elegidas con el rng.
+  7. **Repaso:** distractores solo de señas vistas (mismo nodo → misma categoría → resto); permite 2 a 4 opciones; solo si quedan menos de 2 se completa con señas no vistas.
+  8. **`cameraLabel`** solo en letras `static` de nodos ALPHABET (las palabras no tienen modelo de cámara todavía).
+  9. **Módulo publicado:** LOCKED si su primer nodo está bloqueado, COMPLETED si todos sus nodos están COMPLETED o GOLDEN, si no IN_PROGRESS.
+  10. **Vidas:** `gain_one` conserva el avance de la recarga; con 0 vidas `lose_one` devuelve el estado materializado.
+- Consecuencias: el contenido de §6.5 (conversaciones y palabras) debe cumplir estas reglas; `alas content check` (Grupo 2) las verificará con los mismos generadores.

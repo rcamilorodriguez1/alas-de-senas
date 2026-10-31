@@ -25,18 +25,18 @@
 
 ## Grupo 1 — Dominio en Python (pruebas primero)
 
-- [ ] **1.1** `domain/dates.py`: `Clock`, `to_local_day`, `add_days`, `diff_days` (+ `tzdata`); pruebas de medianoche en Bogotá, cambio de año y `datetime` sin zona horaria. _R5.5_
-- [ ] **1.2** `domain/text.py`: `normalize_text` y `levenshtein` con pruebas (`GRACÍAS`, `¿Cómo estás?`, `Año`, `BAÑO`). _R7.1_
-- [ ] **1.3** `round_half_up` y `score_session` con pruebas de umbral (3/5, 7/10, 6/10, 2/3, 1/8, total 0). _R3.4_
-- [ ] **1.4** `RewardPolicy` (XP y néctar) con pruebas. _R5.1–5.4_
-- [ ] **1.5** `compute_progress` con pruebas (usuario nuevo, cadena, cambio de módulo, módulo no publicado, contenido agregado después). _R3.2–3.7_
-- [ ] **1.6** `StreakPolicy.apply_activity` y `display` con pruebas (incluida «lección y repaso el mismo día suben 1»). _R5.5–5.8_
-- [ ] **1.7** `ReviewScheduler` con pruebas. _R6.4–6.5_
-- [ ] **1.8** Modelos Pydantic discriminados de `payload`/`answer`; `ExerciseEvaluator` (clase abstracta), **7** evaluadores (incluido `SPELLING`) y registro; opciones con tokens opacos recibiendo una función `tokenize` inyectada (D20); prueba de que `to_public()` nunca incluye `correctId`, `signId` ni slugs en las opciones. _R4.4–4.7_
-- [ ] **1.9** `AchievementRule` (9 logros) y `evaluate_achievements`. _R5.10_
-- [ ] **1.10** `generate_exercises` determinista (§6.7: L1 con repaso `MEANING_TO_VIDEO`, L3 con `MEANING_TO_VIDEO`, fórmula de preguntas de L4, `SPELLING` en ALPHABET, reparto ALPHABET por posición, `cameraLabel` solo en letras `static`, nada para módulos no publicados, ≥ 4 ejercicios con puntaje); separación de palabras en letras por coincidencia más larga (con y sin `letra-ll`); prueba que ejecuta el generador en dos procesos distintos y compara resultados. _R9.8, R9.9, R9.11, R4.10c_
-- [ ] **1.11** `HeartsPolicy` (`current`, `lose_one`, `gain_one`, `refill`) con los casos de §7.10. _R5.13–5.16_
-- [ ] **1.12** `build_review_items` (repaso: alterna los dos tipos, distractores solo de señas vistas, determinista). _R6.7_
+- [x] **1.1** `domain/dates.py`: `Clock`, `to_local_day`, `add_days`, `diff_days` (+ `tzdata`); pruebas de medianoche en Bogotá, cambio de año y `datetime` sin zona horaria. _R5.5_
+- [x] **1.2** `domain/text.py`: `normalize_text` y `levenshtein` con pruebas (`GRACÍAS`, `¿Cómo estás?`, `Año`, `BAÑO`). _R7.1_
+- [x] **1.3** `round_half_up` y `score_session` con pruebas de umbral (3/5, 7/10, 6/10, 2/3, 1/8, total 0). _R3.4_
+- [x] **1.4** `RewardPolicy` (XP y néctar) con pruebas. _R5.1–5.4_
+- [x] **1.5** `compute_progress` con pruebas (usuario nuevo, cadena, cambio de módulo, módulo no publicado, contenido agregado después). _R3.2–3.7_
+- [x] **1.6** `StreakPolicy.apply_activity` y `display` con pruebas (incluida «lección y repaso el mismo día suben 1»). _R5.5–5.8_
+- [x] **1.7** `ReviewScheduler` con pruebas. _R6.4–6.5_
+- [x] **1.8** Modelos Pydantic discriminados de `payload`/`answer`; `ExerciseEvaluator` (clase abstracta), **7** evaluadores (incluido `SPELLING`) y registro; opciones con tokens opacos recibiendo una función `tokenize` inyectada (D20); prueba de que `to_public()` nunca incluye `correctId`, `signId` ni slugs en las opciones. _R4.4–4.7_
+- [x] **1.9** `AchievementRule` (9 logros) y `evaluate_achievements`. _R5.10_
+- [x] **1.10** `generate_exercises` determinista (§6.7: L1 con repaso `MEANING_TO_VIDEO`, L3 con `MEANING_TO_VIDEO`, fórmula de preguntas de L4, `SPELLING` en ALPHABET, reparto ALPHABET por posición, `cameraLabel` solo en letras `static`, nada para módulos no publicados, ≥ 4 ejercicios con puntaje); separación de palabras en letras por coincidencia más larga (con y sin `letra-ll`); prueba que ejecuta el generador en dos procesos distintos y compara resultados. _R9.8, R9.9, R9.11, R4.10c_
+- [x] **1.11** `HeartsPolicy` (`current`, `lose_one`, `gain_one`, `refill`) con los casos de §7.10. _R5.13–5.16_
+- [x] **1.12** `build_review_items` (repaso: alterna los dos tipos, distractores solo de señas vistas, determinista). _R6.7_
   **Verificar:** cobertura de `app/domain` ≥ 95 %.
 
 ## Grupo 2 — Contenido y base de datos

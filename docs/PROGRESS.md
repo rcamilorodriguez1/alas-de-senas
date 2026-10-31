@@ -34,3 +34,24 @@
   - Grupo 2: con la primera migración, agregar una prueba que aplique todas las migraciones sobre una BD temporal vacía y luego `alembic check` (B47); el harness no permite bajar todas las migraciones. Llenar `USER_TABLES` en `tests/api/conftest.py`.
   - `alas dev` en Windows dejaba procesos huérfanos (puertos 8000/5173 ocupados): corregido, ahora detiene el árbol completo con `taskkill /T` (probado con el puerto 5173 ocupado).
   - Aviso de Starlette (httpx en `TestClient`): no afecta; revisar al actualizar dependencias.
+
+## Grupo 1 — Dominio en Python (pruebas primero)
+- Plan:
+  - Esqueletos (tipos y firmas, sin lógica) en `app/domain`: `enums.py`, `dates.py`, `text.py`, `policies/{scoring,rewards,progress,streak,review,achievements,hearts}.py`, `exercises/{models,evaluators}.py`, `content/{models,generator,review_builder}.py`.
+  - Pruebas en `tests/unit/domain/` con todos los casos obligatorios de §7 (escritor-pruebas), luego la implementación tarea por tarea (1.1 → 1.12).
+  - Prueba del generador en dos procesos distintos (determinismo sin `hash()`), prueba de que `to_public()` no filtra `correctId`/`signId`/slugs.
+  - Meta: cobertura de `app/domain` ≥ 95 %.
+- Hecho: 1.1–1.12. 653 pruebas de dominio (dos escritores de pruebas en paralelo); cobertura de `app/domain` 99,45 %; `alas check` en verde (783 pruebas). Decisiones: D-007.
+- Revisión independiente: **pendiente**. `verificador-fase` y `revisor-codigo` se cortaron por el límite de uso (31/10/2026, reinicio 2:10 a. m.) antes de reportar. Hay que relanzarlos antes de dar el grupo por cerrado.
+- Verificación manual: no aplica (el grupo no tiene interfaz); la línea «Verificar» es la cobertura ≥ 95 % → ✅ 99,45 %.
+
+## ⏸ Punto de guardado — 31/10/2026
+Estado al pausar (todo confirmado en git, `alas check` en verde, 783 pruebas):
+- Grupo 0 ✅ (0.8 pospuesta por D-006: sin GitHub por ahora).
+- Grupo 1 ✅ en código y pruebas; **falta** solo la revisión independiente.
+
+Para retomar (en este orden):
+1. Abrir Docker Desktop y ejecutar `uv run alas db up` (el contenedor no arranca solo).
+2. `uv run alas check` debe terminar en «✓ alas check en verde».
+3. Relanzar `verificador-fase` y `revisor-codigo` sobre el Grupo 1; corregir lo bloqueante y hacer commit `fix(grupo-1): …` si hace falta.
+4. Seguir con `/fase 2` (contenido y base de datos: `content/`, modelos SQLAlchemy, primera migración, `alas content …`, `alas db seed`). Pendientes anotados para el Grupo 2: prueba de migraciones sobre BD temporal vacía (B47) y llenar `USER_TABLES` en `tests/api/conftest.py`.
