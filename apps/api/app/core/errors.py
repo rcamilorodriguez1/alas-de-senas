@@ -95,8 +95,17 @@ def validation_fields(errors: Sequence[Mapping[str, object]]) -> dict[str, JsonV
         )
         name = _field_name(loc)
         error_type = str(error.get("type", ""))
-        fields.setdefault(name, FIELD_MESSAGES.get(error_type, DEFAULT_FIELD_MESSAGE))
+        fields.setdefault(name, _field_message(error_type, error.get("ctx")))
     return fields
+
+
+def _field_message(error_type: str, ctx: object) -> str:
+    # Los validadores propios lanzan ValueError con el mensaje en español: se usa tal cual.
+    if error_type == "value_error" and isinstance(ctx, Mapping):
+        custom = ctx.get("error")
+        if isinstance(custom, ValueError) and str(custom):
+            return str(custom)
+    return FIELD_MESSAGES.get(error_type, DEFAULT_FIELD_MESSAGE)
 
 
 async def _app_error_handler(_: Request, exc: Exception) -> JSONResponse:

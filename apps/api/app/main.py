@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from app.api import health
+from app.api import auth, health
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.core.security_headers import SecurityHeadersMiddleware
@@ -27,6 +27,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Se agrega al final para quedar por fuera: cubre también los 500 (UnhandledErrorMiddleware).
     app.add_middleware(SecurityHeadersMiddleware)
     app.include_router(health.router, prefix="/api")
+    app.include_router(auth.router, prefix="/api")
     return app
 
 

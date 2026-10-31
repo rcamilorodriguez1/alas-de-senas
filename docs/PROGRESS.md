@@ -72,3 +72,11 @@ Para retomar (en este orden):
   - **Pruebas de API:** `tests/api/test_seed.py` trunca las tablas de contenido; cuando haya pruebas de API que necesiten contenido (Grupo 4 en adelante), sembrar en una fixture de sesión y volver a sembrar tras `test_seed`.
   - **B54 / D20:** `apps/web/public/media/manifest.json` relaciona slug → video y se sirve como archivo público; con él se puede deducir la respuesta de VIDEO_TO_MEANING. Decidir en el Grupo 5/11 si no se sirve (el frontend no lo necesita: recibe las rutas de la API). Los videos de relleno muestran la palabra escrita por diseño (D6).
   - D-007.5 (distractores de «misma categoría» de nodos posteriores): confirmar con el equipo.
+
+## Grupo 3 — Autenticación
+- Plan:
+  - 3.1 `app/core/security.py` (bcrypt costo 12, hash ficticio, JWT HS256 15 min con `exp`/`sub`/`role`, refresh `token_urlsafe(32)` guardado como SHA-256), `app/core/rate_limit.py` (librería `limits` de slowapi: login 5/min por IP+correo, registro 10/min por IP, 240/min por usuario autenticado), `app/schemas/auth.py` (camelCase, `extra="forbid"`, 8–72 bytes, meta 5/10/15/20, aceptación obligatoria), `app/services/auth_service.py`, `app/api/auth.py` + `app/api/deps.py` (`current_user`), cookie `rt` httpOnly `path=/api/auth`.
+  - 3.2 `tests/api/test_auth.py`: duplicado, credenciales inválidas (mensaje genérico), 73 bytes, refresh rotado, refresh revocado tras logout, límite de intentos, `/me`, correo normalizado.
+  - 3.3 `alas gen-api`; `src/lib/api.ts` (token en memoria con Zustand, *single-flight* ante 401, `volver=`), arranque con refresh y pantalla de carga, guardas `RequireAuth`/`GuestOnly`.
+  - 3.4 `/ingresar` y `/registro` (React Hook Form + Zod, errores por campo del servidor), `/aprender` provisional con «Cerrar sesión».
+  - Vitest: refresh único con 3 peticiones simultáneas (B22), guardas, formularios con errores del servidor.
