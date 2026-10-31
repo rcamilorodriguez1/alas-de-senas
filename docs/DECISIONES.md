@@ -72,3 +72,4 @@
   9. **Módulo publicado:** LOCKED si su primer nodo está bloqueado, COMPLETED si todos sus nodos están COMPLETED o GOLDEN, si no IN_PROGRESS.
   10. **Vidas:** `gain_one` conserva el avance de la recarga; con 0 vidas `lose_one` devuelve el estado materializado.
 - Consecuencias: el contenido de §6.5 (conversaciones y palabras) debe cumplir estas reglas; `alas content check` (Grupo 2) las verificará con los mismos generadores.
+- Nota tras la verificación del Grupo 1: D-007.7 se aparta de §8.5 («solo señas vistas», `optionIds[4]`) en un caso límite: con menos de 2 señas vistas se completa con señas no vistas, y el repaso puede tener 2–3 opciones. En la práctica no ocurre (L1 enseña ≥ 2 señas); el servicio de repaso (Grupo 7) solo programa señas de lecciones completadas. D-007.5: el nivel «misma categoría» puede incluir señas de nodos posteriores (aún no enseñadas); pendiente de confirmar con el equipo.
