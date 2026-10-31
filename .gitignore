@@ -1,0 +1,30 @@
+# Entornos y dependencias
+.venv/
+ml/.venv/
+node_modules/
+__pycache__/
+*.pyc
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Configuración local y secretos
+.env
+apps/api/.env
+.claude/settings.local.json
+
+# Compilados
+apps/web/dist/
+openapi.json
+
+# Contenido pesado o local
+content/videos/raw/
+content/videos/.cache.json
+ml/data/
+ml/reports/
+
+# Sistema
+.DS_Store
+Thumbs.db

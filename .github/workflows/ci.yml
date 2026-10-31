@@ -1,0 +1,124 @@
+# Integración continua de Alas de Señas: ejecuta `alas check` (ruff, mypy, pytest, ESLint, tsc, Vitest,
+# tipos de la API) en cada push y pull request. Mientras no exista el código de la fase 0, solo avisa.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  calidad:
+    name: alas check
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: alas
+          POSTGRES_PASSWORD: alas
+          POSTGRES_DB: alas_test
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U alas -d alas_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      APP_ENV: development
+      DATABASE_URL: postgresql+psycopg://alas:alas@localhost:5433/alas_test
+      DATABASE_URL_TEST: postgresql+psycopg://alas:alas@localhost:5433/alas_test
+      JWT_SECRET: ci-secreto-solo-para-pruebas-de-32-caracteres-o-mas
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ¿Ya existe el código de la fase 0?
+        id: estado
+        run: |
+          if [ -f apps/api/pyproject.toml ] && [ -f apps/web/package-lock.json ] && [ -f uv.lock ]; then
+            echo "listo=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Aún no existe el código de la fase 0: CI no ejecuta pruebas todavía."
+          fi
+
+      - uses: astral-sh/setup-uv@v6
+        if: steps.estado.outputs.listo == 'true'
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@v4
+        if: steps.estado.outputs.listo == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Instalar dependencias
+        if: steps.estado.outputs.listo == 'true'
+        run: |
+          uv sync --frozen
+          npm ci --prefix apps/web
+
+      - name: Validar contenido (sin videos originales)
+        if: steps.estado.outputs.listo == 'true' && hashFiles('content/curriculum.json') != ''
+        run: uv run alas content check --skip-raw
+
+      - name: alas check
+        if: steps.estado.outputs.listo == 'true'
+        run: uv run alas check
+
+  e2e:
+    name: E2E (Playwright)
+    needs: calidad
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: alas
+          POSTGRES_PASSWORD: alas
+          POSTGRES_DB: alas_test
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U alas -d alas_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      APP_ENV: development
+      DATABASE_URL: postgresql+psycopg://alas:alas@localhost:5433/alas_test
+      DATABASE_URL_TEST: postgresql+psycopg://alas:alas@localhost:5433/alas_test
+      JWT_SECRET: ci-secreto-solo-para-pruebas-de-32-caracteres-o-mas
+    steps:
+      - uses: actions/checkout@v4
+      - name: ¿Ya existen las pruebas E2E?
+        id: estado
+        run: |
+          if [ -d apps/api/tests/e2e ] && [ -f uv.lock ]; then echo "listo=true" >> "$GITHUB_OUTPUT"; else echo "listo=false" >> "$GITHUB_OUTPUT"; fi
+      - uses: astral-sh/setup-uv@v6
+        if: steps.estado.outputs.listo == 'true'
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@v4
+        if: steps.estado.outputs.listo == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Instalar dependencias y navegadores
+        if: steps.estado.outputs.listo == 'true'
+        run: |
+          uv sync --frozen
+          npm ci --prefix apps/web
+          uv run playwright install --with-deps chromium firefox
+      - name: alas e2e
+        if: steps.estado.outputs.listo == 'true'
+        run: uv run alas e2e

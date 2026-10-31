@@ -1,0 +1,125 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run alas *)",
+      "Bash(uv run pytest *)",
+      "Bash(uv run ruff *)",
+      "Bash(uv run mypy *)",
+      "Bash(uv run alembic upgrade *)",
+      "Bash(uv run alembic revision *)",
+      "Bash(uv run alembic current)",
+      "Bash(uv run alembic history *)",
+      "Bash(uv run alembic check)",
+      "Bash(uv sync *)",
+      "Bash(npm run *)",
+      "Bash(npm ci)",
+      "Bash(npx openapi-typescript *)",
+      "Bash(docker compose up *)",
+      "Bash(docker compose ps *)",
+      "Bash(docker compose logs *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git switch *)"
+    ],
+    "ask": [
+      "Bash(uv add *)",
+      "Bash(uv remove *)",
+      "Bash(npm install *)",
+      "Bash(npm uninstall *)",
+      "Bash(uv run alembic downgrade *)",
+      "Bash(uv run alas db reset *)",
+      "Bash(docker compose down *)",
+      "Bash(git push *)",
+      "Bash(git checkout *)",
+      "Bash(git restore *)",
+      "Bash(git stash *)",
+      "Bash(rm *)",
+      "Edit(./.github/**)",
+      "Edit(./ml/pyproject.toml)",
+      "Bash(uv run alas db seed-demo --reset*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./apps/api/.env)",
+      "Edit(./.env)",
+      "Edit(./docs/especificacion.md)",
+      "Edit(./docs/anexo-camara-holistica.md)",
+      "Edit(./docs/mockups.md)",
+      "Edit(./docs/specs/requirements.md)",
+      "Edit(./docs/specs/design.md)",
+      "Edit(./content/videos/raw/**)",
+      "Edit(./.claude/**)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean *)",
+      "Bash(pip install *)",
+      "Bash(pip3 install *)",
+      "Edit(./ml/fixtures/**)",
+      "Edit(./docs/plantillas/**)",
+      "Edit(./docs/validacion-interprete.md)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-project python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session_start.py\"",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-project python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/guard_bash.py\"",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-project python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/guard_code.py\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-project python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/after_edit.py\"",
+            "timeout": 90
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-project python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/quality_gate.py\"",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  }
+}
