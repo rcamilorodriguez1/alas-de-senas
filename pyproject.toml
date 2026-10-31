@@ -1,0 +1,42 @@
+[tool.uv.workspace]
+members = ["apps/api"]
+exclude = ["ml"]          # ml/ es un proyecto aparte (Python 3.11 + TensorFlow)
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["ml"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF", "DTZ", "S"]   # DTZ: prohíbe datetimes sin zona horaria
+
+[tool.ruff.lint.per-file-ignores]
+"apps/api/tests/**" = ["S101", "S105", "S106"]          # assert y contraseñas de prueba
+"apps/api/app/content/**" = ["S603"]                     # subprocess con lista de argumentos (ffmpeg)
+"apps/api/app/cli.py" = ["S603", "S607"]                 # la CLI lanza uvicorn, npm y docker
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.mypy]
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[[tool.mypy.overrides]]
+module = ["slowapi.*", "imageio_ffmpeg.*"]   # sin tipos publicados; ampliar solo con justificación en DECISIONES.md
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["apps/api/tests"]
+addopts = "--strict-markers"
+markers = [
+    "e2e: pruebas de extremo a extremo con Playwright (no corren en `alas check`)",
+]
+
+[tool.coverage.run]
+branch = true

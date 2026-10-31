@@ -1,0 +1,76 @@
+"""Tarea 0.7 — CLI `alas` (Typer, §19.3). Solo se prueban comandos que no lanzan procesos."""
+
+from __future__ import annotations
+
+import pytest
+from typer.testing import CliRunner
+
+from app.cli import app
+
+runner = CliRunner()
+WIDE = {"COLUMNS": "200", "NO_COLOR": "1", "TERM": "dumb"}
+
+
+def _help(*args: str) -> str:
+    result = runner.invoke(app, [*args, "--help"], env=WIDE)
+    assert result.exit_code == 0, result.output
+    return result.output
+
+
+@pytest.mark.parametrize(
+    "command",
+    ["dev", "check", "gen-api", "db", "content", "camera-assets", "e2e", "start-prod"],
+)
+def test_help_lista_los_comandos_principales(command: str) -> None:
+    assert command in _help()
+
+
+@pytest.mark.parametrize("command", ["up", "migrate", "seed", "seed-demo", "reset"])
+def test_db_help_lista_sus_subcomandos(command: str) -> None:
+    assert command in _help("db")
+
+
+@pytest.mark.parametrize("command", ["placeholders", "videos", "check", "all"])
+def test_content_help_lista_sus_subcomandos(command: str) -> None:
+    assert command in _help("content")
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["db", "seed"],
+        ["db", "seed-demo"],
+        ["content", "placeholders"],
+        ["content", "videos"],
+        ["content", "check"],
+        ["content", "all"],
+        ["camera-assets"],
+        ["e2e"],
+        ["start-prod"],
+    ],
+    ids=lambda args: " ".join(args),
+)
+def test_comandos_sin_contenido_avisan_que_estan_pendientes(args: list[str]) -> None:
+    result = runner.invoke(app, args, env=WIDE)
+
+    assert result.exit_code == 0, result.output
+    assert "Pendiente de la fase" in result.output
+
+
+def test_comando_desconocido_falla() -> None:
+    result = runner.invoke(app, ["no-existe"], env=WIDE)
+    assert result.exit_code != 0
+
+
+def test_db_reset_se_niega_a_borrar_una_base_remota(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.core.config import get_settings
+
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://u:p@db.example.com:5432/alas")
+    get_settings.cache_clear()
+    try:
+        result = runner.invoke(app, ["db", "reset", "--yes"], env=WIDE)
+    finally:
+        get_settings.cache_clear()
+    assert result.exit_code == 1
+    assert "solo borra bases locales" in result.output

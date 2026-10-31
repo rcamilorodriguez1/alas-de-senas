@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-tomi-500: #16a34a;
+  --color-tomi-600: #15803d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

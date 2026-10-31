@@ -38,3 +38,17 @@
 - Decisión: D25 — `alas content videos` acepta `slug.jpg` (una imagen) o `slug__1.jpg`…`slug__4.jpg` (secuencia) y genera un clip (3 s fijo o 1,2 s por imagen con fundido). Prioridad video > imágenes > relleno. Prototipo verificado (EXIF, 4000×3000, medidas impares → 720p H.264).
 - Consecuencias: se pueden mezclar videos e imágenes y pasar a video después sin tocar código. Pedagógicamente, las letras estáticas y los números no pierden nada; las señas con movimiento se entienden peor y requieren `how_to` escrito. La cámara no se afecta (se entrena con muestras de la webcam). Las imágenes deben ser propias o con permiso escrito.
 - Secciones afectadas: §2 (D25), §5 (`media_source`), §6.4, §6.4.1 (nueva), §6.6, §14.7 (B90–B95), §18.1 (nueva); requirements R9.12–R9.13; design.md; tasks.md 2.6b y 5.3.
+
+## D-005 · Ajustes técnicos del Grupo 0 · 30/10/2026
+- Contexto / problema: detalles que la especificación no fija o que cambian con las versiones instaladas.
+- Decisiones:
+  1. **Errores de validación con estado 422** (el de FastAPI) y cuerpo `{ statusCode: 422, code: "VALIDATION_ERROR", message, fields }`; el campo es el último elemento de `loc` (alias camelCase).
+  2. **`/api/health` devuelve 503 `{ ok: false, db: false }`** si la BD no responde (para que un monitor lo detecte).
+  3. **TypeScript 5.9.3** (no 7.x): `typescript-eslint` exige `<6.1` y `openapi-typescript` exige `^5`. Dependencias npm con versión exacta (`--save-exact`).
+  4. **Vitest con dos proyectos**: `dom` (jsdom) y `node` solo para `src/camera/tfjs-compat.test.ts`, que usa `node:fs` e `import.meta.url` con esquema `file:` (en jsdom falla). La plantilla se copió sin cambios.
+  5. **Variables vacías** (`ADMIN_EMAIL=`, `ADMIN_PASSWORD=`, `DEMO_PASSWORD=`) se leen como `None` (= no configurado).
+  6. **`JWT_SECRET` ≥ 32 caracteres en todo entorno**; en producción además debe estar definido explícitamente y no ser el de desarrollo.
+  7. **`alas start-prod` queda «Pendiente de la fase 11»**: servir la SPA desde FastAPI es la tarea 11.1.
+  8. **FastAPI 0.162** ya no expone las rutas incluidas en `app.routes` (usa un `_IncludedRouter` interno): la prueba de `test_main.py` comprueba la ruta de salud con `app.url_path_for("health")`.
+  9. Todas las dependencias de §3 se agregaron en el Grupo 0 (incluidas las de grupos posteriores: PyJWT, bcrypt, slowapi, PyYAML, imageio-ffmpeg, Pillow, pytest-playwright) para no pedir permisos en cada fase.
+- Consecuencias: ninguna sobre el diseño; el contrato de errores queda fijado para el Grupo 3 (páginas de registro).
