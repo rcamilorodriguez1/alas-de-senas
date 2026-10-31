@@ -6,6 +6,8 @@ import random
 from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass
 
+from pydantic import ValidationError
+
 from app.domain.content.distractors import pick_distractors
 from app.domain.content.models import (
     ConversationsByNode,
@@ -126,7 +128,11 @@ def generate_content(
     previous: list[SignSpec] = []
     for node in nodes:
         own = node_signs[node.id]
-        a, b, _ = split_counts(node.kind, len(own))
+        a, b, c = split_counts(node.kind, len(own))
+        if min(a, b, c) < 1:
+            raise GenerationError(
+                f"{node.id} tiene {len(own)} señas: no alcanzan para repartirlas en 3 lecciones."
+            )
         ctx = _NodeContext(
             node=node,
             signs=own,
@@ -289,18 +295,38 @@ class _LessonBuilder:
                 f"{self.lesson_id} necesita una conversación de {turns} turnos con señas ya "
                 "enseñadas."
             )
-        payload = ConversationPayload(
-            turns=[
-                ConversationTurn(
-                    prompt_id=t.prompt, option_ids=[t.answer, *t.distractors], correct_id=t.answer
+        for t in conversation.turns:
+            if t.prompt in (t.answer, *t.distractors):
+                # El video del estímulo sería idéntico al de una opción (D-008).
+                raise GenerationError(
+                    f"{self.ctx.node.id}: en la conversación, «{t.prompt}» no puede aparecer "
+                    "entre sus propias opciones."
                 )
-                for t in conversation.turns
-            ]
-        )
+        try:
+            payload = ConversationPayload(
+                turns=[
+                    ConversationTurn(
+                        prompt_id=t.prompt,
+                        option_ids=[t.answer, *t.distractors],
+                        correct_id=t.answer,
+                    )
+                    for t in conversation.turns
+                ]
+            )
+        except ValidationError as exc:
+            raise GenerationError(
+                f"{self.ctx.node.id}: un turno de conversación tiene opciones repetidas o más de "
+                "3 distractores."
+            ) from exc
         self.items.append((ExerciseType.CONVERSATION, None, payload))
 
     def _spelling(self) -> None:
         words = self.ctx.conversations.spelling
+        for word in words:
+            if word != word.upper():
+                raise GenerationError(
+                    f"{self.ctx.node.id}: la palabra de deletreo «{word}» debe ir en mayúsculas."
+                )
         valid: list[tuple[str, list[str]]] = []
         for word in words:
             try:
@@ -315,6 +341,10 @@ class _LessonBuilder:
         word, letters = (fresh or valid)[0]
         self.used_words.append(word)
         others = [w for w in dict.fromkeys(words) if w != word]
+        if not others:
+            raise GenerationError(
+                f"{self.ctx.node.id} necesita al menos 2 palabras de deletreo para dar opciones."
+            )
         option_words = [word, *self.rng.sample(others, min(DISTRACTORS, len(others)))]
         payload = SpellingPayload(word=word, letter_ids=letters, option_words=option_words)
         self.items.append((ExerciseType.SPELLING, None, payload))

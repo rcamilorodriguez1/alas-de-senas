@@ -199,22 +199,22 @@ def conversation(*turns: ConversationTurnSpec) -> ConversationSpec:
 # L3: gracias, por-favor, de-nada). La primera usa una seña de L3: no sirve para L2 pero sí para L3.
 M1_N1_CONV_L3_ONLY = conversation(
     turn("gracias", "de-nada", "por-favor", "adios"),
-    turn("hola", "hola", "adios", "buenas-noches"),
+    turn("hola", "buenos-dias", "adios", "buenas-noches"),
 )
 M1_N1_CONV_L2 = conversation(
-    turn("hola", "hola", "adios", "buenas-noches"),
+    turn("hola", "buenos-dias", "adios", "buenas-noches"),
     turn("como-estas", "buenos-dias", "adios", "buenas-noches"),
 )
 M1_N1_CONV_3 = conversation(
-    turn("hola", "hola", "adios", "gracias"),
+    turn("hola", "buenos-dias", "adios", "gracias"),
     turn("como-estas", "buenos-dias", "buenas-noches", "de-nada"),
     turn("gracias", "de-nada", "por-favor", "adios"),
 )
 
 # M1-N2 (L1: nombre, yo, tu · L2: mucho-gusto, sordo, oyente · L3: si, no, perdon).
 M1_N2_CONV_L2 = conversation(
-    turn("hola", "hola", "adios", "tu"),
-    turn("mucho-gusto", "mucho-gusto", "sordo", "oyente"),
+    turn("hola", "mucho-gusto", "adios", "tu"),
+    turn("nombre", "yo", "sordo", "oyente"),
 )
 M1_N2_CONV_3 = conversation(
     turn("nombre", "yo", "tu", "sordo"),
@@ -225,7 +225,7 @@ M1_N2_CONV_3 = conversation(
 # M2-N1 (L1: familia, mama, papa · L2: hermano, hermana, hijo · L3: abuelo).
 M2_N1_CONV_L2 = conversation(
     turn("familia", "mama", "papa", "hermano"),
-    turn("hola", "hola", "adios", "hijo"),
+    turn("hola", "familia", "adios", "hijo"),
 )
 M2_N1_CONV_3 = conversation(
     turn("familia", "papa", "mama", "abuelo"),

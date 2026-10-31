@@ -42,16 +42,16 @@
   - Prueba del generador en dos procesos distintos (determinismo sin `hash()`), prueba de que `to_public()` no filtra `correctId`/`signId`/slugs.
   - Meta: cobertura de `app/domain` ≥ 95 %.
 - Hecho: 1.1–1.12. 653 pruebas de dominio (dos escritores de pruebas en paralelo); cobertura de `app/domain` 99,45 %; `alas check` en verde (783 pruebas). Decisiones: D-007.
-- Revisión independiente: `verificador-fase` **APROBADO** (sin bloqueantes); `revisor-codigo` en curso.
+- Revisión independiente: `verificador-fase` **APROBADO**; `revisor-codigo` encontró 2 bloqueantes (respuesta deducible por la semilla pública del barajado y estímulo igual a la respuesta en conversaciones) → **corregidos** (D-008, 8 pruebas nuevas que simulan el ataque). Mejoras aplicadas: errores de contenido como `GenerationError`. Mejoras pendientes (no bloquean): `all_signs` obligatorio en `build_review_items`, usar o quitar `ReviewSign.node_order`, limitar `next_heart_at` cuando `updated_at` está en el futuro.
 - Verificación manual: no aplica (el grupo no tiene interfaz); la línea «Verificar» es la cobertura ≥ 95 % → ✅ 99,45 %.
 
 ## ⏸ Punto de guardado — 31/10/2026
-Estado al pausar (todo confirmado en git, `alas check` en verde, 783 pruebas):
+Estado al pausar (todo confirmado en git, `alas check` en verde, 791 pruebas):
 - Grupo 0 ✅ (0.8 pospuesta por D-006: sin GitHub por ahora).
-- Grupo 1 ✅ en código y pruebas; **falta** solo la revisión independiente.
+- Grupo 1 ✅ cerrado: revisado, bloqueantes corregidos, `alas check` en verde (791 pruebas, dominio 99,46 %).
 
 Para retomar (en este orden):
 1. Abrir Docker Desktop y ejecutar `uv run alas db up` (el contenedor no arranca solo).
 2. `uv run alas check` debe terminar en «✓ alas check en verde».
-3. Relanzar `verificador-fase` y `revisor-codigo` sobre el Grupo 1; corregir lo bloqueante y hacer commit `fix(grupo-1): …` si hace falta.
-4. Seguir con `/fase 2` (contenido y base de datos). Pendientes anotados para el Grupo 2: prueba de migraciones sobre BD temporal vacía (B47); llenar `USER_TABLES` en `tests/api/conftest.py`; repetir la prueba anti-filtración de `to_public` y la de ≥ 4 ejercicios con puntaje sobre el contenido real de `content/`; que `alas content check` exija ≥ 4 palabras de deletreo por nodo ALPHABET (para tener 4 opciones).
+3. (Hecho) Revisión del Grupo 1.
+4. Seguir con `/fase 2` (contenido y base de datos). Las conversaciones de `content/conversations.yaml` NO pueden responder una seña con ella misma (D-008). Pendientes anotados para el Grupo 2: prueba de migraciones sobre BD temporal vacía (B47); llenar `USER_TABLES` en `tests/api/conftest.py`; repetir la prueba anti-filtración de `to_public` y la de ≥ 4 ejercicios con puntaje sobre el contenido real de `content/`; que `alas content check` exija ≥ 4 palabras de deletreo por nodo ALPHABET (para tener 4 opciones).

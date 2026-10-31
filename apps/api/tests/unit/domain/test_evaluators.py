@@ -123,10 +123,6 @@ def ev(exercise_type: ExerciseType) -> ExerciseEvaluator:
     return get_evaluator(exercise_type)
 
 
-def rng(seed: str = "S1:E1") -> random.Random:
-    return random.Random(seed)  # noqa: S311  # barajado determinista, no criptográfico
-
-
 # ---------- Registro --------------------------------------------------------------------------
 
 
@@ -429,7 +425,7 @@ def test_to_public_and_feedback_reject_payload_of_another_type(
     evaluator = ev(exercise_type)
     for payload in _wrong_payloads(exercise_type):
         with pytest.raises(TypeError):
-            evaluator.to_public(payload, CATALOG, TOK, rng())
+            evaluator.to_public(payload, CATALOG, TOK)
         with pytest.raises(TypeError):
             evaluator.feedback(payload, CATALOG, TOK)
 
@@ -438,7 +434,7 @@ def test_to_public_and_feedback_reject_payload_of_another_type(
 
 
 def test_public_observe() -> None:
-    public = ev(T.OBSERVE).to_public(OBSERVE, CATALOG, TOK, rng())
+    public = ev(T.OBSERVE).to_public(OBSERVE, CATALOG, TOK)
     sign = CATALOG["gracias"]
     assert public == PublicObserve(
         video=sign.video, word=sign.word, how_to=sign.how_to, usage_example=sign.usage_example
@@ -446,17 +442,17 @@ def test_public_observe() -> None:
 
 
 def test_public_produce_keeps_camera_label() -> None:
-    public = ev(T.PRODUCE).to_public(PRODUCE, CATALOG, TOK, rng())
+    public = ev(T.PRODUCE).to_public(PRODUCE, CATALOG, TOK)
     sign = CATALOG["letra-a"]
     assert public == PublicProduce(video=sign.video, word="A", camera_label="letra-a")
-    without = ev(T.PRODUCE).to_public(ProducePayload(sign_id="hola"), CATALOG, TOK, rng())
+    without = ev(T.PRODUCE).to_public(ProducePayload(sign_id="hola"), CATALOG, TOK)
     assert isinstance(without, PublicProduce)
     assert without.camera_label is None
     assert without.word == "Hola"
 
 
 def test_public_video_to_meaning() -> None:
-    public = ev(T.VIDEO_TO_MEANING).to_public(V2M, CATALOG, TOK, rng())
+    public = ev(T.VIDEO_TO_MEANING).to_public(V2M, CATALOG, TOK)
     assert isinstance(public, PublicVideoToMeaning)
     assert public.video == CATALOG["hola"].video
     expected = {WordOption(token=TOK("w", i), word=CATALOG[i].word) for i in V2M.option_ids}
@@ -465,7 +461,7 @@ def test_public_video_to_meaning() -> None:
 
 
 def test_public_meaning_to_video() -> None:
-    public = ev(T.MEANING_TO_VIDEO).to_public(M2V, CATALOG, TOK, rng())
+    public = ev(T.MEANING_TO_VIDEO).to_public(M2V, CATALOG, TOK)
     assert isinstance(public, PublicMeaningToVideo)
     assert public.word == "Adiós"
     expected = {VideoOption(token=TOK("v", i), video=CATALOG[i].video) for i in M2V.option_ids}
@@ -474,7 +470,7 @@ def test_public_meaning_to_video() -> None:
 
 
 def test_public_memory_match() -> None:
-    public = ev(T.MEMORY_MATCH).to_public(MEMORY, CATALOG, TOK, rng())
+    public = ev(T.MEMORY_MATCH).to_public(MEMORY, CATALOG, TOK)
     assert isinstance(public, PublicMemoryMatch)
     ids = MEMORY.sign_ids
     assert set(public.video_cards) == {
@@ -487,7 +483,7 @@ def test_public_memory_match() -> None:
 
 
 def test_public_conversation() -> None:
-    public = ev(T.CONVERSATION).to_public(CONVERSATION, CATALOG, TOK, rng())
+    public = ev(T.CONVERSATION).to_public(CONVERSATION, CATALOG, TOK)
     assert isinstance(public, PublicConversation)
     assert len(public.turns) == 2
     for turn, source in zip(public.turns, CONVERSATION.turns, strict=True):
@@ -498,7 +494,7 @@ def test_public_conversation() -> None:
 
 
 def test_public_spelling() -> None:
-    public = ev(T.SPELLING).to_public(SPELLING, CATALOG, TOK, rng())
+    public = ev(T.SPELLING).to_public(SPELLING, CATALOG, TOK)
     assert isinstance(public, PublicSpelling)
     assert public.letters == [CATALOG[i].video for i in SPELLING.letter_ids]  # en orden
     assert set(public.options) == {
@@ -506,15 +502,14 @@ def test_public_spelling() -> None:
     }
 
 
-def _option_order(exercise_type: ExerciseType, payload: ExercisePayload, seed: str) -> list[str]:
-    public = ev(exercise_type).to_public(payload, CATALOG, TOK, rng(seed))
+def _option_tokens(public: object) -> list[list[str]]:
     if isinstance(public, PublicVideoToMeaning | PublicMeaningToVideo | PublicSpelling):
-        return [o.token for o in public.options]
+        return [[o.token for o in public.options]]
     if isinstance(public, PublicConversation):
-        return [o.token for turn in public.turns for o in turn.options]
+        return [[o.token for o in turn.options] for turn in public.turns]
     if isinstance(public, PublicMemoryMatch):
-        return [c.token for c in public.video_cards] + [c.token for c in public.word_cards]
-    raise AssertionError(f"Tipo sin opciones: {exercise_type}")
+        return [[c.token for c in public.video_cards], [c.token for c in public.word_cards]]
+    raise AssertionError(f"Tipo sin opciones: {type(public).__name__}")
 
 
 SHUFFLED_TYPES = [
@@ -527,46 +522,82 @@ SHUFFLED_TYPES = [
 
 
 @pytest.mark.parametrize("exercise_type", SHUFFLED_TYPES)
-def test_same_seed_same_order(exercise_type: ExerciseType) -> None:
-    payload = PAYLOADS[exercise_type]
-    first = _option_order(exercise_type, payload, "S1:M1-N1-L1-02")
-    second = _option_order(exercise_type, payload, "S1:M1-N1-L1-02")
-    assert first == second
-
-
-def _unshuffled(exercise_type: ExerciseType) -> list[str]:
-    if exercise_type is T.VIDEO_TO_MEANING:
-        return [TOK("w", i) for i in V2M.option_ids]
-    if exercise_type is T.MEANING_TO_VIDEO:
-        return [TOK("v", i) for i in M2V.option_ids]
-    if exercise_type is T.SPELLING:
-        return [TOK("s", w) for w in SPELLING.option_words]
-    if exercise_type is T.CONVERSATION:
-        return [TOK("v", i) for turn in CONVERSATION.turns for i in turn.option_ids]
-    return [TOK("v", i) for i in MEMORY.sign_ids] + [TOK("w", i) for i in MEMORY.sign_ids]
+def test_public_options_are_ordered_by_token(exercise_type: ExerciseType) -> None:
+    # D-008: el orden depende de tokens con secreto, no de una semilla que el cliente conoce.
+    public = ev(exercise_type).to_public(PAYLOADS[exercise_type], CATALOG, TOK)
+    for tokens in _option_tokens(public):
+        assert tokens == sorted(tokens)
 
 
 @pytest.mark.parametrize("exercise_type", SHUFFLED_TYPES)
-def test_options_are_shuffled_with_rng(exercise_type: ExerciseType) -> None:
+def test_same_payload_same_public_order(exercise_type: ExerciseType) -> None:
     payload = PAYLOADS[exercise_type]
-    orders = {tuple(_option_order(exercise_type, payload, f"S{k}:E")) for k in range(30)}
-    assert len(orders) > 1
-    assert any(list(order) != _unshuffled(exercise_type) for order in orders)
+    first = ev(exercise_type).to_public(payload, CATALOG, TOK)
+    assert first == ev(exercise_type).to_public(payload, CATALOG, TOK)
 
 
-def test_memory_match_cards_are_shuffled_separately() -> None:
-    def permutation(seed: str) -> tuple[list[str], list[str]]:
-        public = ev(T.MEMORY_MATCH).to_public(MEMORY, CATALOG, TOK, rng(seed))
+def test_public_seed_does_not_reveal_the_correct_option() -> None:
+    """Ataque del revisor: barajar con la semilla pública «sesión:ejercicio» y tomar el índice 0.
+
+    Con opciones ordenadas por token (HMAC con secreto) el ataque no debe acertar siempre, y la
+    posición de la correcta en lo público debe variar entre ejercicios.
+    """
+    content = generate_content(build_modules(), build_signs(), build_conversations())
+    hits = total = 0
+    positions: set[int] = set()
+    for exercise in content.exercises:
+        payload = exercise.payload
+        if not isinstance(payload, VideoToMeaningPayload | MeaningToVideoPayload):
+            continue
+        tokenize = fake_tokenize("S-demo", exercise.id)
+        public = get_evaluator(exercise.type).to_public(payload, CATALOG, tokenize)
+        assert isinstance(public, PublicVideoToMeaning | PublicMeaningToVideo)
+        order = list(range(len(payload.option_ids)))
+        random.Random(f"S-demo:{exercise.id}").shuffle(order)  # noqa: S311 — simula al atacante
+        guessed = public.options[order.index(0)].token
+        side = "w" if isinstance(payload, VideoToMeaningPayload) else "v"
+        correct = tokenize(side, payload.correct_id)
+        hits += guessed == correct
+        total += 1
+        positions.add([o.token for o in public.options].index(correct))
+    assert total > 50
+    assert hits < total * 0.6
+    assert len(positions) == 4
+
+
+def test_memory_match_columns_do_not_reveal_the_pairs() -> None:
+    content = generate_content(build_modules(), build_signs(), build_conversations())
+    same_order = total = 0
+    for exercise in content.exercises:
+        if not isinstance(exercise.payload, MemoryMatchPayload):
+            continue
+        tokenize = fake_tokenize("S-demo", exercise.id)
+        public = get_evaluator(T.MEMORY_MATCH).to_public(exercise.payload, CATALOG, tokenize)
         assert isinstance(public, PublicMemoryMatch)
-        by_video = {TOK("v", i): i for i in MEMORY.sign_ids}
-        by_word = {TOK("w", i): i for i in MEMORY.sign_ids}
-        return (
-            [by_video[c.token] for c in public.video_cards],
-            [by_word[c.token] for c in public.word_cards],
-        )
+        by_video = {tokenize("v", s): s for s in exercise.payload.sign_ids}
+        by_word = {tokenize("w", s): s for s in exercise.payload.sign_ids}
+        videos = [by_video[c.token] for c in public.video_cards]
+        words = [by_word[c.token] for c in public.word_cards]
+        same_order += videos == words
+        total += 1
+    assert total > 0
+    assert same_order < total
 
-    results = [permutation(f"S{k}:E") for k in range(30)]
-    assert any(videos != words for videos, words in results)
+
+def test_conversation_prompt_video_is_never_an_option() -> None:
+    content = generate_content(build_modules(), build_signs(), build_conversations())
+    checked = 0
+    for exercise in content.exercises:
+        if not isinstance(exercise.payload, ConversationPayload):
+            continue
+        public = get_evaluator(T.CONVERSATION).to_public(
+            exercise.payload, CATALOG, fake_tokenize("S-demo", exercise.id)
+        )
+        assert isinstance(public, PublicConversation)
+        for turn in public.turns:
+            assert turn.prompt.src not in {o.video.src for o in turn.options}
+            checked += 1
+    assert checked > 0
 
 
 # ---------- feedback --------------------------------------------------------------------------
@@ -653,9 +684,7 @@ def test_public_json_of_all_generated_exercises_never_reveals_answers() -> None:
     seen_types: set[ExerciseType] = set()
     for exercise in content.exercises:
         tokenize = fake_tokenize("S-demo", exercise.id)
-        public = get_evaluator(exercise.type).to_public(
-            exercise.payload, CATALOG, tokenize, rng(f"S-demo:{exercise.id}")
-        )
+        public = get_evaluator(exercise.type).to_public(exercise.payload, CATALOG, tokenize)
         assert public.type is exercise.type
         seen_types.add(exercise.type)
         data = public.model_dump(mode="json", by_alias=True)
@@ -680,9 +709,7 @@ def test_feedback_tokens_of_generated_exercises_are_public_options_and_correct()
             continue
         tokenize = fake_tokenize("S-demo", exercise.id)
         evaluator = get_evaluator(exercise.type)
-        public = evaluator.to_public(
-            exercise.payload, CATALOG, tokenize, rng(f"S-demo:{exercise.id}")
-        )
+        public = evaluator.to_public(exercise.payload, CATALOG, tokenize)
         feedback = evaluator.feedback(exercise.payload, CATALOG, tokenize)
         if isinstance(public, PublicConversation):
             assert len(feedback.tokens) == len(public.turns)

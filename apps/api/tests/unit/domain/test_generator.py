@@ -628,28 +628,29 @@ def _mini_signs() -> tuple[SignSpec, ...]:
 
 
 def _mini_conversations() -> dict[str, NodeConversations]:
+    # Ningún estímulo aparece entre sus opciones (D-008).
     return {
         "X1-N1": NodeConversations(
             conversations=(
                 conversation(
-                    turn("agua", "agua", "pan", "arroz"), turn("fruta", "fruta", "pan", "agua")
+                    turn("agua", "pan", "arroz", "fruta"), turn("fruta", "agua", "pan", "arroz")
                 ),
                 conversation(
                     turn("agua", "pan", "arroz", "carne"),
-                    turn("carne", "carne", "fruta", "agua"),
-                    turn("pan", "pan", "agua", "fruta"),
+                    turn("carne", "fruta", "pan", "agua"),
+                    turn("pan", "agua", "arroz", "fruta"),
                 ),
             )
         ),
         "X1-N2": NodeConversations(
             conversations=(
                 conversation(
-                    turn("casa", "casa", "parque", "agua"), turn("tienda", "tienda", "agua", "pan")
+                    turn("casa", "parque", "tienda", "agua"), turn("tienda", "casa", "agua", "pan")
                 ),
                 conversation(
-                    turn("casa", "casa", "parque", "tienda"),
-                    turn("bano", "bano", "agua", "pan"),
-                    turn("parque", "parque", "carne", "fruta"),
+                    turn("casa", "parque", "tienda", "agua"),
+                    turn("bano", "casa", "agua", "pan"),
+                    turn("parque", "tienda", "carne", "fruta"),
                 ),
             )
         ),
@@ -745,7 +746,9 @@ def test_l2_without_valid_conversation_raises_exact_message() -> None:
         "M1-N2",
         NodeConversations(
             conversations=(
-                conversation(turn("hola", "hola", "adios", "tu"), turn("sordo", "si", "no", "yo")),
+                conversation(
+                    turn("hola", "mucho-gusto", "adios", "tu"), turn("sordo", "si", "no", "yo")
+                ),
                 M1_N2_CONV_3,
             )
         ),
@@ -975,3 +978,58 @@ def test_generation_is_identical_across_processes() -> None:
     assert first == serialize_content(
         generate_content(build_modules(), build_signs(), build_conversations())
     )
+
+
+# ---------- Validaciones de contenido mal escrito (revisión del Grupo 1, D-008) ----------------
+
+
+@pytest.mark.parametrize(
+    "bad_turn",
+    [
+        ("hola", "hola", "adios", "buenas-noches"),  # se responde con la misma seña
+        ("hola", "buenos-dias", "hola", "adios"),  # el estímulo aparece como distractor
+    ],
+)
+def test_prompt_among_its_own_options_raises(bad_turn: tuple[str, str, str, str]) -> None:
+    conversations = _conversations_with(
+        "M1-N1",
+        NodeConversations(
+            conversations=(conversation(turn(*bad_turn), M1_N1_CONV_L2.turns[1]), M1_N1_CONV_3)
+        ),
+    )
+    with pytest.raises(GenerationError, match="no puede aparecer entre sus propias opciones"):
+        generate_content(build_modules(), build_signs(), conversations)
+
+
+def test_turn_with_repeated_options_raises_generation_error() -> None:
+    conversations = _conversations_with(
+        "M1-N1",
+        NodeConversations(
+            conversations=(
+                conversation(turn("hola", "buenos-dias", "adios", "adios"), M1_N1_CONV_L2.turns[1]),
+                M1_N1_CONV_3,
+            )
+        ),
+    )
+    with pytest.raises(GenerationError, match="opciones repetidas"):
+        generate_content(build_modules(), build_signs(), conversations)
+
+
+def test_lowercase_spelling_word_raises() -> None:
+    conversations = _conversations_with(
+        "M1-N3", NodeConversations(spelling=(*SPELLING_M1_N3, "cada"))
+    )
+    with pytest.raises(GenerationError, match="debe ir en mayúsculas"):
+        generate_content(build_modules(), build_signs(), conversations)
+
+
+def test_single_spelling_word_raises() -> None:
+    conversations = _conversations_with("M1-N3", NodeConversations(spelling=("CADA",)))
+    with pytest.raises(GenerationError, match="al menos 2 palabras"):
+        generate_content(build_modules(), build_signs(), conversations)
+
+
+def test_node_with_too_few_signs_raises() -> None:
+    signs = [s for s in build_signs() if s.node_id != "M1-N1" or s.order <= 3]
+    with pytest.raises(GenerationError, match="no alcanzan para repartirlas"):
+        generate_content(build_modules(), signs, build_conversations())

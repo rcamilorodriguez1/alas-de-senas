@@ -73,3 +73,13 @@
   10. **Vidas:** `gain_one` conserva el avance de la recarga; con 0 vidas `lose_one` devuelve el estado materializado.
 - Consecuencias: el contenido de §6.5 (conversaciones y palabras) debe cumplir estas reglas; `alas content check` (Grupo 2) las verificará con los mismos generadores.
 - Nota tras la verificación del Grupo 1: D-007.7 se aparta de §8.5 («solo señas vistas», `optionIds[4]`) en un caso límite: con menos de 2 señas vistas se completa con señas no vistas, y el repaso puede tener 2–3 opciones. En la práctica no ocurre (L1 enseña ≥ 2 señas); el servicio de repaso (Grupo 7) solo programa señas de lecciones completadas. D-007.5: el nivel «misma categoría» puede incluir señas de nodos posteriores (aún no enseñadas); pendiente de confirmar con el equipo.
+
+## D-008 · Orden público de las opciones por token y estímulos fuera de sus opciones · 31/10/2026
+- Contexto / problema: la revisión del Grupo 1 demostró que la respuesta se deducía en el 100 % de los ejercicios. §7.6 manda barajar con `random.Random(f"{session_id}:{exercise_id}")`, pero el cliente conoce ambos valores y la correcta iba primera en el payload: repitiendo el barajado se sabe qué opción es la correcta (también las parejas de MEMORY_MATCH). Además, en conversaciones como «hola → hola» el video del estímulo es idéntico al de la opción correcta (B54).
+- Opciones consideradas: barajar el payload en el generador (no protege MEMORY_MATCH) · semilla derivada del secreto en el servicio (depende de que cada servicio lo haga bien) · **ordenar las opciones públicas por su token** (HMAC con secreto, D20).
+- Decisión:
+  1. `to_public()` ya no recibe `rng`: ordena las opciones por token. Es estable dentro de la sesión e impredecible sin el secreto; videos y palabras tienen tokens independientes. **Se aparta del texto literal de §7.6** (barajado con semilla pública).
+  2. En las conversaciones, el estímulo no puede aparecer entre sus opciones (ni como respuesta ni como distractor): el generador lanza `GenerationError`. **El ejemplo de §6.5 («hola → hola») deja de ser válido**; el contenido del Grupo 2 debe usar respuestas distintas (p. ej. «hola → buenos días»), a revisar con el intérprete.
+  3. El generador convierte el contenido mal escrito en `GenerationError` con mensaje en español: turnos con opciones repetidas, palabras de deletreo en minúsculas, menos de 2 palabras de deletreo, nodos con muy pocas señas para 3 lecciones.
+- Consecuencias: pruebas nuevas que simulan el ataque (semilla pública) y verifican que ya no acierta, que las columnas de MEMORY_MATCH no revelan las parejas y que ningún estímulo aparece entre sus opciones. Las pruebas de «barajado con rng» se reemplazaron por las de orden por token.
+- Secciones afectadas: §6.5, §7.6.

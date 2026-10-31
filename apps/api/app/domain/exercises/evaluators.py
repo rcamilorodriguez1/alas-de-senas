@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import builtins
-import random
 from abc import ABC, abstractmethod
-from typing import ClassVar
+from collections.abc import Sequence
+from typing import ClassVar, Protocol
 
 from pydantic import BaseModel
 
@@ -50,10 +50,20 @@ def _expect[T](value: object, kind: builtins.type[T]) -> T:
     return value
 
 
-def _shuffled[T](items: list[T], rng: random.Random) -> list[T]:
-    result = list(items)
-    rng.shuffle(result)
-    return result
+class _Tokened(Protocol):
+    @property
+    def token(self) -> str: ...
+
+
+def _by_token[O: _Tokened](options: Sequence[O]) -> list[O]:
+    """Orden público de las opciones: por token (D-008).
+
+    Los tokens son HMAC con el secreto del servidor: el orden es estable dentro de la sesión y no
+    se puede reproducir desde lo que conoce el cliente (`sessionId`, `exerciseId`), a diferencia de
+    un barajado con semilla pública. Videos y palabras tienen tokens independientes, así que en
+    MEMORY_MATCH las dos columnas no revelan las parejas.
+    """
+    return sorted(options, key=lambda option: option.token)
 
 
 class ExerciseEvaluator(ABC):
@@ -75,7 +85,6 @@ class ExerciseEvaluator(ABC):
         payload: ExercisePayload,
         catalog: SignCatalog,
         tokenize: Tokenize,
-        rng: random.Random,
     ) -> PublicExercise:
         """Vista para el cliente: sin `correctId`, `signId` ni slugs en las opciones (D20)."""
 
@@ -102,7 +111,6 @@ class ObserveEvaluator(ExerciseEvaluator):
         payload: ExercisePayload,
         catalog: SignCatalog,
         tokenize: Tokenize,
-        rng: random.Random,
     ) -> PublicExercise:
         sign = catalog[_expect(payload, ObservePayload).sign_id]
         return PublicObserve(
@@ -124,14 +132,13 @@ class VideoToMeaningEvaluator(ExerciseEvaluator):
         payload: ExercisePayload,
         catalog: SignCatalog,
         tokenize: Tokenize,
-        rng: random.Random,
     ) -> PublicExercise:
         p = _expect(payload, VideoToMeaningPayload)
         options = [
             WordOption(token=tokenize(SIDE_WORD, sign_id), word=catalog[sign_id].word)
             for sign_id in p.option_ids
         ]
-        return PublicVideoToMeaning(video=catalog[p.sign_id].video, options=_shuffled(options, rng))
+        return PublicVideoToMeaning(video=catalog[p.sign_id].video, options=_by_token(options))
 
     def feedback(
         self, payload: ExercisePayload, catalog: SignCatalog, tokenize: Tokenize
@@ -154,14 +161,13 @@ class MeaningToVideoEvaluator(ExerciseEvaluator):
         payload: ExercisePayload,
         catalog: SignCatalog,
         tokenize: Tokenize,
-        rng: random.Random,
     ) -> PublicExercise:
         p = _expect(payload, MeaningToVideoPayload)
         options = [
             VideoOption(token=tokenize(SIDE_VIDEO, sign_id), video=catalog[sign_id].video)
             for sign_id in p.option_ids
         ]
-        return PublicMeaningToVideo(word=catalog[p.sign_id].word, options=_shuffled(options, rng))
+        return PublicMeaningToVideo(word=catalog[p.sign_id].word, options=_by_token(options))
 
     def feedback(
         self, payload: ExercisePayload, catalog: SignCatalog, tokenize: Tokenize
@@ -194,16 +200,13 @@ class MemoryMatchEvaluator(ExerciseEvaluator):
         payload: ExercisePayload,
         catalog: SignCatalog,
         tokenize: Tokenize,
-        rng: random.Random,
     ) -> PublicExercise:
         p = _expect(payload, MemoryMatchPayload)
         videos = [
             VideoOption(token=tokenize(SIDE_VIDEO, s), video=catalog[s].video) for s in p.sign_ids
         ]
         words = [WordOption(token=tokenize(SIDE_WORD, s), word=catalog[s].word) for s in p.sign_ids]
-        return PublicMemoryMatch(
-            video_cards=_shuffled(videos, rng), word_cards=_shuffled(words, rng)
-        )
+        return PublicMemoryMatch(video_cards=_by_token(videos), word_cards=_by_token(words))
 
 
 class ProduceEvaluator(ExerciseEvaluator):
@@ -220,7 +223,6 @@ class ProduceEvaluator(ExerciseEvaluator):
         payload: ExercisePayload,
         catalog: SignCatalog,
         tokenize: Tokenize,
-        rng: random.Random,
     ) -> PublicExercise:
         p = _expect(payload, ProducePayload)
         sign = catalog[p.sign_id]
@@ -247,18 +249,16 @@ class ConversationEvaluator(ExerciseEvaluator):
         payload: ExercisePayload,
         catalog: SignCatalog,
         tokenize: Tokenize,
-        rng: random.Random,
     ) -> PublicExercise:
         p = _expect(payload, ConversationPayload)
         turns = [
             PublicConversationTurn(
                 prompt=catalog[turn.prompt_id].video,
-                options=_shuffled(
+                options=_by_token(
                     [
                         VideoOption(token=tokenize(SIDE_VIDEO, s), video=catalog[s].video)
                         for s in turn.option_ids
-                    ],
-                    rng,
+                    ]
                 ),
             )
             for turn in p.turns
@@ -286,13 +286,12 @@ class SpellingEvaluator(ExerciseEvaluator):
         payload: ExercisePayload,
         catalog: SignCatalog,
         tokenize: Tokenize,
-        rng: random.Random,
     ) -> PublicExercise:
         p = _expect(payload, SpellingPayload)
         options = [WordOption(token=tokenize(SIDE_SPELLING, w), word=w) for w in p.option_words]
         return PublicSpelling(
             letters=[catalog[letter].video for letter in p.letter_ids],
-            options=_shuffled(options, rng),
+            options=_by_token(options),
         )
 
     def feedback(
