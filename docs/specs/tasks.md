@@ -109,8 +109,8 @@
 
 - [x] **10.1** `alas camera-assets` (WASM y modelos `.task` en `apps/web/public/mediapipe/`). _R8_
 - [x] **10.2** `normalizeLandmarks` (TypeScript) con pruebas Vitest. _R8_
-- [ ] **10.3** Reconocedor: *singleton*, timestamps crecientes, pausa en pestaña oculta, limpieza, `tf.tidy()`, `MockClassifier`. _R8.5, R8.6_
-- [ ] **10.4** Página `/camara` con video en espejo, puntos, seña detectada, confianza y errores de permiso. _R8.1–8.4_
+- [x] **10.3** Reconocedor: *singleton*, timestamps crecientes, pausa en pestaña oculta, limpieza, `tf.tidy()`, `MockClassifier`. _R8.5, R8.6_
+- [x] **10.4** Página `/camara` con video en espejo, puntos, seña detectada, confianza y errores de permiso. _R8.1–8.4_
 - [ ] **10.5** Colector `/admin/dataset` que exporta `dataset.json` (`hand-v1`, 63 valores, etiquetas = slugs de la seña o `NINGUNA`, alias, versión de MediaPipe). `POST /recognition/results` evalúa el logro HUMMINGBIRD_EYE. _R8.7_
 - [ ] **10.6** Entorno `ml/` con el `ml/pyproject.toml` del kit (versiones verificadas: no cambiarlas sin regenerar `ml/fixtures/tfjs-smoke` y pasar `tfjs-compat`; si TensorFlow no instala en un computador, usar Colab) y `ml/train_static.py` (rechaza letras `motion = dynamic`): validación, separación por persona, semillas fijas, matriz de confusión, exportación con `labels.json` y `meta.json`; cuaderno equivalente para Colab. _R8.7_
 - [ ] **10.7** `ProduceActivity` con cámara cuando la seña está en `labels.json`; prueba Vitest de que `labels.json` coincide con las salidas del modelo. _R4.8_

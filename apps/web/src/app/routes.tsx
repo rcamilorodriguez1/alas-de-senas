@@ -1,5 +1,6 @@
 import type { RouteObject } from "react-router";
 import { LoginPage } from "../features/auth/LoginPage";
+import { CameraPage } from "../features/camera/CameraPage";
 import { DictionaryPage } from "../features/dictionary/DictionaryPage";
 import { SignPage } from "../features/dictionary/SignPage";
 import { AchievementsPage } from "../features/gamification/AchievementsPage";
@@ -68,6 +69,14 @@ export const appRoutes: RouteObject[] = [
     element: (
       <RequireAuth>
         <ReviewPage />
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/camara",
+    element: (
+      <RequireAuth>
+        <CameraPage />
       </RequireAuth>
     ),
   },
