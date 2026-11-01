@@ -6,6 +6,8 @@ export const NONE_LABEL = "NINGUNA";
 export interface Sample {
   label: string;
   features: number[];
+  /** Persona que hizo la seña si no es el alias del archivo (videos de varias personas, D-019). */
+  collector?: string;
 }
 
 export interface Dataset {

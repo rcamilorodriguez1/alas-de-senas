@@ -33,6 +33,8 @@ MIN_SPELLING_WORDS_L2 = 4
 MAX_VIDEO_SECONDS = 8
 
 ALPHABET_CATEGORY = "alfabeto"
+# Números: motion opcional; los estáticos pueden reconocerse con la cámara (D-019).
+NUMBERS_CATEGORY = "numeros"
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 CATEGORY_SUGGESTION_DISTANCE = 2
 REQUIRED_TEXT = ("word", "meaning", "usage_example")
@@ -191,8 +193,15 @@ def _check_motion(rows: Sequence[SignRow], report: Report) -> None:
                 report.errors.append(
                     f'{row.slug}: motion "{row.motion}" no es válido (static o dynamic).'
                 )
+        elif row.category == NUMBERS_CATEGORY:
+            if row.motion is not None and row.motion not in valid:
+                report.errors.append(
+                    f'{row.slug}: motion "{row.motion}" no es válido (static o dynamic).'
+                )
         elif row.motion is not None:
-            report.errors.append(f"{row.slug}: solo las letras llevan motion; déjalo vacío.")
+            report.errors.append(
+                f"{row.slug}: solo las letras y los números llevan motion; déjalo vacío."
+            )
 
 
 def _check_labels(rows: Sequence[SignRow], labels_path: Path, report: Report) -> None:

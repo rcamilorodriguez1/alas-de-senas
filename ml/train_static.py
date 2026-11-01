@@ -96,9 +96,13 @@ def load_datasets(paths: list[Path], signs_csv: Path) -> Samples:
                 f"{FEATURE_SIZE}; vuelve a recolectar con la versión actual del colector."
             )
         collector = str(data.get("collector") or "").strip()
-        if not collector:
+        samples_in = data.get("samples", [])
+        per_sample = all(
+            str(s.get("collector") or "").strip() for s in samples_in if isinstance(s, dict)
+        )
+        if not collector and not (samples_in and per_sample):
             raise DatasetError(f"{path.name}: falta el alias de quien grabó (`collector`).")
-        for index, sample in enumerate(data.get("samples", [])):
+        for index, sample in enumerate(samples_in):
             label = sample.get("label")
             vector = sample.get("features")
             where = f"{path.name}, muestra {index}"
@@ -122,7 +126,8 @@ def load_datasets(paths: list[Path], signs_csv: Path) -> Samples:
                 raise DatasetError(f"{where}: se esperaban {FEATURE_SIZE} números finitos.")
             features.append([float(v) for v in vector])
             labels.append(str(label))
-            collectors.append(collector)
+            # Persona por muestra (videos de varias personas, D-019); si no, el alias del archivo.
+            collectors.append(str(sample.get("collector") or collector).strip())
     if len(set(labels)) < 2:
         raise DatasetError("Se necesitan al menos 2 clases (por ejemplo una letra y NINGUNA).")
     return Samples(features, labels, collectors, dict(skipped))

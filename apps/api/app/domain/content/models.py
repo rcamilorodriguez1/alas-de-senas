@@ -16,7 +16,7 @@ class SignSpec:
     category: str
     node_id: str | None  # None = solo diccionario
     order: int
-    motion: Motion | None = None  # solo letras
+    motion: Motion | None = None  # letras y números
 
 
 @dataclass(frozen=True, slots=True)

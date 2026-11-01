@@ -249,8 +249,9 @@ class _LessonBuilder:
         self.items.append((ExerciseType.OBSERVE, sign.id, ObservePayload(sign_id=sign.id)))
 
     def _produce(self, sign: SignSpec) -> None:
-        static_letter = self.ctx.node.kind is NodeKind.ALPHABET and sign.motion is Motion.STATIC
-        payload = ProducePayload(sign_id=sign.id, camera_label=sign.id if static_letter else None)
+        # Letras y números estáticos pueden reconocerse con la cámara (§10, D-019).
+        static_sign = sign.motion is Motion.STATIC
+        payload = ProducePayload(sign_id=sign.id, camera_label=sign.id if static_sign else None)
         self.items.append((ExerciseType.PRODUCE, sign.id, payload))
 
     def _choice(self, kind: ExerciseType, sign: SignSpec) -> None:

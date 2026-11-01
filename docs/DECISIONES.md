@@ -207,3 +207,12 @@
   2. **Una sola persona** (la 1: fondo blanco, mismo encuadre, las 22 señas) y la toma 0 de cada seña, para que la app se vea coherente. Los `.avi` (XviD, 640×360) se convierten a `.mp4` y se dejan en `content/videos/raw/<slug>.mp4` (fuera de git); `alas content all` los normaliza como cualquier video propio.
   3. **Créditos visibles** en `/creditos` (pública, enlazada desde la barra lateral), con cita, DOI, licencia y los cambios hechos (exigido por CC BY).
 - **Pendiente con el intérprete** (`docs/validacion-interprete.md`): los rostros vienen pixelados en el original (la expresión facial no se ve) y hay que confirmar que «Chao» sirve para «Adiós». Si alguna no sirve, se reemplaza por un video propio y se quita de `/creditos`.
+
+## D-019 · Modelo de la cámara para los números 1–5 con LSC-54 · 01/11/2026
+- Contexto: LSC-54 no trae alfabeto; el usuario pidió entrenar con LSC-54 en Colab y decidir lo mejor.
+- Decisiones:
+  1. **Números 1–5 `static`, 6–10 `dynamic`** en `signs.csv` (provisional: **pendiente de confirmar por el intérprete**). La validación acepta `motion` en los números (opcional) y el generador da `camera_label` a toda seña estática (letras y números): «Produce la seña» puede usar la cámara con los números 1–5.
+  2. **Datos desde videos con el mismo pipeline del navegador (D11):** el colector `/admin/dataset` tiene «Desde videos» (`src/camera/video-extract.ts`): recorre cada video local cada 0,1 s con HandLandmarker (CPU) + `normalizeLandmarks`; etiqueta y persona salen del nombre `etiqueta__persona__toma.mp4`. Los videos no se suben. `dataset.json` admite `collector` por muestra (varias personas en un archivo) y `train_static.py` lo usa para separar por persona.
+  3. **NINGUNA** = 6 señas de cortesía de LSC-54 que no son números (Hola, Gracias, Por favor, Bien, Esperar, Permiso), toma 0 de cada persona.
+  4. **Resultado:** `ml/data/dataset-lsc54-numeros.json` (fuera de git): 3.908 muestras de 18 personas — NINGUNA 1.004 y 565–599 por número (cumple ≥ 300 por clase, ≥ 600 de NINGUNA y ≥ 3 personas).
+  5. **Entrenamiento en Google Colab** con `ml/notebooks/entrenamiento.ipynb` (uv con `ml/pyproject.toml`; se instala uv si falta). El `venv/` local del equipo (TF 2.15.0 sin `tensorflowjs`, que no instala en Windows) no se usa para exportar.

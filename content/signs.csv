@@ -57,16 +57,16 @@ enojado,Enojado,Que siente rabia o molestia.,,«Mi hermano está enojado conmigo
 cansado,Cansado,Que necesita descansar.,,«Después del trabajo llego cansado».,emociones,M2-N2,4,
 miedo,Miedo,Sensación de peligro o temor.,,«Le tengo miedo a la oscuridad».,emociones,M2-N2,5,
 amor,Amor,Sentimiento de cariño profundo.,,«Siento mucho amor por mi familia».,emociones,M2-N2,6,
-numero-1,Uno,Número 1.,,«Tengo un hermano».,numeros,M2-N3,1,
-numero-2,Dos,Número 2.,,«Compré dos panes».,numeros,M2-N3,2,
-numero-3,Tres,Número 3.,,«Tengo tres primos».,numeros,M2-N3,3,
-numero-4,Cuatro,Número 4.,,«Somos cuatro en mi casa».,numeros,M2-N3,4,
-numero-5,Cinco,Número 5.,,«La clase empieza a las cinco».,numeros,M2-N3,5,
-numero-6,Seis,Número 6.,,«Me levanto a las seis».,numeros,M2-N3,6,
-numero-7,Siete,Número 7.,,«La semana tiene siete días».,numeros,M2-N3,7,
-numero-8,Ocho,Número 8.,,«Trabajo ocho horas».,numeros,M2-N3,8,
-numero-9,Nueve,Número 9.,,«Mi sobrino tiene nueve años».,numeros,M2-N3,9,
-numero-10,Diez,Número 10.,,«Tengo diez dedos en las manos».,numeros,M2-N3,10,
+numero-1,Uno,Número 1.,,«Tengo un hermano».,numeros,M2-N3,1,static
+numero-2,Dos,Número 2.,,«Compré dos panes».,numeros,M2-N3,2,static
+numero-3,Tres,Número 3.,,«Tengo tres primos».,numeros,M2-N3,3,static
+numero-4,Cuatro,Número 4.,,«Somos cuatro en mi casa».,numeros,M2-N3,4,static
+numero-5,Cinco,Número 5.,,«La clase empieza a las cinco».,numeros,M2-N3,5,static
+numero-6,Seis,Número 6.,,«Me levanto a las seis».,numeros,M2-N3,6,dynamic
+numero-7,Siete,Número 7.,,«La semana tiene siete días».,numeros,M2-N3,7,dynamic
+numero-8,Ocho,Número 8.,,«Trabajo ocho horas».,numeros,M2-N3,8,dynamic
+numero-9,Nueve,Número 9.,,«Mi sobrino tiene nueve años».,numeros,M2-N3,9,dynamic
+numero-10,Diez,Número 10.,,«Tengo diez dedos en las manos».,numeros,M2-N3,10,dynamic
 comer,Comer,Tomar alimentos.,,«Vamos a comer a las doce».,actividades,M2-N4,1,
 beber,Beber,Tomar un líquido.,,«Hay que beber agua todos los días».,actividades,M2-N4,2,
 dormir,Dormir,Descansar con los ojos cerrados.,,«Me gusta dormir temprano».,actividades,M2-N4,3,

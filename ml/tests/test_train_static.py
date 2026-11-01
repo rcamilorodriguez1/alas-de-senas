@@ -144,3 +144,31 @@ def test_orden_de_etiquetas_estable() -> None:
         "letra-a",
         "letra-b",
     ]
+
+
+def test_acepta_numeros_estaticos_y_descarta_los_de_movimiento(tmp_path: Path) -> None:
+    """D-019: numero-1 a numero-5 son static en signs.csv; del 6 al 10, dynamic."""
+    path = write(
+        tmp_path / "n.json",
+        [
+            {"label": "numero-3", "features": vector()},
+            {"label": "numero-8", "features": vector()},
+            {"label": "NINGUNA", "features": vector()},
+        ],
+    )
+    samples = load_datasets([path], SIGNS)
+    assert samples.labels == ["numero-3", "NINGUNA"]
+    assert samples.skipped_dynamic == {"numero-8": 1}
+
+
+def test_persona_por_muestra_para_videos_de_varias_personas(tmp_path: Path) -> None:
+    path = write(
+        tmp_path / "v.json",
+        [
+            {"label": "numero-1", "features": vector(), "collector": "p1"},
+            {"label": "NINGUNA", "features": vector(), "collector": "p17"},
+        ],
+        collector="",
+    )
+    samples = load_datasets([path], SIGNS)
+    assert samples.collectors == ["p1", "p17"]

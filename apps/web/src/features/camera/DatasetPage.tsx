@@ -10,6 +10,7 @@ import {
   type CameraSession,
 } from "../../camera/session";
 import { useSessionStore } from "../../lib/session-store";
+import { extractFromVideos, type ExtractProgress } from "../../camera/video-extract";
 import { useSignSearch } from "../dictionary/dictionary-api";
 
 const COUNTDOWN_S = 3;
@@ -36,6 +37,9 @@ export function DatasetPage() {
   const [samples, setSamples] = useState<Sample[]>([]);
   const [cameraOn, setCameraOn] = useState(false);
   const [error, setError] = useState<CameraErrorKind | null>(null);
+  const [progress, setProgress] = useState<ExtractProgress | null>(null);
+  const [extracting, setExtracting] = useState(false);
+  const [videoNote, setVideoNote] = useState<string | null>(null);
 
   const setPhase = (next: Phase) => {
     phaseRef.current = next;
@@ -108,7 +112,29 @@ export function DatasetPage() {
     );
   }
 
+  // Desde videos (D-019): mismos 63 valores que con la cámara; nada sale del navegador.
+  const fromVideos = async (list: FileList | null) => {
+    if (!list || list.length === 0) return;
+    setExtracting(true);
+    setVideoNote(null);
+    try {
+      const { samples: found, skipped } = await extractFromVideos(Array.from(list), setProgress);
+      if (!mounted.current) return;
+      setSamples((previous) => [...previous, ...found]);
+      setVideoNote(
+        skipped.length
+          ? `Listo. Se omitieron ${skipped.length} archivo(s) por nombre o formato: ${skipped.slice(0, 3).join(", ")}…`
+          : `Listo: ${found.length} muestras de ${list.length} video(s).`,
+      );
+    } catch {
+      if (mounted.current) setVideoNote("No pudimos procesar los videos. Revisa que sean MP4 (H.264).");
+    } finally {
+      if (mounted.current) setExtracting(false);
+    }
+  };
+
   const counts = countByLabel(samples);
+  const everySampleHasPerson = samples.length > 0 && samples.every((sample) => sample.collector);
   const letterSlugs = [...(lettersPage1.data?.items ?? []), ...(lettersPage2.data?.items ?? [])].map(
     (sign) => sign.slug,
   );
@@ -186,13 +212,41 @@ export function DatasetPage() {
         )}
         <button
           type="button"
-          disabled={samples.length === 0 || !collector.trim()}
+          disabled={samples.length === 0 || (!collector.trim() && !everySampleHasPerson)}
           onClick={() => downloadDataset(buildDataset(collector, samples))}
           className="rounded-xl border border-[#047857] px-4 py-2 font-bold text-[#047857] disabled:opacity-50"
         >
           Exportar dataset.json
         </button>
       </div>
+      <section aria-labelledby="desde-videos" className="mt-6 rounded-2xl bg-white p-4 shadow">
+        <h2 id="desde-videos" className="font-display text-xl font-extrabold">
+          Desde videos
+        </h2>
+        <p className="mt-1 text-sm text-[#45606A]">
+          Elige videos MP4 nombrados <code>etiqueta__persona__toma.mp4</code> (por ejemplo{" "}
+          <code>numero-3__p17__t0.mp4</code> o <code>NINGUNA__p1__t2.mp4</code>). Se procesan en este navegador
+          con el mismo método de la cámara; los videos no se suben.
+        </p>
+        <label className="mt-3 block font-semibold">
+          Videos
+          <input
+            type="file"
+            accept="video/mp4,video/webm"
+            multiple
+            disabled={extracting}
+            onChange={(event) => void fromVideos(event.target.files)}
+            className="mt-1 block"
+          />
+        </label>
+        <p role="status" className="mt-2 text-sm font-semibold">
+          {extracting && progress
+            ? `Procesando ${progress.index} de ${progress.total}: ${progress.file} (${progress.samples} muestras)`
+            : extracting
+              ? "Preparando…"
+              : (videoNote ?? "")}
+        </p>
+      </section>
       <section aria-labelledby="conteo" className="mt-6 rounded-2xl bg-white p-4 shadow">
         <h2 id="conteo" className="font-display text-xl font-extrabold">
           Muestras por clase ({samples.length})
