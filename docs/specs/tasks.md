@@ -96,8 +96,8 @@
 
 ## Grupo 8 — Diccionario
 
-- [ ] **8.1** `DictionaryService`: `ILIKE` sobre `normalized_word` (escapando `%` y `_`), sugerencias por Levenshtein ≤ 2, categorías no vacías, ficha con lección relacionada, favoritos idempotentes. _R7_
-- [ ] **8.2** Páginas `/diccionario` y `/diccionario/:slug`. _R7.4–7.7_
+- [x] **8.1** `DictionaryService`: `ILIKE` sobre `normalized_word` (escapando `%` y `_`), sugerencias por Levenshtein ≤ 2, categorías no vacías, ficha con lección relacionada, favoritos idempotentes. _R7_
+- [x] **8.2** Páginas `/diccionario` y `/diccionario/:slug`. _R7.4–7.7_
   **Verificar:** «GRACÍAS» encuentra «Gracias»; «grasias» la sugiere.
 
 ## Grupo 9 — Introducción

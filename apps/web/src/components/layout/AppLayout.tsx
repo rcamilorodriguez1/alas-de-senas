@@ -77,14 +77,25 @@ export function AppLayout({ children, aside }: { children: ReactNode; aside?: Re
               )}
             </div>
           )}
-          <span className="font-semibold">{user?.name}</span>
-          <button
-            type="button"
-            onClick={() => void onLogout()}
-            className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-semibold hover:bg-slate-50"
-          >
-            Cerrar sesión
-          </button>
+          {user ? (
+            <>
+              <span className="font-semibold">{user.name}</span>
+              <button
+                type="button"
+                onClick={() => void onLogout()}
+                className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-semibold hover:bg-slate-50"
+              >
+                Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <NavLink
+              to="/ingresar"
+              className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-semibold hover:bg-slate-50"
+            >
+              Ingresar
+            </NavLink>
+          )}
         </header>
         <div className="flex flex-1 justify-center gap-6 px-6 py-8">
           <main className="w-full max-w-[720px] min-w-0">{children}</main>

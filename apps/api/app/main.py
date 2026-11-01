@@ -4,7 +4,16 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from app.api import auth, curriculum, gamification, health, lessons, progress, reviews
+from app.api import (
+    auth,
+    curriculum,
+    dictionary,
+    gamification,
+    health,
+    lessons,
+    progress,
+    reviews,
+)
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.core.media_files import MediaFiles
@@ -34,6 +43,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(gamification.router, prefix="/api")
     app.include_router(progress.router, prefix="/api")
     app.include_router(reviews.router, prefix="/api")
+    app.include_router(dictionary.router, prefix="/api")
     app.mount("/media", MediaFiles(directory=settings.media_dir, check_dir=False), name="media")
     return app
 

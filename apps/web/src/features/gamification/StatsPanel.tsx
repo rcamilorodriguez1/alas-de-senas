@@ -21,6 +21,22 @@ export function StatsPanel() {
   const countdown = useCountdown(stats?.hearts.enabled ? stats.hearts.nextHeartAt : null);
 
   const greeting = user?.name ? `¡Hola, ${user.name}! Sigue tu ruta.` : "¡Hola! Sigue tu ruta.";
+  if (!user) {
+    return (
+      <section aria-label="Tu día" className="sticky top-8 flex flex-col gap-3 rounded-2xl bg-white p-4 shadow">
+        <Mascot mood="happy" message="Crea tu cuenta para guardar favoritos y seguir tu ruta." />
+        <Link
+          to="/registro"
+          className="rounded-xl border-b-4 border-emerald-950 bg-[#047857] px-4 py-2 text-center font-display font-bold text-white"
+        >
+          Crear cuenta
+        </Link>
+        <Link to="/ingresar" className="text-center font-semibold text-[#047857] underline">
+          Ya tengo cuenta
+        </Link>
+      </section>
+    );
+  }
   if (!stats) {
     return (
       <section aria-label="Tu día" className="sticky top-8 rounded-2xl bg-white p-4 shadow">

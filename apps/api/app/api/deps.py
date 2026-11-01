@@ -44,5 +44,15 @@ def current_user(request: Request, service: AuthServiceDep) -> User:
 CurrentUser = Annotated[User, Depends(current_user)]
 
 
+def optional_user(request: Request, service: AuthServiceDep) -> User | None:
+    """Usuario si envía token (un token inválido sigue siendo 401); None si no envía ninguno."""
+    if not request.headers.get("authorization"):
+        return None
+    return current_user(request, service)
+
+
+OptionalUser = Annotated[User | None, Depends(optional_user)]
+
+
 def client_ip(request: Request) -> str:
     return request.client.host if request.client else "desconocida"

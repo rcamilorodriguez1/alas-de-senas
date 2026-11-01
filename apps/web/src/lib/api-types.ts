@@ -379,6 +379,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dictionary/signs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search */
+        get: operations["search_api_dictionary_signs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dictionary/signs/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Sign */
+        get: operations["get_sign_api_dictionary_signs__slug__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dictionary/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Categories */
+        get: operations["categories_api_dictionary_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dictionary/favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Favorites */
+        get: operations["favorites_api_dictionary_favorites_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dictionary/favorites/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Favorite */
+        post: operations["add_favorite_api_dictionary_favorites__slug__post"];
+        /** Remove Favorite */
+        delete: operations["remove_favorite_api_dictionary_favorites__slug__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -440,6 +526,22 @@ export interface components {
             /** Accesstoken */
             accessToken: string;
             user: components["schemas"]["UserOut"];
+        };
+        /** CategoryOut */
+        CategoryOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Count */
+            count: number;
+        };
+        /** CategoryRefOut */
+        CategoryRefOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
         };
         /** ErrorOut */
         ErrorOut: {
@@ -872,6 +974,14 @@ export interface components {
              */
             introCompleted?: boolean;
         };
+        /** RelatedLessonOut */
+        RelatedLessonOut: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            status: components["schemas"]["ProgressStatus"] | null;
+        };
         /** ReviewAnswerOut */
         ReviewAnswerOut: {
             /** Correct */
@@ -924,6 +1034,46 @@ export interface components {
             /** Exercises */
             exercises: components["schemas"]["ReviewExerciseOut"][];
         };
+        /** SignCardOut */
+        SignCardOut: {
+            /** Slug */
+            slug: string;
+            /** Word */
+            word: string;
+            category: components["schemas"]["CategoryRefOut"];
+            video: components["schemas"]["VideoRef"];
+        };
+        /** SignDetailOut */
+        SignDetailOut: {
+            /** Slug */
+            slug: string;
+            /** Word */
+            word: string;
+            /** Meaning */
+            meaning: string;
+            category: components["schemas"]["CategoryRefOut"];
+            /** Howto */
+            howTo: string | null;
+            /** Usageexample */
+            usageExample: string;
+            video: components["schemas"]["VideoRef"];
+            relatedLesson: components["schemas"]["RelatedLessonOut"] | null;
+            /** Isfavorite */
+            isFavorite: boolean;
+        };
+        /** SignSearchOut */
+        SignSearchOut: {
+            /** Items */
+            items: components["schemas"]["SignCardOut"][];
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+            /** Total */
+            total: number;
+            /** Suggestions */
+            suggestions: components["schemas"]["SuggestionOut"][];
+        };
         /** StatsOut */
         StatsOut: {
             /** Totalxp */
@@ -951,6 +1101,13 @@ export interface components {
             freezesAvailable: number;
             /** Atrisk */
             atRisk: boolean;
+        };
+        /** SuggestionOut */
+        SuggestionOut: {
+            /** Slug */
+            slug: string;
+            /** Word */
+            word: string;
         };
         /** TodayOut */
         TodayOut: {
@@ -1935,6 +2092,240 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ReviewCompletionOut"];
                 };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    search_api_dictionary_signs_get: {
+        parameters: {
+            query?: {
+                q?: string;
+                category?: string | null;
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignSearchOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    get_sign_api_dictionary_signs__slug__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignDetailOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    categories_api_dictionary_categories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryOut"][];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    favorites_api_dictionary_favorites_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignCardOut"][];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    add_favorite_api_dictionary_favorites__slug__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    remove_favorite_api_dictionary_favorites__slug__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error de la petición */
             "4XX": {

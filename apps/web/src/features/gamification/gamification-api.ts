@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { apiRequest } from "../../lib/api";
+import { useSessionStore } from "../../lib/session-store";
 import type { components } from "../../lib/api-types";
 
 export type Stats = components["schemas"]["StatsOut"];
@@ -10,8 +11,11 @@ export const statsKey = ["gamification", "stats"] as const;
 export const achievementsKey = ["gamification", "achievements"] as const;
 
 export function useStats() {
+  // Solo con sesión: el diccionario también se ve sin iniciar sesión (R7.7).
+  const authenticated = useSessionStore((state) => state.status === "authenticated");
   return useQuery({
     queryKey: statsKey,
+    enabled: authenticated,
     queryFn: () => apiRequest<Stats>("GET", "/gamification/stats"),
   });
 }

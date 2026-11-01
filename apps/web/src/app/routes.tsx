@@ -1,5 +1,7 @@
 import type { RouteObject } from "react-router";
 import { LoginPage } from "../features/auth/LoginPage";
+import { DictionaryPage } from "../features/dictionary/DictionaryPage";
+import { SignPage } from "../features/dictionary/SignPage";
 import { AchievementsPage } from "../features/gamification/AchievementsPage";
 import { ProgressPage } from "../features/progress/ProgressPage";
 import { ReviewPage } from "../features/review/ReviewPage";
@@ -68,5 +70,8 @@ export const appRoutes: RouteObject[] = [
       </RequireAuth>
     ),
   },
+  // El diccionario se ve sin iniciar sesión (R7.7).
+  { path: "/diccionario", element: <DictionaryPage /> },
+  { path: "/diccionario/:slug", element: <SignPage /> },
   { path: "*", element: <NotFoundPage /> },
 ];

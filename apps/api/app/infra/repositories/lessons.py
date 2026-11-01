@@ -57,15 +57,19 @@ def sign_catalog(session: Session, sign_ids: Collection[str]) -> SignCatalog:
             word=sign.word,
             how_to=sign.how_to,
             usage_example=sign.usage_example,
-            video=VideoRef(
-                src=sign.video_path,
-                poster=sign.poster_path,
-                placeholder=sign.is_placeholder,
-                source=_media_source(sign.media_source),
-            ),
+            video=video_ref(sign),
         )
         for sign in rows
     }
+
+
+def video_ref(sign: Sign) -> VideoRef:
+    return VideoRef(
+        src=sign.video_path,
+        poster=sign.poster_path,
+        placeholder=sign.is_placeholder,
+        source=_media_source(sign.media_source),
+    )
 
 
 def _media_source(value: str) -> Literal["video", "images", "placeholder"]:
