@@ -1,0 +1,254 @@
+"""Entrena el MLP del alfabeto estático a partir de los `dataset.json` del colector (§10.5).
+
+Uso:
+    uv run --project ml python ml/train_static.py --data ml/data/*.json \\
+        --out apps/web/public/models/lsc-alfabeto
+
+Python NUNCA recalcula puntos (D11): solo entrena sobre los 63 números que exportó el navegador
+con `normalizeLandmarks` (hand-v1). Solo letras `motion = static` de `content/signs.csv` (R8.3a).
+`labels.json` y `meta.json` se escriben en el mismo paso que el modelo, para que el orden de las
+etiquetas coincida siempre con las salidas.
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import glob
+import json
+import math
+import os
+import random
+import sys
+from collections import Counter
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+
+FEATURE_VERSION = "hand-v1"
+FEATURE_SIZE = 63
+NONE_LABEL = "NINGUNA"
+THRESHOLD = 0.7
+SEED = 42
+EPOCHS = 60
+MIN_PEOPLE_FOR_GROUP_SPLIT = 3
+ROOT = Path(__file__).resolve().parent.parent
+
+
+class DatasetError(ValueError):
+    """Datos inválidos: se explica en español qué archivo y qué falla."""
+
+
+@dataclass(frozen=True)
+class Samples:
+    features: list[list[float]]
+    labels: list[str]
+    collectors: list[str]
+
+
+# ---------- Carga y validación (sin TensorFlow: se puede probar sola) ----------
+
+
+def expand_paths(patterns: list[str]) -> list[Path]:
+    """En Windows la terminal no expande `*.json`: se expande aquí."""
+    paths: list[Path] = []
+    for pattern in patterns:
+        matches = sorted(glob.glob(pattern))
+        paths.extend(Path(match) for match in (matches or [pattern]))
+    return paths
+
+
+def static_labels(signs_csv: Path) -> tuple[set[str], set[str]]:
+    """(slugs estáticos, slugs con movimiento) según la columna `motion` de signs.csv."""
+    static: set[str] = set()
+    dynamic: set[str] = set()
+    with signs_csv.open(encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            motion = (row.get("motion") or "").strip()
+            if motion == "static":
+                static.add(row["slug"])
+            elif motion == "dynamic":
+                dynamic.add(row["slug"])
+    return static, dynamic
+
+
+def load_datasets(paths: list[Path], signs_csv: Path) -> Samples:
+    static, dynamic = static_labels(signs_csv)
+    features: list[list[float]] = []
+    labels: list[str] = []
+    collectors: list[str] = []
+    if not paths:
+        raise DatasetError("No hay archivos de datos: pasa --data ml/data/*.json")
+    for path in paths:
+        if not path.is_file():
+            raise DatasetError(f"No existe el archivo {path}")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("featureVersion") != FEATURE_VERSION or data.get("featureSize") != FEATURE_SIZE:
+            raise DatasetError(
+                f"{path.name}: se esperaba featureVersion={FEATURE_VERSION} y featureSize="
+                f"{FEATURE_SIZE}; vuelve a recolectar con la versión actual del colector."
+            )
+        collector = str(data.get("collector") or "").strip()
+        if not collector:
+            raise DatasetError(f"{path.name}: falta el alias de quien grabó (`collector`).")
+        for index, sample in enumerate(data.get("samples", [])):
+            label = sample.get("label")
+            vector = sample.get("features")
+            where = f"{path.name}, muestra {index}"
+            if label in dynamic:
+                raise DatasetError(
+                    f"{where}: «{label}» es una letra con movimiento;"
+                    " se practica con autoevaluación."
+                )
+            if label != NONE_LABEL and label not in static:
+                raise DatasetError(
+                    f"{where}: «{label}» no es una letra estática de signs.csv ni {NONE_LABEL}."
+                )
+            if (
+                not isinstance(vector, list)
+                or len(vector) != FEATURE_SIZE
+                or not all(isinstance(v, int | float) and math.isfinite(v) for v in vector)
+            ):
+                raise DatasetError(f"{where}: se esperaban {FEATURE_SIZE} números finitos.")
+            features.append([float(v) for v in vector])
+            labels.append(str(label))
+            collectors.append(collector)
+    if len(set(labels)) < 2:
+        raise DatasetError("Se necesitan al menos 2 clases (por ejemplo una letra y NINGUNA).")
+    return Samples(features, labels, collectors)
+
+
+def label_order(labels: list[str]) -> list[str]:
+    """Orden estable de las clases = índice de cada salida del modelo."""
+    return sorted(set(labels))
+
+
+# ---------- Entrenamiento ----------
+
+
+def set_seeds() -> None:
+    os.environ["PYTHONHASHSEED"] = str(SEED)
+    random.seed(SEED)
+    import numpy as np
+    import tensorflow as tf
+
+    np.random.seed(SEED)
+    tf.random.set_seed(SEED)
+
+
+def train(samples: Samples, out: Path, reports: Path) -> dict[str, float]:
+    os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+    set_seeds()
+    import numpy as np
+    import tensorflow as tf
+    import tensorflowjs as tfjs
+    from sklearn.metrics import confusion_matrix
+    from sklearn.model_selection import GroupShuffleSplit, train_test_split
+
+    classes = label_order(samples.labels)
+    index = {label: i for i, label in enumerate(classes)}
+    x = np.array(samples.features, dtype="float32")
+    y = np.array([index[label] for label in samples.labels], dtype="int32")
+    people = sorted(set(samples.collectors))
+    if len(people) >= MIN_PEOPLE_FOR_GROUP_SPLIT:
+        splitter = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=SEED)
+        train_idx, val_idx = next(splitter.split(x, y, groups=samples.collectors))
+        print(f"Separación por persona: {len(people)} personas.")
+    else:
+        print(
+            f"ADVERTENCIA: solo {len(people)} persona(s); se usa 80/20 estratificado. "
+            "La meta es ≥ 3 personas para medir cómo generaliza."
+        )
+        train_idx, val_idx = train_test_split(
+            np.arange(len(y)), test_size=0.2, random_state=SEED, stratify=y
+        )
+
+    layers = tf.keras.layers
+    model = tf.keras.Sequential(
+        [
+            layers.Input((FEATURE_SIZE,)),
+            layers.Dense(128, activation="relu"),
+            layers.Dropout(0.3),
+            layers.Dense(64, activation="relu"),
+            layers.Dense(len(classes), activation="softmax"),
+        ]
+    )
+    model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+    model.fit(
+        x[train_idx],
+        y[train_idx],
+        validation_data=(x[val_idx], y[val_idx]),
+        epochs=EPOCHS,
+        batch_size=32,
+        shuffle=True,
+        verbose=2,
+        callbacks=[tf.keras.callbacks.EarlyStopping(patience=8, restore_best_weights=True)],
+    )
+
+    predicted = model.predict(x[val_idx], verbose=0).argmax(axis=1)
+    per_class: dict[str, float] = {}
+    for i, label in enumerate(classes):
+        mask = y[val_idx] == i
+        per_class[label] = float((predicted[mask] == i).mean()) if mask.any() else float("nan")
+        print(f"  {label:>16}: {per_class[label]:.2%} ({int(mask.sum())} muestras de validación)")
+
+    reports.mkdir(parents=True, exist_ok=True)
+    matrix = confusion_matrix(y[val_idx], predicted, labels=list(range(len(classes))))
+    save_confusion(matrix, classes, reports / "confusion.png")
+
+    out.mkdir(parents=True, exist_ok=True)
+    tfjs.converters.save_keras_model(model, str(out))
+    (out / "labels.json").write_text(json.dumps(classes, ensure_ascii=False), encoding="utf-8")
+    meta = {
+        "featureVersion": FEATURE_VERSION,
+        "featureSize": FEATURE_SIZE,
+        "threshold": THRESHOLD,
+        "createdAt": datetime.now(UTC).isoformat(timespec="seconds"),
+        "classes": len(classes),
+        "samples": dict(Counter(samples.labels)),
+        "people": len(people),
+    }
+    (out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"Modelo, labels.json y meta.json en {out}")
+    return per_class
+
+
+def save_confusion(matrix: object, classes: list[str], path: Path) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    size = max(4, len(classes) * 0.6)
+    figure, axis = plt.subplots(figsize=(size, size))
+    axis.imshow(matrix, cmap="Greens")
+    axis.set_xticks(range(len(classes)), classes, rotation=90)
+    axis.set_yticks(range(len(classes)), classes)
+    axis.set_xlabel("Predicción")
+    axis.set_ylabel("Real")
+    axis.set_title("Matriz de confusión (validación)")
+    figure.tight_layout()
+    figure.savefig(path)
+    plt.close(figure)
+    print(f"Matriz de confusión en {path}")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Entrena el alfabeto estático (§10.5).")
+    parser.add_argument("--data", nargs="+", required=True, help="Archivos dataset.json")
+    parser.add_argument("--out", type=Path, default=ROOT / "apps/web/public/models/lsc-alfabeto")
+    parser.add_argument("--signs", type=Path, default=ROOT / "content/signs.csv")
+    parser.add_argument("--reports", type=Path, default=ROOT / "ml/reports")
+    args = parser.parse_args(argv)
+    try:
+        samples = load_datasets(expand_paths(args.data), args.signs)
+    except DatasetError as exc:
+        print(f"Error en los datos: {exc}", file=sys.stderr)
+        return 1
+    print(f"{len(samples.labels)} muestras · clases: {dict(Counter(samples.labels))}")
+    train(samples, args.out, args.reports)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
