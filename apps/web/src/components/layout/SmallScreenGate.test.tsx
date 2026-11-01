@@ -1,4 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
+import { useEffect } from "react";
 import { describe, expect, it } from "vitest";
 import { setViewportWidth } from "../../test/media";
 import { SmallScreenGate } from "./SmallScreenGate";
@@ -41,14 +42,14 @@ describe("SmallScreenGate (R10.1, §9.7)", () => {
     expect(screen.getByText(NOTICE)).toBeInTheDocument();
     expect(screen.getByText(SOON)).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Tomi, el colibrí" })).toBeInTheDocument();
-    expect(screen.queryByText("Contenido de la app")).toBeNull();
+    expect(screen.getByText("Contenido de la app")).not.toBeVisible();
   });
 
   it("en 390 px (celular) muestra el aviso", () => {
     setViewportWidth(390);
     renderGate();
     expect(screen.getByText(NOTICE)).toBeInTheDocument();
-    expect(screen.queryByText("Contenido de la app")).toBeNull();
+    expect(screen.getByText("Contenido de la app")).not.toBeVisible();
   });
 
   it("al achicar la ventana por debajo de 1024 px aparece el aviso", () => {
@@ -59,7 +60,7 @@ describe("SmallScreenGate (R10.1, §9.7)", () => {
     resizeTo(800);
 
     expect(screen.getByText(NOTICE)).toBeInTheDocument();
-    expect(screen.queryByText("Contenido de la app")).toBeNull();
+    expect(screen.getByText("Contenido de la app")).not.toBeVisible();
   });
 
   it("al agrandar la ventana a 1024 px o más vuelve la app", () => {
@@ -83,5 +84,36 @@ describe("SmallScreenGate (R10.1, §9.7)", () => {
     unmount();
     // No debe lanzar ni actualizar un componente desmontado.
     expect(() => resizeTo(600)).not.toThrow();
+  });
+});
+
+describe("SmallScreenGate: revisión del Grupo 4", () => {
+  it("no desmonta la app al achicar y volver a ensanchar (no repite el arranque de sesión)", () => {
+    let mounts = 0;
+    function Counter() {
+      useEffect(() => {
+        mounts += 1;
+      }, []);
+      return <p>Contenido de la app</p>;
+    }
+    setViewportWidth(1366);
+    render(
+      <SmallScreenGate>
+        <Counter />
+      </SmallScreenGate>,
+    );
+    resizeTo(900);
+    resizeTo(1366);
+    expect(mounts).toBe(1);
+    expect(screen.getByText("Contenido de la app")).toBeVisible();
+  });
+
+  it("no bloquea el diccionario aunque la pantalla sea pequeña (§9.7)", () => {
+    window.history.pushState({}, "", "/diccionario/gracias");
+    setViewportWidth(900);
+    renderGate();
+    expect(screen.getByText("Contenido de la app")).toBeVisible();
+    expect(screen.queryByText(NOTICE)).toBeNull();
+    window.history.pushState({}, "", "/");
   });
 });

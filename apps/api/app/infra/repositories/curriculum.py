@@ -28,11 +28,6 @@ def load_curriculum(session: Session) -> list[Module]:
     return list(session.execute(statement).scalars().all())
 
 
-def load_node(session: Session, node_id: str) -> Node | None:
-    statement = select(Node).options(selectinload(Node.lessons)).where(Node.id == node_id)
-    return session.execute(statement).scalar_one_or_none()
-
-
 def lesson_facts(session: Session, user_id: uuid.UUID) -> Mapping[str, LessonFacts]:
     """Hechos guardados (D3): mejor puntaje y si alguna vez aprobó, por lección completada."""
     statement = (

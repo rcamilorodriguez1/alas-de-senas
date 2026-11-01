@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Collection, Mapping, Sequence
 
+import pytest
+
 from app.domain.enums import LessonType, ProgressStatus
 from app.domain.policies.progress import (
     CurriculumLesson,
@@ -365,3 +367,18 @@ def test_es_pura_y_no_modifica_la_entrada() -> None:
 
     assert dict(first.lessons) == dict(second.lessons)
     assert modules == curriculum()
+
+
+# ---------- % de avance de un módulo (revisión del Grupo 4) -----------------------------------
+
+
+@pytest.mark.parametrize(
+    ("approved", "total", "expected"),
+    [(0, 16, 0), (1, 16, 6), (2, 16, 13), (4, 16, 25), (16, 16, 100), (0, 0, 0)],
+)
+def test_module_progress_percent(approved: int, total: int, expected: int) -> None:
+    from app.domain.policies.progress import module_progress_percent
+
+    lesson_ids = [f"L{i}" for i in range(total)]
+    passed = set(lesson_ids[:approved]) | {"OTRA-LECCION"}
+    assert module_progress_percent(lesson_ids, passed) == expected

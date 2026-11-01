@@ -113,3 +113,22 @@ def test_calculate_devuelve_enteros() -> None:
     reward = _calc(LessonType.RECOGNIZE, _score(67), previously_passed=True)
     assert type(reward.xp) is int
     assert type(reward.nectar) is int
+
+
+# ---------- XP estimada en la ruta (revisión del Grupo 4) -------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("lesson_type", "previously_passed", "expected"),
+    [
+        (LessonType.LEARN, False, 20),
+        (LessonType.PRACTICE, False, 20),
+        (LessonType.CHALLENGE, False, 30),
+        (LessonType.LEARN, True, 10),
+        (LessonType.CHALLENGE, True, 15),
+    ],
+)
+def test_max_xp_es_el_de_aprobar_con_100(
+    lesson_type: LessonType, previously_passed: bool, expected: int
+) -> None:
+    assert RewardPolicy().max_xp(lesson_type, previously_passed) == expected

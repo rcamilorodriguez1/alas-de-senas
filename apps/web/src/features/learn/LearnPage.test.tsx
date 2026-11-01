@@ -587,3 +587,68 @@ describe("LearnPage: popover de lección (R3.8)", () => {
     expect(within(dialogs[0]).getByText("Esta lección aún está bloqueada")).toBeInTheDocument();
   });
 });
+
+describe("LearnPage: revisión del Grupo 4 (foco y un solo popover)", () => {
+  beforeEach(() => {
+    mockFetch(serve(PATH_IN_PROGRESS));
+  });
+
+  it("al abrir, el foco entra al diálogo; al cerrar con Escape vuelve al botón de la lección", async () => {
+    const user = userEvent.setup();
+    renderLearn();
+    await loaded();
+    const trigger = lessonButton("2 · Reconoce");
+    await user.click(trigger);
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(trigger).toHaveFocus();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("el foco no salta de vuelta al diálogo si el usuario ya se movió dentro de él", async () => {
+    const user = userEvent.setup();
+    renderLearn();
+    await loaded();
+    await user.click(lessonButton("2 · Reconoce"));
+    const start = within(screen.getByRole("dialog")).getByRole("link", { name: /Empezar/ });
+    start.focus();
+    // Un nuevo render (p. ej. otro nodo desplegado) no debe robar el foco.
+    await user.click(nodeButton("Presentaciones"));
+    await user.click(lessonButton("2 · Reconoce", "Disponible"));
+    await user.click(lessonButton("2 · Reconoce", "Disponible"));
+    const again = within(screen.getByRole("dialog")).getByRole("link", { name: /Empezar/ });
+    again.focus();
+    expect(again).toHaveFocus();
+  });
+
+  it("con dos nodos desplegados solo hay un popover abierto", async () => {
+    const user = userEvent.setup();
+    renderLearn();
+    await loaded();
+    await user.click(nodeButton("Presentaciones"));
+    await user.click(lessonButton("2 · Reconoce", "Disponible"));
+    await user.click(lessonButtons("1 · Aprende", "Bloqueada")[0]);
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+  });
+});
+
+describe("LearnPage: módulo bloqueado (revisión del Grupo 4)", () => {
+  it("la tarjeta de un módulo bloqueado lo dice con texto y candado", async () => {
+    mockFetch(serve(PATH_IN_PROGRESS));
+    renderLearn();
+    await loaded();
+    const heading = screen.getByRole("heading", { name: /Módulo 2 ·/ });
+    const card = heading.closest("section");
+    expect(card).not.toBeNull();
+    const header = heading.parentElement;
+    expect(header).not.toBeNull();
+    if (card && header) {
+      expect(within(header).getByText("Bloqueado")).toBeInTheDocument();
+      expect(within(card).getByText(/Completa el módulo anterior para desbloquearlo/)).toBeInTheDocument();
+    }
+  });
+});

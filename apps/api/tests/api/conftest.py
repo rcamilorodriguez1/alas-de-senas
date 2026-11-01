@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 from app.content.seed import seed_content
 from app.core.config import Settings, get_settings
 from app.infra.db import get_engine
-from app.infra.models import Module
+from app.infra.models import Lesson, Module
 from app.main import create_app
 from tests.unit.content.real_content import CONTENT_DIR, make_media
 
@@ -95,7 +95,9 @@ def seeded_content(tmp_path_factory: pytest.TempPathFactory) -> None:
     y, si `modules` está vacía, se vuelve a sembrar con un `media_dir` temporal.
     """
     with Session(get_engine()) as session:
-        if session.execute(select(Module.id).limit(1)).first() is not None:
+        has_modules = session.execute(select(Module.id).limit(1)).first() is not None
+        has_lessons = session.execute(select(Lesson.id).limit(1)).first() is not None
+        if has_modules and has_lessons:
             return
         media_dir = tmp_path_factory.mktemp("seeded-media")
         make_media(media_dir, CONTENT_DIR)

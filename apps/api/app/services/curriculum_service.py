@@ -16,9 +16,9 @@ from app.domain.policies.progress import (
     ProgressFacts,
     ProgressMap,
     compute_progress,
+    module_progress_percent,
 )
 from app.domain.policies.rewards import RewardPolicy
-from app.domain.policies.scoring import round_half_up, score_session
 from app.infra.models import Lesson, Module, Node
 from app.infra.repositories import curriculum as repo
 from app.infra.repositories.curriculum import LessonFacts
@@ -101,8 +101,7 @@ class CurriculumService:
             for module in modules
         ]
         best = {lid: f.best_score for lid, f in facts.items() if f.best_score is not None}
-        passed = {lid for lid, f in facts.items() if f.passed}
-        return compute_progress(curriculum, ProgressFacts(best_scores=best, passed=passed))
+        return compute_progress(curriculum, ProgressFacts(best_scores=best, passed=_passed(facts)))
 
     def _module_out(
         self, module: Module, progress: ProgressMap, facts: Mapping[str, LessonFacts]
@@ -121,9 +120,8 @@ class CurriculumService:
                 progress=0,
                 nodes=nodes,
             )
-        lessons = [lesson for node in module.nodes for lesson in node.lessons]
-        approved = sum(1 for lesson in lessons if facts.get(lesson.id, _NO_FACTS).passed)
-        percent = round_half_up(approved * 100, len(lessons)) if lessons else 0
+        lesson_ids = [lesson.id for node in module.nodes for lesson in node.lessons]
+        percent = module_progress_percent(lesson_ids, _passed(facts))
         return ModuleOut(
             id=module.id,
             order=module.order,
@@ -158,8 +156,6 @@ class CurriculumService:
         self, lesson: Lesson, progress: ProgressMap, facts: Mapping[str, LessonFacts]
     ) -> LessonSummaryOut:
         fact = facts.get(lesson.id, _NO_FACTS)
-        perfect = score_session(1, 1, lesson.type)  # XP posible si la aprueba con 100 %
-        reward = self.rewards.calculate(lesson.type, perfect, previously_passed=fact.passed)
         return LessonSummaryOut(
             id=lesson.id,
             order=lesson.order,
@@ -167,8 +163,12 @@ class CurriculumService:
             title=lesson.title,
             status=progress.lessons[lesson.id],
             best_score=fact.best_score,
-            estimated_xp=reward.xp,
+            estimated_xp=self.rewards.max_xp(lesson.type, fact.passed),
         )
 
 
 _NO_FACTS = LessonFacts(best_score=None, passed=False)
+
+
+def _passed(facts: Mapping[str, LessonFacts]) -> set[str]:
+    return {lesson_id for lesson_id, fact in facts.items() if fact.passed}

@@ -6,6 +6,7 @@ from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 
 from app.domain.enums import LessonType, ProgressStatus
+from app.domain.policies.scoring import round_half_up
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,3 +104,12 @@ def _module_status(node_states: Sequence[ProgressStatus]) -> ProgressStatus:
     if all(state in done for state in node_states):
         return ProgressStatus.COMPLETED
     return ProgressStatus.IN_PROGRESS
+
+
+def module_progress_percent(lesson_ids: Collection[str], passed: Collection[str]) -> int:
+    """% de avance de un módulo publicado = aprobadas ÷ lecciones del módulo (§8.2), sin round()."""
+    if not lesson_ids:
+        return 0
+    approved_set = set(passed)
+    approved = sum(1 for lesson_id in lesson_ids if lesson_id in approved_set)
+    return round_half_up(approved * 100, len(lesson_ids))

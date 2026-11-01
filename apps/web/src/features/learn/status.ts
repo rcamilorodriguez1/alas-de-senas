@@ -23,7 +23,7 @@ export const STATUS_STYLE: Record<LearningNode["status"], string> = {
   LOCKED: "bg-[#CBD5E1] text-[#45606A] border-slate-400",
   AVAILABLE: "bg-violet-600 text-white border-violet-800",
   IN_PROGRESS: "bg-violet-600 text-white border-violet-800",
-  COMPLETED: "bg-emerald-500 text-white border-emerald-700",
+  COMPLETED: "bg-[#047857] text-white border-emerald-950", // contraste AA con blanco
   GOLDEN: "bg-[#FACC15] text-[#0E2A2F] border-yellow-600",
   COMING_SOON: "bg-[#CBD5E1] text-[#45606A] border-slate-400",
 };

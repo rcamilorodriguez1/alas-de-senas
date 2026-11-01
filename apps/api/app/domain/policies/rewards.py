@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.domain.enums import LessonType
-from app.domain.policies.scoring import SessionScore, round_half_up
+from app.domain.policies.scoring import SessionScore, round_half_up, score_session
 
 BASE_XP = 10
 CHALLENGE_BASE_XP = 20
@@ -38,3 +38,8 @@ class RewardPolicy:
         if is_challenge and not previously_passed:
             nectar += FIRST_CHALLENGE_NECTAR
         return Reward(xp=xp, nectar=nectar)
+
+    def max_xp(self, lesson_type: LessonType, previously_passed: bool) -> int:
+        """XP de aprobar la lección con 100 % (la «XP estimada» que muestra la ruta)."""
+        perfect = score_session(1, 1, lesson_type)
+        return self.calculate(lesson_type, perfect, previously_passed).xp

@@ -1,5 +1,5 @@
 import { Lock } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { AppLayout } from "../../components/layout/AppLayout";
 import { Mascot } from "../../components/mascot/Mascot";
 import { useSessionStore } from "../../lib/session-store";
@@ -24,18 +24,31 @@ function StatusIcon({ status }: { status: LearningNode["status"] }) {
   return <span aria-hidden="true">{status === "GOLDEN" ? "⭐" : status === "COMPLETED" ? "✔" : "▶"}</span>;
 }
 
+interface PopoverState {
+  openLesson: string | null;
+  onOpen: (lessonId: string | null) => void;
+}
+
 function NodeItem({
   node,
   index,
   expanded,
   onToggle,
+  popover,
 }: {
   node: LearningNode;
   index: number;
   expanded: boolean;
   onToggle: () => void;
+  popover: PopoverState;
 }) {
-  const [openLesson, setOpenLesson] = useState<string | null>(null);
+  const triggers = useRef(new Map<string, HTMLButtonElement>());
+  const { openLesson, onOpen } = popover;
+  const close = useCallback(() => {
+    const trigger = openLesson ? triggers.current.get(openLesson) : undefined;
+    onOpen(null);
+    trigger?.focus(); // el foco vuelve al botón que abrió el diálogo
+  }, [openLesson, onOpen]);
   const status = NODE_STATUS_TEXT[node.status];
   const side = index % 2 === 0 ? "self-start ml-8" : "self-end mr-8"; // zigzag
   const selected = node.lessons.find((lesson) => lesson.id === openLesson);
@@ -60,7 +73,13 @@ function NodeItem({
               <li key={lesson.id}>
                 <button
                   type="button"
-                  onClick={() => setOpenLesson(openLesson === lesson.id ? null : lesson.id)}
+                  ref={(element) => {
+                    if (element) triggers.current.set(lesson.id, element);
+                    else triggers.current.delete(lesson.id);
+                  }}
+                  aria-expanded={openLesson === lesson.id}
+                  aria-controls={openLesson === lesson.id ? `popover-${lesson.id}` : undefined}
+                  onClick={() => onOpen(openLesson === lesson.id ? null : lesson.id)}
                   className={`flex flex-col items-center rounded-full border-b-4 px-3 py-2 text-sm font-bold ${STATUS_STYLE[lesson.status]}`}
                 >
                   <span className="flex items-center gap-1">
@@ -72,7 +91,9 @@ function NodeItem({
               </li>
             ))}
           </ol>
-          {selected && <LessonPopover lesson={selected} onClose={() => setOpenLesson(null)} />}
+          {selected && (
+            <LessonPopover key={selected.id} lesson={selected} id={`popover-${selected.id}`} onClose={close} />
+          )}
         </div>
       )}
     </li>
@@ -83,10 +104,12 @@ function ModuleSection({
   module,
   expanded,
   onToggle,
+  popover,
 }: {
   module: LearningModule;
   expanded: Set<string>;
   onToggle: (nodeId: string) => void;
+  popover: PopoverState;
 }) {
   const comingSoon = module.status === "COMING_SOON";
   return (
@@ -101,8 +124,17 @@ function ModuleSection({
               Próximamente
             </span>
           )}
+          {module.status === "LOCKED" && (
+            <span className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-[#45606A]">
+              <Lock aria-hidden="true" size={14} />
+              Bloqueado
+            </span>
+          )}
         </div>
         <p className="text-[#45606A]">{module.description}</p>
+        {module.status === "LOCKED" && (
+          <p className="text-sm text-[#45606A]">Completa el módulo anterior para desbloquearlo.</p>
+        )}
         {!comingSoon && (
           <div className="mt-3 flex items-center gap-3">
             <div
@@ -128,6 +160,7 @@ function ModuleSection({
               index={index}
               expanded={expanded.has(node.id)}
               onToggle={() => onToggle(node.id)}
+              popover={popover}
             />
           ))}
         </ol>
@@ -141,6 +174,9 @@ function LearningPathView({ modules }: { modules: LearningModule[] }) {
     const current = currentNodeId(modules);
     return new Set(current ? [current] : []);
   });
+  // Un solo popover abierto en toda la ruta.
+  const [openLesson, setOpenLesson] = useState<string | null>(null);
+  const popover = useMemo(() => ({ openLesson, onOpen: setOpenLesson }), [openLesson]);
   const toggle = (nodeId: string) =>
     setExpanded((previous) => {
       const next = new Set(previous);
@@ -151,7 +187,13 @@ function LearningPathView({ modules }: { modules: LearningModule[] }) {
   return (
     <>
       {modules.map((module) => (
-        <ModuleSection key={module.id} module={module} expanded={expanded} onToggle={toggle} />
+        <ModuleSection
+          key={module.id}
+          module={module}
+          expanded={expanded}
+          onToggle={toggle}
+          popover={popover}
+        />
       ))}
     </>
   );
@@ -162,7 +204,10 @@ export function LearnPage() {
   const { data, isPending, isError, refetch } = useLearningPath();
   const aside = (
     <div className="sticky top-8 rounded-2xl bg-white p-4 shadow">
-      <Mascot mood="happy" message={`¡Hola, ${user?.name ?? ""}! Sigue tu ruta.`} />
+      <Mascot
+        mood="happy"
+        message={user?.name ? `¡Hola, ${user.name}! Sigue tu ruta.` : "¡Hola! Sigue tu ruta."}
+      />
     </div>
   );
   return (

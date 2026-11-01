@@ -5,24 +5,36 @@ import { isOpenable } from "./status";
 
 interface LessonPopoverProps {
   lesson: LearningLesson;
+  id: string;
   onClose: () => void;
 }
 
 /** Detalle de una lección de la ruta: XP posible y «Empezar», o por qué está bloqueada. */
-export function LessonPopover({ lesson, onClose }: LessonPopoverProps) {
+export function LessonPopover({ lesson, id, onClose }: LessonPopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // El foco entra una sola vez al abrir; los renders siguientes no lo roban.
   useEffect(() => {
     ref.current?.focus();
+  }, []);
+
+  useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-  const titleId = `popover-${lesson.id}`;
+  }, []);
+
+  const titleId = `${id}-title`;
   return (
     <div
       ref={ref}
+      id={id}
       role="dialog"
       aria-labelledby={titleId}
       tabIndex={-1}
@@ -38,7 +50,7 @@ export function LessonPopover({ lesson, onClose }: LessonPopoverProps) {
       {isOpenable(lesson) ? (
         <Link
           to={`/leccion/${lesson.id}`}
-          className="mt-3 block rounded-xl border-b-4 border-emerald-700 bg-emerald-500 px-4 py-2 text-center font-display font-bold text-white hover:bg-emerald-600"
+          className="mt-3 block rounded-xl border-b-4 border-emerald-950 bg-[#047857] px-4 py-2 text-center font-display font-bold text-white hover:bg-emerald-800"
         >
           Empezar
         </Link>
@@ -49,7 +61,7 @@ export function LessonPopover({ lesson, onClose }: LessonPopoverProps) {
       )}
       <button
         type="button"
-        onClick={onClose}
+        onClick={() => onCloseRef.current()}
         className="mt-2 w-full rounded-xl px-3 py-1.5 text-sm font-semibold text-[#45606A] hover:bg-slate-100"
       >
         Cerrar

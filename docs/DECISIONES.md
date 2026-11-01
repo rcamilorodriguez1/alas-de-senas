@@ -124,3 +124,9 @@
   4. **Movimiento reducido** con un hook propio (`lib/motion.ts`) que lee `matchMedia` y escucha cambios: el de Framer Motion guarda el valor una sola vez.
   5. **Panel derecho** oculto por debajo de 1280 px (§9.7); aviso «solo computador» por debajo de 1024 px para toda la app.
   6. **Barra superior provisional** (nombre y «Cerrar sesión»); racha, XP, néctar y vidas llegan en el Grupo 6.
+- Ajustes tras la revisión del Grupo 4 (D-011, continuación; reemplaza D-011.5):
+  7. **Reglas al dominio:** `module_progress_percent` (`domain/policies/progress.py`) y `RewardPolicy.max_xp` (XP estimada); el servicio solo las llama (ProgressService del Grupo 7 reutilizará la primera).
+  8. **Aviso de pantalla pequeña como capa:** la app queda montada y oculta (`hidden` + `inert`) para no perder estado ni repetir el refresh al cambiar el tamaño; `/diccionario` no se bloquea (§9.7).
+  9. **Accesibilidad:** verde de «completado» y «Empezar» con `#047857` (contraste AA con blanco); el popover recibe el foco una sola vez, lo devuelve al botón al cerrar, `aria-expanded`/`aria-controls`, y hay un solo popover abierto en toda la ruta.
+  10. **Pendiente (Grupo 6):** entre 1024 y 1279 px el panel derecho queda oculto; cuando tenga racha y vidas, mostrarlo tras un botón (§9.7).
+  11. **Riesgo de pruebas:** las pruebas de API comparten `alas_test`; si dos procesos de pytest corren a la vez (p. ej. un revisor y `alas check`), los que truncan contenido pueden hacer fallar a los otros. No correr dos suites de API en paralelo.
