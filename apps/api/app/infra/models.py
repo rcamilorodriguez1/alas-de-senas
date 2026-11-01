@@ -218,6 +218,8 @@ class ReviewSession(Base):  # D23, §8.5
     correct: Mapped[int | None]
     total: Mapped[int | None]
     hearts_gained: Mapped[int | None]
+    # ReviewCompletionOut: el complete repetido devuelve exactamente lo mismo (idempotencia).
+    result: Mapped[dict[str, object] | None] = mapped_column(JSONB)
 
 
 class ReviewAnswer(Base):

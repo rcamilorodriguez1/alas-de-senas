@@ -1,8 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Link } from "react-router";
 import { Mascot } from "../../components/mascot/Mascot";
 import { ApiError } from "../../lib/api";
 import { useSessionStore } from "../../lib/session-store";
+import { useReviewQueue } from "../review/review-api";
 import { buyStreakFreeze, statsKey, streakLabel, useCountdown, useStats } from "./gamification-api";
 
 const MAX_FREEZES = 2;
@@ -13,6 +15,7 @@ export function StatsPanel() {
   const user = useSessionStore((state) => state.user);
   const queryClient = useQueryClient();
   const { data: stats } = useStats();
+  const { data: queue } = useReviewQueue();
   const [buying, setBuying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const countdown = useCountdown(stats?.hearts.enabled ? stats.hearts.nextHeartAt : null);
@@ -87,6 +90,15 @@ export function StatsPanel() {
         </div>
       </div>
       <p className="font-semibold">🌸 {stats.nectar} de néctar</p>
+      {queue && queue.due > 0 && (
+        <div className="rounded-xl bg-emerald-50 p-3">
+          <p className="font-semibold">Señas por repasar: {queue.due}</p>
+          <p className="text-sm text-[#45606A]">{queue.signs.map((sign) => sign.word).join(", ")}</p>
+          <Link to="/repaso" className="text-sm font-bold text-[#047857] underline">
+            Repasar ahora
+          </Link>
+        </div>
+      )}
       {hearts.enabled && (
         <div>
           <p className="font-semibold">

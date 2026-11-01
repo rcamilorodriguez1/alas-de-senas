@@ -88,10 +88,10 @@
 
 ## Grupo 7 — Progreso y repaso
 
-- [ ] **7.1** `GET /progress/summary`, `/history`, `/units`. _R6.1–6.3_
-- [ ] **7.2** `ReviewService` (modelos `ReviewSession`/`ReviewAnswer` de §5, creados en la tarea 2.1) (`get_queue`, `start` con 409 `NO_REVIEWS_DUE` y reutilización de la sesión abierta, `answer`, `complete` SERIALIZABLE e idempotente que reprograma señas, registra actividad para la racha y da +1 vida con ≥ 80 %). **No existe** un endpoint donde el cliente envíe sus aciertos (D23). _R6.4–6.8, R5.5, R5.14_
-- [ ] **7.3** Pruebas de API del repaso: tokens sin slugs, cuenta para la racha, segunda sesión el mismo día → 409, no quita vidas, da vida con ≥ 80 %.
-- [ ] **7.4** Páginas `/progreso` (Recharts) y `/repaso` (tarjeta de lección con la actividad 2).
+- [x] **7.1** `GET /progress/summary`, `/history`, `/units`. _R6.1–6.3_
+- [x] **7.2** `ReviewService` (modelos `ReviewSession`/`ReviewAnswer` de §5, creados en la tarea 2.1) (`get_queue`, `start` con 409 `NO_REVIEWS_DUE` y reutilización de la sesión abierta, `answer`, `complete` SERIALIZABLE e idempotente que reprograma señas, registra actividad para la racha y da +1 vida con ≥ 80 %). **No existe** un endpoint donde el cliente envíe sus aciertos (D23). _R6.4–6.8, R5.5, R5.14_
+- [x] **7.3** Pruebas de API del repaso: tokens sin slugs, cuenta para la racha, segunda sesión el mismo día → 409, no quita vidas, da vida con ≥ 80 %.
+- [x] **7.4** Páginas `/progreso` (Recharts) y `/repaso` (tarjeta de lección con la actividad 2).
   **Verificar:** fallar una seña la pone en «Señas por repasar»; repasarla al día siguiente mantiene la racha.
 
 ## Grupo 8 — Diccionario

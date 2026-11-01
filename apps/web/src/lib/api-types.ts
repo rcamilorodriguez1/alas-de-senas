@@ -260,6 +260,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/progress/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Summary */
+        get: operations["summary_api_progress_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/progress/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** History */
+        get: operations["history_api_progress_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/progress/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Units */
+        get: operations["units_api_progress_units_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Queue */
+        get: operations["queue_api_reviews_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Review */
+        post: operations["start_review_api_reviews_sessions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/review-sessions/{session_id}/answers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer Review */
+        post: operations["answer_review_api_review_sessions__session_id__answers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/review-sessions/{session_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Review */
+        post: operations["complete_review_api_review_sessions__session_id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -362,6 +481,42 @@ export interface components {
             max: number;
             /** Nextheartat */
             nextHeartAt: string | null;
+        };
+        /** HistoryItemOut */
+        HistoryItemOut: {
+            /**
+             * Sessionid
+             * Format: uuid
+             */
+            sessionId: string;
+            /** Lessonid */
+            lessonId: string;
+            /** Lessontitle */
+            lessonTitle: string;
+            /** Nodetitle */
+            nodeTitle: string;
+            /**
+             * Completedat
+             * Format: date-time
+             */
+            completedAt: string;
+            /** Score */
+            score: number;
+            /** Passed */
+            passed: boolean;
+            /** Xpearned */
+            xpEarned: number;
+        };
+        /** HistoryPageOut */
+        HistoryPageOut: {
+            /** Items */
+            items: components["schemas"]["HistoryItemOut"][];
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+            /** Total */
+            total: number;
         };
         JsonValue: unknown;
         /** LearningPathOut */
@@ -482,6 +637,32 @@ export interface components {
             /** Nodes */
             nodes: components["schemas"]["NodeSummaryOut"][];
         };
+        /** ModuleProgressOut */
+        ModuleProgressOut: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Order */
+            order: number;
+            /** Percent */
+            percent: number;
+        };
+        /** ModuleUnitOut */
+        ModuleUnitOut: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Order */
+            order: number;
+            /** Averagescore */
+            averageScore: number | null;
+            /** Accuracy */
+            accuracy: number | null;
+            /** Nodes */
+            nodes: components["schemas"]["NodeUnitOut"][];
+        };
         /** NodeDetailOut */
         NodeDetailOut: {
             /** Id */
@@ -528,11 +709,37 @@ export interface components {
             /** Lessons */
             lessons: components["schemas"]["LessonSummaryOut"][];
         };
+        /** NodeUnitOut */
+        NodeUnitOut: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Order */
+            order: number;
+            /** Averagescore */
+            averageScore: number | null;
+            /** Accuracy */
+            accuracy: number | null;
+        };
         /**
          * ProgressStatus
          * @enum {string}
          */
         ProgressStatus: "LOCKED" | "AVAILABLE" | "IN_PROGRESS" | "COMPLETED" | "GOLDEN" | "COMING_SOON";
+        /** ProgressSummaryOut */
+        ProgressSummaryOut: {
+            /** Percent */
+            percent: number;
+            /** Modules */
+            modules: components["schemas"]["ModuleProgressOut"][];
+            /** Totalxp */
+            totalXp: number;
+            /** Streak */
+            streak: number;
+            /** Signslearned */
+            signsLearned: number;
+        };
         /** PublicConversation */
         PublicConversation: {
             /**
@@ -639,6 +846,11 @@ export interface components {
             /** Options */
             options: components["schemas"]["WordOption"][];
         };
+        /** QueueSignOut */
+        QueueSignOut: {
+            /** Word */
+            word: string;
+        };
         /** RegisterIn */
         RegisterIn: {
             /** Email */
@@ -659,6 +871,58 @@ export interface components {
              * @default false
              */
             introCompleted?: boolean;
+        };
+        /** ReviewAnswerOut */
+        ReviewAnswerOut: {
+            /** Correct */
+            correct: boolean;
+            /** Correcttoken */
+            correctToken: string | null;
+            /** Correcttokens */
+            correctTokens: string[];
+            /** Correctword */
+            correctWord: string | null;
+            /** Alreadyanswered */
+            alreadyAnswered: boolean;
+        };
+        /** ReviewCompletionOut */
+        ReviewCompletionOut: {
+            /** Correct */
+            correct: number;
+            /** Total */
+            total: number;
+            /** Score */
+            score: number;
+            streak: components["schemas"]["StreakResultOut"];
+            /** Heartsgained */
+            heartsGained: number;
+            /** Newachievements */
+            newAchievements: components["schemas"]["AchievementOut"][];
+        };
+        /** ReviewExerciseOut */
+        ReviewExerciseOut: {
+            /** Id */
+            id: string;
+            type: components["schemas"]["ExerciseType"];
+            /** Content */
+            content: components["schemas"]["PublicObserve"] | components["schemas"]["PublicVideoToMeaning"] | components["schemas"]["PublicMeaningToVideo"] | components["schemas"]["PublicMemoryMatch"] | components["schemas"]["PublicProduce"] | components["schemas"]["PublicConversation"] | components["schemas"]["PublicSpelling"];
+        };
+        /** ReviewQueueOut */
+        ReviewQueueOut: {
+            /** Due */
+            due: number;
+            /** Signs */
+            signs: components["schemas"]["QueueSignOut"][];
+        };
+        /** ReviewStartOut */
+        ReviewStartOut: {
+            /**
+             * Sessionid
+             * Format: uuid
+             */
+            sessionId: string;
+            /** Exercises */
+            exercises: components["schemas"]["ReviewExerciseOut"][];
         };
         /** StatsOut */
         StatsOut: {
@@ -696,6 +960,11 @@ export interface components {
             goalSeconds: number;
             /** Xp */
             xp: number;
+        };
+        /** UnitsOut */
+        UnitsOut: {
+            /** Modules */
+            modules: components["schemas"]["ModuleUnitOut"][];
         };
         /** UnlockedOut */
         UnlockedOut: {
@@ -1389,6 +1658,282 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatsOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    summary_api_progress_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgressSummaryOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    history_api_progress_history_get: {
+        parameters: {
+            query?: {
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryPageOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    units_api_progress_units_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitsOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    queue_api_reviews_queue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewQueueOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    start_review_api_reviews_sessions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewStartOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    answer_review_api_review_sessions__session_id__answers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewAnswerOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    complete_review_api_review_sessions__session_id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewCompletionOut"];
                 };
             };
             /** @description Error de la petición */

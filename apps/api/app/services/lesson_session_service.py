@@ -196,7 +196,7 @@ class LessonSessionService:
 
     def complete(self, user_id: uuid.UUID, session_id: uuid.UUID) -> LessonCompletionOut:
         """Sesión SERIALIZABLE propia (D21) con reintentos ante SerializationFailure."""
-        return _with_retries(lambda db: self._complete_in(db, user_id, session_id))
+        return with_serializable_retries(lambda db: self._complete_in(db, user_id, session_id))
 
     def _complete_in(
         self, db: Session, user_id: uuid.UUID, session_id: uuid.UUID
@@ -291,7 +291,7 @@ class LessonSessionService:
         return hearts_out(user, self.clock, self.settings)
 
 
-def _with_retries[T](work: Callable[[Session], T]) -> T:
+def with_serializable_retries[T](work: Callable[[Session], T]) -> T:
     for attempt in range(1, SERIALIZABLE_ATTEMPTS + 1):
         try:
             with serializable_session() as db:
