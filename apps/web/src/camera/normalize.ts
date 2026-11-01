@@ -3,6 +3,8 @@
 
 export const FEATURE_VERSION = "hand-v1";
 export const FEATURE_SIZE = 63;
+/** Versión exacta de `@mediapipe/tasks-vision` (se guarda en cada `dataset.json`). */
+export const TASKS_VISION_VERSION = "1.1.0";
 const POINTS = 21;
 const MIDDLE_BASE = 9;
 const MIN_SCALE = 1e-6;

@@ -482,6 +482,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/recognition/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register Result */
+        post: operations["register_result_api_recognition_results_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -999,6 +1016,24 @@ export interface components {
         QueueSignOut: {
             /** Word */
             word: string;
+        };
+        /** RecognitionIn */
+        RecognitionIn: {
+            /** Signid */
+            signId: string;
+            /** Correct */
+            correct: boolean;
+            /** Confidence */
+            confidence: number;
+        };
+        /** RecognitionOut */
+        RecognitionOut: {
+            /** Counted */
+            counted: boolean;
+            /** Recognitionscorrect */
+            recognitionsCorrect: number;
+            /** Newachievements */
+            newAchievements: components["schemas"]["AchievementOut"][];
         };
         /** RegisterIn */
         RegisterIn: {
@@ -2410,6 +2445,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IntroOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    register_result_api_recognition_results_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecognitionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecognitionOut"];
                 };
             };
             /** @description Error de la petición */

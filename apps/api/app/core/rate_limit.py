@@ -16,6 +16,7 @@ from app.core.errors import AppError
 LOGIN_LIMIT = "5/minute"
 REGISTER_LIMIT = "10/minute"
 USER_LIMIT = "240/minute"
+RECOGNITION_LIMIT = "60/minute"  # §8.2: resultados de la cámara por usuario
 TOO_MANY_MESSAGE = "Demasiados intentos, espera un minuto"
 
 _storage = MemoryStorage()
@@ -37,6 +38,10 @@ def check_register(ip: str) -> None:
 
 def check_user(user_id: str) -> None:
     _hit(USER_LIMIT, "user", user_id)
+
+
+def check_recognition(user_id: str) -> None:
+    _hit(RECOGNITION_LIMIT, "recognition", user_id)
 
 
 def reset_rate_limits() -> None:

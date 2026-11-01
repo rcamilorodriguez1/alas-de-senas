@@ -1,6 +1,7 @@
 import type { RouteObject } from "react-router";
 import { LoginPage } from "../features/auth/LoginPage";
 import { CameraPage } from "../features/camera/CameraPage";
+import { DatasetPage } from "../features/camera/DatasetPage";
 import { DictionaryPage } from "../features/dictionary/DictionaryPage";
 import { SignPage } from "../features/dictionary/SignPage";
 import { AchievementsPage } from "../features/gamification/AchievementsPage";
@@ -77,6 +78,14 @@ export const appRoutes: RouteObject[] = [
     element: (
       <RequireAuth>
         <CameraPage />
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/admin/dataset",
+    element: (
+      <RequireAuth>
+        <DatasetPage />
       </RequireAuth>
     ),
   },

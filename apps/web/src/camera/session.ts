@@ -65,6 +65,8 @@ export const CAMERA_ERRORS: Record<CameraErrorKind, string> = {
 
 export interface FrameResult {
   points: NormalizedLandmark[] | null;
+  /** Los 63 valores de `normalizeLandmarks` (lo único que guarda el colector). */
+  features: number[] | null;
   detected: Prediction | null;
 }
 
@@ -113,13 +115,14 @@ export async function startCameraSession(
       const result = handLandmarker.detectForVideo(video, timestamp);
       const points = result.landmarks[0] ?? null;
       let detected: Prediction | null = null;
+      let features: number[] | null = null;
       if (points) {
-        const features = normalizeLandmarks(points, handednessOf(result.handedness[0]?.[0]?.categoryName));
+        features = normalizeLandmarks(points, handednessOf(result.handedness[0]?.[0]?.categoryName));
         if (features) detected = smoother.push(classifier.classify(features));
       } else {
         smoother.reset();
       }
-      onFrame({ points, detected });
+      onFrame({ points, features, detected });
     }
     frame = requestAnimationFrame(tick);
   };

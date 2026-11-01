@@ -3,6 +3,8 @@ import { Camera, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppLayout } from "../../components/layout/AppLayout";
 import { Mascot } from "../../components/mascot/Mascot";
+import { apiRequest } from "../../lib/api";
+import type { components } from "../../lib/api-types";
 import { useSessionStore } from "../../lib/session-store";
 import type { Prediction } from "../../camera/classifier";
 import {
@@ -14,6 +16,14 @@ import {
   type CameraSession,
 } from "../../camera/session";
 import { StatsPanel } from "../gamification/StatsPanel";
+
+const REPORT_EVERY_MS = 10_000; // el servidor tampoco cuenta la misma seña antes de 10 s
+
+/** Solo números al servidor (R8.3): la seña, si fue correcta y la confianza. */
+function reportRecognition(signId: string, confidence: number) {
+  const body: components["schemas"]["RecognitionIn"] = { signId, correct: true, confidence };
+  void apiRequest("POST", "/recognition/results", { body }).catch(() => undefined);
+}
 
 // Conexiones de la mano de MediaPipe (21 puntos) para dibujar el esqueleto.
 const CONNECTIONS: [number, number][] = [
@@ -82,6 +92,17 @@ export function CameraPage() {
   const [detected, setDetected] = useState<Prediction | null>(null);
   const [handVisible, setHandVisible] = useState(false);
   const [simulated, setSimulated] = useState(false);
+  const reported = useRef(new Map<string, number>());
+
+  // Cada seña detectada suma para «Ojo de colibrí» (máximo una vez cada 10 s).
+  useEffect(() => {
+    if (!detected || simulated) return;
+    const now = Date.now();
+    const last = reported.current.get(detected.label) ?? 0;
+    if (now - last < REPORT_EVERY_MS) return;
+    reported.current.set(detected.label, now);
+    reportRecognition(detected.label, detected.confidence);
+  }, [detected, simulated]);
 
   const stop = useCallback(() => {
     session.current?.stop();

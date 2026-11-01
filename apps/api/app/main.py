@@ -13,6 +13,7 @@ from app.api import (
     intro,
     lessons,
     progress,
+    recognition,
     reviews,
 )
 from app.core.config import Settings, get_settings
@@ -46,6 +47,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(reviews.router, prefix="/api")
     app.include_router(dictionary.router, prefix="/api")
     app.include_router(intro.router, prefix="/api")
+    app.include_router(recognition.router, prefix="/api")
     app.mount("/media", MediaFiles(directory=settings.media_dir, check_dir=False), name="media")
     return app
 
