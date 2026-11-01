@@ -207,10 +207,6 @@ def train(samples: Samples, out: Path, reports: Path) -> dict[str, float]:
         per_class[label] = float((predicted[mask] == i).mean()) if mask.any() else float("nan")
         print(f"  {label:>16}: {per_class[label]:.2%} ({int(mask.sum())} muestras de validación)")
 
-    reports.mkdir(parents=True, exist_ok=True)
-    matrix = confusion_matrix(y[val_idx], predicted, labels=list(range(len(classes))))
-    save_confusion(matrix, classes, reports / "confusion.png")
-
     out.mkdir(parents=True, exist_ok=True)
     tfjs.converters.save_keras_model(model, str(out))
     (out / "labels.json").write_text(json.dumps(classes, ensure_ascii=False), encoding="utf-8")
@@ -225,10 +221,22 @@ def train(samples: Samples, out: Path, reports: Path) -> dict[str, float]:
     }
     (out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Modelo, labels.json y meta.json en {out}")
+
+    # La matriz va después de exportar: si la gráfica falla, el modelo ya quedó guardado.
+    reports.mkdir(parents=True, exist_ok=True)
+    matrix = confusion_matrix(y[val_idx], predicted, labels=list(range(len(classes))))
+    try:
+        save_confusion(matrix, classes, reports / "confusion.png")
+    except Exception as exc:  # un reporte no puede tumbar el entrenamiento
+        print(f"ADVERTENCIA: no se pudo dibujar la matriz de confusión ({exc}).")
+        print(matrix)
     return per_class
 
 
 def save_confusion(matrix: object, classes: list[str], path: Path) -> None:
+    # Colab define MPLBACKEND=module://matplotlib_inline…, que el matplotlib de este entorno no
+    # reconoce y falla al importarse: se fuerza el modo sin pantalla antes de importarlo.
+    os.environ["MPLBACKEND"] = "Agg"
     import matplotlib
 
     matplotlib.use("Agg")
