@@ -107,8 +107,8 @@
 
 ## Grupo 10 — Cámara (beta)
 
-- [ ] **10.1** `alas camera-assets` (WASM y modelos `.task` en `apps/web/public/mediapipe/`). _R8_
-- [ ] **10.2** `normalizeLandmarks` (TypeScript) con pruebas Vitest. _R8_
+- [x] **10.1** `alas camera-assets` (WASM y modelos `.task` en `apps/web/public/mediapipe/`). _R8_
+- [x] **10.2** `normalizeLandmarks` (TypeScript) con pruebas Vitest. _R8_
 - [ ] **10.3** Reconocedor: *singleton*, timestamps crecientes, pausa en pestaña oculta, limpieza, `tf.tidy()`, `MockClassifier`. _R8.5, R8.6_
 - [ ] **10.4** Página `/camara` con video en espejo, puntos, seña detectada, confianza y errores de permiso. _R8.1–8.4_
 - [ ] **10.5** Colector `/admin/dataset` que exporta `dataset.json` (`hand-v1`, 63 valores, etiquetas = slugs de la seña o `NINGUNA`, alias, versión de MediaPipe). `POST /recognition/results` evalúa el logro HUMMINGBIRD_EYE. _R8.7_

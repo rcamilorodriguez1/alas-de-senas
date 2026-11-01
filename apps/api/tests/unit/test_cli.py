@@ -41,7 +41,6 @@ def test_content_help_lista_sus_subcomandos(command: str) -> None:
     "args",
     [
         ["db", "seed-demo"],
-        ["camera-assets"],
         ["e2e"],
         ["start-prod"],
     ],

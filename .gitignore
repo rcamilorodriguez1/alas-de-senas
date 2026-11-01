@@ -28,3 +28,6 @@ ml/reports/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Archivos de MediaPipe: los genera `uv run alas camera-assets` (§10.1)
+apps/web/public/mediapipe/

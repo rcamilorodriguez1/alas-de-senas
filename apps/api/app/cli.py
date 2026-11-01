@@ -406,9 +406,24 @@ def content_all() -> None:
 
 
 @app.command("camera-assets")
-def camera_assets() -> None:
-    """Copia el WASM de MediaPipe y descarga los modelos `.task`."""
-    _pending(10)
+def camera_assets(
+    force: Annotated[bool, typer.Option(help="Descargar el modelo aunque ya exista.")] = False,
+) -> None:
+    """Copia el WASM de MediaPipe y descarga los modelos `.task` (§10.1)."""
+    from app.content.camera_assets import CameraAssetsError, prepare_camera_assets
+
+    try:
+        report = prepare_camera_assets(WEB_DIR, force=force)
+    except CameraAssetsError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
+    count = len(report.wasm_files)
+    typer.echo(f"WASM copiado: {count} archivos en apps/web/public/mediapipe/wasm/")
+    if report.error:
+        typer.echo(report.error, err=True)
+        raise typer.Exit(code=1)
+    state = "descargado" if report.downloaded else "ya estaba"
+    typer.echo(f"Modelo {report.model.name}: {state}.")
 
 
 @app.command()
