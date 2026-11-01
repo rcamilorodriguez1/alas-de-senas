@@ -5,6 +5,8 @@ import type * as tfType from "@tensorflow/tfjs";
 export const NONE = "NINGUNA";
 export const THRESHOLD = 0.7;
 export const SMOOTHING_WINDOW = 10;
+/** Votos mínimos de la misma etiqueta en la ventana: un cuadro aislado nunca basta (B37). */
+export const MIN_VOTES = 6;
 export const MODEL_DIR = "/models/lsc-alfabeto";
 
 export interface Prediction {
@@ -61,8 +63,8 @@ export async function loadClassifier(fetchFn: typeof fetch = fetch): Promise<Cla
     if (!Array.isArray(labels) || !labels.every((l) => typeof l === "string")) return new MockClassifier();
     const tf = await import("@tensorflow/tfjs"); // carga diferida: solo en la cámara
     const model = await tf.loadLayersModel(`${MODEL_DIR}/model.json`);
-    const outputs = (model.outputs[0]?.shape.at(-1) ?? 0) as number;
-    if (outputs !== labels.length) {
+    const outputs = model.outputs[0]?.shape.at(-1) ?? 0;
+    if (outputs !== labels.length || new Set(labels).size !== labels.length) {
       model.dispose();
       return new MockClassifier();
     }
@@ -92,11 +94,12 @@ export class Smoother {
         top = entry.count;
       }
     }
-    if (winner === null || winner === NONE) return null;
+    if (winner === null || winner === NONE || top < MIN_VOTES) return null;
     // Confianza media de esa etiqueta en la ventana: un pico aislado no basta.
     const matches = this.window.filter((item) => item.label === winner);
     const confidence = matches.reduce((sum, item) => sum + item.confidence, 0) / matches.length;
-    return confidence >= THRESHOLD ? { label: winner, confidence } : null;
+    // Tolerancia para el error de redondeo de la media (0,7 × 6 / 6 ≠ 0,7 exacto en coma flotante).
+    return confidence + 1e-9 >= THRESHOLD ? { label: winner, confidence } : null;
   }
 
   reset(): void {

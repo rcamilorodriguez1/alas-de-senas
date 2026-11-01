@@ -21,7 +21,10 @@ type Phase = { kind: "idle" } | { kind: "countdown"; left: number } | { kind: "r
 /** Colector de muestras `/admin/dataset` (§10.5): solo ADMIN, exporta `dataset.json`. */
 export function DatasetPage() {
   const isAdmin = useSessionStore((state) => state.user?.role === "ADMIN");
-  const letters = useSignSearch("", "alfabeto", 1);
+  // El alfabeto tiene 27 letras y el diccionario pagina de 24: se piden las dos páginas.
+  const lettersPage1 = useSignSearch("", "alfabeto", 1);
+  const lettersPage2 = useSignSearch("", "alfabeto", 2);
+  const mounted = useRef(true);
   const video = useRef<HTMLVideoElement>(null);
   const session = useRef<CameraSession | null>(null);
   const phaseRef = useRef<Phase>({ kind: "idle" });
@@ -47,27 +50,40 @@ export function DatasetPage() {
     session.current = null;
     setCameraOn(false);
   }, []);
-  useEffect(() => stop, [stop]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      stop();
+    };
+  }, [stop]);
 
   const turnOn = async () => {
     if (!video.current) return;
     setError(null);
     try {
-      session.current = await startCameraSession(video.current, ({ features }) => {
+      const started = await startCameraSession(video.current, ({ features }) => {
         const current = phaseRef.current;
-        if (current.kind !== "recording" || !features) return;
+        if (current.kind !== "recording") return;
         const now = performance.now();
+        // Se revisa el fin antes que la mano: si sale del cuadro, la grabación termina igual.
         if (now >= current.until) {
           setPhase({ kind: "idle" });
           return;
         }
+        if (!features) return;
         if (now - lastSample.current < SAMPLE_EVERY_MS) return;
         lastSample.current = now;
         setSamples((previous) => [...previous, { label: labelRef.current, features }]);
       });
+      if (!mounted.current) {
+        started.stop();
+        return;
+      }
+      session.current = started;
       setCameraOn(true);
     } catch (caught) {
-      setError(cameraErrorKind(caught));
+      if (mounted.current) setError(cameraErrorKind(caught));
     }
   };
 
@@ -93,7 +109,10 @@ export function DatasetPage() {
   }
 
   const counts = countByLabel(samples);
-  const options = [NONE_LABEL, ...(letters.data?.items.map((sign) => sign.slug) ?? [])];
+  const letterSlugs = [...(lettersPage1.data?.items ?? []), ...(lettersPage2.data?.items ?? [])].map(
+    (sign) => sign.slug,
+  );
+  const options = [NONE_LABEL, ...new Set(letterSlugs)];
 
   return (
     <AppLayout>
@@ -117,6 +136,7 @@ export function DatasetPage() {
           <select
             value={label}
             onChange={(event) => setLabel(event.target.value)}
+            disabled={phase.kind !== "idle"}
             className="mt-1 rounded-xl border border-slate-300 bg-white px-3 py-2"
           >
             {options.map((slug) => (
@@ -129,14 +149,15 @@ export function DatasetPage() {
       </div>
       <div className="relative mt-4 overflow-hidden rounded-2xl bg-[#0E2A2F]" style={{ aspectRatio: "4 / 3" }}>
         <video ref={video} muted playsInline aria-label="Vista de tu cámara" className="h-full w-full -scale-x-100" />
-        {phase.kind !== "idle" && (
-          <p
-            role="status"
-            className="absolute top-3 left-3 rounded-xl bg-white/90 px-3 py-1 font-display text-xl font-extrabold"
-          >
-            {phase.kind === "countdown" ? `Prepárate: ${phase.left}` : "Grabando…"}
-          </p>
-        )}
+        {/* Región siempre montada: el primer anuncio no se pierde. */}
+        <p
+          role="status"
+          className={`absolute top-3 left-3 rounded-xl px-3 py-1 font-display text-xl font-extrabold ${
+            phase.kind === "idle" ? "" : "bg-white/90"
+          }`}
+        >
+          {phase.kind === "countdown" ? `Prepárate: ${phase.left}` : phase.kind === "recording" ? "Grabando…" : ""}
+        </p>
       </div>
       {error && (
         <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-red-800">
@@ -156,6 +177,11 @@ export function DatasetPage() {
             className="rounded-xl bg-[#047857] px-4 py-2 font-bold text-white disabled:opacity-60"
           >
             Grabar 10 s
+          </button>
+        )}
+        {cameraOn && (
+          <button type="button" onClick={stop} className="rounded-xl border border-slate-300 px-4 py-2 font-semibold">
+            Apagar cámara
           </button>
         )}
         <button

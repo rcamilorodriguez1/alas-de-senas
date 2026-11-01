@@ -93,6 +93,8 @@ export function CameraPage() {
   const [handVisible, setHandVisible] = useState(false);
   const [simulated, setSimulated] = useState(false);
   const reported = useRef(new Map<string, number>());
+  const mounted = useRef(true);
+  const lastShown = useRef("");
 
   // Cada seña detectada suma para «Ojo de colibrí» (máximo una vez cada 10 s).
   useEffect(() => {
@@ -112,22 +114,39 @@ export function CameraPage() {
     setHandVisible(false);
   }, []);
 
-  // R8.5: al salir de la pantalla la cámara se apaga.
-  useEffect(() => stop, [stop]);
+  // R8.5: al salir de la pantalla la cámara se apaga (también si aún se estaba encendiendo).
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      stop();
+    };
+  }, [stop]);
 
   const start = async () => {
     if (!video.current) return;
     setError(null);
     setState("starting");
     try {
-      session.current = await startCameraSession(video.current, ({ points, detected: found }) => {
+      const started = await startCameraSession(video.current, ({ points, detected: found }) => {
         if (canvas.current) drawHand(canvas.current, points);
         setHandVisible(points !== null);
-        setDetected(found);
+        // Solo re-renderiza si cambia la etiqueta o el porcentaje mostrado (no 60 veces por segundo).
+        const key = found ? `${found.label}:${Math.floor(found.confidence * 100)}` : "";
+        if (key !== lastShown.current) {
+          lastShown.current = key;
+          setDetected(found);
+        }
       });
-      setSimulated(session.current.classifier.simulated);
+      if (!mounted.current) {
+        started.stop(); // salió mientras se encendía: B40, R8.5
+        return;
+      }
+      session.current = started;
+      setSimulated(started.classifier.simulated);
       setState("on");
     } catch (caught) {
+      if (!mounted.current) return;
       setError(cameraErrorKind(caught));
       setState("off");
     }
@@ -189,9 +208,12 @@ export function CameraPage() {
       )}
       {state === "on" && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-          <div aria-live="polite">
+          <div>
             <p className="text-sm font-semibold text-[#45606A]">Seña detectada</p>
-            <p className="font-display text-4xl font-extrabold">{detected ? displayLabel(detected.label) : "—"}</p>
+            {/* Solo la letra se anuncia; la confianza cambia muy seguido. */}
+            <p aria-live="polite" className="font-display text-4xl font-extrabold">
+              {detected ? displayLabel(detected.label) : "—"}
+            </p>
             {detected && (
               <p className="font-semibold">Confianza: {Math.floor(detected.confidence * 100)} %</p>
             )}

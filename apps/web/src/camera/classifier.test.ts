@@ -1,6 +1,6 @@
 // Reconocedor (tarea 10.3, §10.2–10.4): suavizado, umbral, timestamps y modo simulado.
 import { describe, expect, it, vi } from "vitest";
-import { loadClassifier, MockClassifier, MonotonicTimestamps, NONE, Smoother, THRESHOLD } from "./classifier";
+import { loadClassifier, MIN_VOTES, MockClassifier, MonotonicTimestamps, NONE, Smoother, THRESHOLD } from "./classifier";
 
 describe("Smoother", () => {
   it("devuelve la mayoría de los últimos 10 resultados con su confianza media", () => {
@@ -28,7 +28,18 @@ describe("Smoother", () => {
 
   it("acepta justo 0,70", () => {
     const smoother = new Smoother();
-    expect(smoother.push({ label: "letra-a", confidence: THRESHOLD })).toEqual({ label: "letra-a", confidence: THRESHOLD });
+    let last = null;
+    for (let i = 0; i < MIN_VOTES; i += 1) last = smoother.push({ label: "letra-a", confidence: THRESHOLD });
+    expect(last?.label).toBe("letra-a");
+    expect(last?.confidence).toBeCloseTo(THRESHOLD, 9);
+  });
+
+  it("un cuadro aislado no basta: hacen falta 6 votos de la misma etiqueta (B37)", () => {
+    const smoother = new Smoother();
+    for (let i = 0; i < MIN_VOTES - 1; i += 1) {
+      expect(smoother.push({ label: "letra-a", confidence: 0.99 })).toBeNull();
+    }
+    expect(smoother.push({ label: "letra-a", confidence: 0.99 })?.label).toBe("letra-a");
   });
 
   it("«NINGUNA» nunca se muestra como seña detectada (R8.2)", () => {
@@ -42,7 +53,9 @@ describe("Smoother", () => {
     const smoother = new Smoother();
     for (let i = 0; i < 9; i += 1) smoother.push({ label: "letra-a", confidence: 0.9 });
     smoother.reset();
-    expect(smoother.push({ label: "letra-b", confidence: 0.9 })?.label).toBe("letra-b");
+    let last = null;
+    for (let i = 0; i < MIN_VOTES; i += 1) last = smoother.push({ label: "letra-b", confidence: 0.9 });
+    expect(last?.label).toBe("letra-b");
   });
 });
 

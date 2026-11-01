@@ -66,15 +66,30 @@ def test_carga_muestras_validas(tmp_path: Path) -> None:
     assert len(samples.features[0]) == FEATURE_SIZE
 
 
-def test_rechaza_letras_con_movimiento(tmp_path: Path) -> None:
+def test_descarta_las_letras_con_movimiento_sin_perder_el_resto(tmp_path: Path) -> None:
     path = write(
         tmp_path / "a.json",
         [
             {"label": "letra-j", "features": vector()},
+            {"label": "letra-a", "features": vector()},
             {"label": "NINGUNA", "features": vector()},
         ],
     )
-    with pytest.raises(DatasetError, match="movimiento"):
+    samples = load_datasets([path], SIGNS)
+    assert samples.labels == ["letra-a", "NINGUNA"]
+    assert samples.skipped_dynamic == {"letra-j": 1}
+
+
+def test_rechaza_booleanos_como_numeros(tmp_path: Path) -> None:
+    path = write(tmp_path / "a.json", [{"label": "letra-a", "features": [True] * FEATURE_SIZE}])
+    with pytest.raises(DatasetError, match="números finitos"):
+        load_datasets([path], SIGNS)
+
+
+def test_json_mal_formado_da_un_error_claro(tmp_path: Path) -> None:
+    path = tmp_path / "roto.json"
+    path.write_text("{no es json", encoding="utf-8")
+    with pytest.raises(DatasetError, match="no es un JSON válido"):
         load_datasets([path], SIGNS)
 
 

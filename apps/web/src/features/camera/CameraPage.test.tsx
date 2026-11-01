@@ -76,6 +76,24 @@ describe("/camara", () => {
   });
 });
 
+describe("/camara: salir mientras se enciende (B40, R8.5)", () => {
+  it("si sale antes de que termine de encender, la cámara se apaga al terminar", async () => {
+    const user = userEvent.setup();
+    let resolve: (session: { classifier: { simulated: boolean }; stop: () => void }) => void = () => undefined;
+    startCameraSession.mockImplementation(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    );
+    const { router } = renderCamera();
+    await user.click(await screen.findByRole("button", { name: "Activar cámara" }));
+    await router.navigate("/diccionario");
+    resolve({ classifier: { simulated: true }, stop });
+    await waitFor(() => expect(stop).toHaveBeenCalled());
+  });
+});
+
 describe("apoyo de la cámara", () => {
   it("cada error de la cámara tiene su tipo (§10.4)", () => {
     expect(cameraErrorKind(new DOMException("x", "NotAllowedError"))).toBe("denied");

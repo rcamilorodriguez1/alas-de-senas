@@ -42,5 +42,5 @@ export function downloadDataset(dataset: Dataset): void {
   link.href = url;
   link.download = `dataset-${dataset.collector || "anonimo"}-${dataset.createdAt.slice(0, 10)}.json`;
   link.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000); // algunos navegadores cortan la descarga si se revoca ya
 }

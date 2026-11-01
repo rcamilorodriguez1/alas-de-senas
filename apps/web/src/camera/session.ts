@@ -94,15 +94,22 @@ export async function startCameraSession(
   let stopped = false;
   let frame = 0;
   const stopTracks = () => stream.getTracks().forEach((track) => track.stop());
-  let handLandmarker: HandLandmarker;
-  let classifier: Classifier;
+  // Si algo falla, se suelta todo lo adquirido: el contador del singleton no se descuadra y el
+  // modelo de tfjs no queda en memoria.
+  let model: Classifier | null = null;
+  let acquired = false;
+  let landmarks: HandLandmarker;
   try {
     video.srcObject = stream;
     await video.play();
-    [handLandmarker, classifier] = await Promise.all([acquireHandLandmarker(), loadClassifier()]);
+    model = await loadClassifier();
+    acquired = true;
+    landmarks = await acquireHandLandmarker();
   } catch (error) {
     stopTracks();
     video.srcObject = null;
+    if (acquired) releaseHandLandmarker();
+    model?.dispose();
     throw error;
   }
   const timestamps = new MonotonicTimestamps();
@@ -112,13 +119,19 @@ export async function startCameraSession(
     if (stopped || document.hidden) return;
     const timestamp = timestamps.next(performance.now());
     if (timestamp !== null && video.readyState >= 2) {
-      const result = handLandmarker.detectForVideo(video, timestamp);
+      let result: ReturnType<HandLandmarker["detectForVideo"]>;
+      try {
+        result = landmarks.detectForVideo(video, timestamp);
+      } catch {
+        frame = requestAnimationFrame(tick); // un cuadro fallido no detiene el bucle
+        return;
+      }
       const points = result.landmarks[0] ?? null;
       let detected: Prediction | null = null;
       let features: number[] | null = null;
       if (points) {
         features = normalizeLandmarks(points, handednessOf(result.handedness[0]?.[0]?.categoryName));
-        if (features) detected = smoother.push(classifier.classify(features));
+        if (features) detected = smoother.push(model.classify(features));
       } else {
         smoother.reset();
       }
@@ -135,7 +148,7 @@ export async function startCameraSession(
   frame = requestAnimationFrame(tick);
 
   return {
-    classifier,
+    classifier: model,
     stop() {
       if (stopped) return;
       stopped = true;
@@ -143,7 +156,7 @@ export async function startCameraSession(
       document.removeEventListener("visibilitychange", onVisibility);
       stopTracks(); // R8.5: la cámara se apaga al salir
       video.srcObject = null;
-      classifier.dispose();
+      model.dispose();
       releaseHandLandmarker();
     },
   };

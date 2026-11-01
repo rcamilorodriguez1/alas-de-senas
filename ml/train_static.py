@@ -44,6 +44,7 @@ class Samples:
     features: list[list[float]]
     labels: list[str]
     collectors: list[str]
+    skipped_dynamic: dict[str, int]  # muestras de letras con movimiento descartadas
 
 
 # ---------- Carga y validación (sin TensorFlow: se puede probar sola) ----------
@@ -77,12 +78,18 @@ def load_datasets(paths: list[Path], signs_csv: Path) -> Samples:
     features: list[list[float]] = []
     labels: list[str] = []
     collectors: list[str] = []
+    skipped: Counter[str] = Counter()
     if not paths:
         raise DatasetError("No hay archivos de datos: pasa --data ml/data/*.json")
     for path in paths:
         if not path.is_file():
             raise DatasetError(f"No existe el archivo {path}")
-        data = json.loads(path.read_text(encoding="utf-8"))
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise DatasetError(f"{path.name} no es un JSON válido ({exc}).") from exc
+        if not isinstance(data, dict):
+            raise DatasetError(f"{path.name}: se esperaba un objeto con `samples`.")
         if data.get("featureVersion") != FEATURE_VERSION or data.get("featureSize") != FEATURE_SIZE:
             raise DatasetError(
                 f"{path.name}: se esperaba featureVersion={FEATURE_VERSION} y featureSize="
@@ -96,10 +103,10 @@ def load_datasets(paths: list[Path], signs_csv: Path) -> Samples:
             vector = sample.get("features")
             where = f"{path.name}, muestra {index}"
             if label in dynamic:
-                raise DatasetError(
-                    f"{where}: «{label}» es una letra con movimiento;"
-                    " se practica con autoevaluación."
-                )
+                # Las letras con movimiento se practican con autoevaluación (R8.3a): se descartan
+                # sus muestras sin perder el resto del archivo.
+                skipped[str(label)] += 1
+                continue
             if label != NONE_LABEL and label not in static:
                 raise DatasetError(
                     f"{where}: «{label}» no es una letra estática de signs.csv ni {NONE_LABEL}."
@@ -107,7 +114,10 @@ def load_datasets(paths: list[Path], signs_csv: Path) -> Samples:
             if (
                 not isinstance(vector, list)
                 or len(vector) != FEATURE_SIZE
-                or not all(isinstance(v, int | float) and math.isfinite(v) for v in vector)
+                or not all(
+                    isinstance(v, int | float) and not isinstance(v, bool) and math.isfinite(v)
+                    for v in vector
+                )
             ):
                 raise DatasetError(f"{where}: se esperaban {FEATURE_SIZE} números finitos.")
             features.append([float(v) for v in vector])
@@ -115,7 +125,7 @@ def load_datasets(paths: list[Path], signs_csv: Path) -> Samples:
             collectors.append(collector)
     if len(set(labels)) < 2:
         raise DatasetError("Se necesitan al menos 2 clases (por ejemplo una letra y NINGUNA).")
-    return Samples(features, labels, collectors)
+    return Samples(features, labels, collectors, dict(skipped))
 
 
 def label_order(labels: list[str]) -> list[str]:
@@ -245,6 +255,11 @@ def main(argv: list[str] | None = None) -> int:
     except DatasetError as exc:
         print(f"Error en los datos: {exc}", file=sys.stderr)
         return 1
+    if samples.skipped_dynamic:
+        print(
+            "ADVERTENCIA: se descartaron muestras de letras con movimiento: "
+            f"{samples.skipped_dynamic}"
+        )
     print(f"{len(samples.labels)} muestras · clases: {dict(Counter(samples.labels))}")
     train(samples, args.out, args.reports)
     return 0
