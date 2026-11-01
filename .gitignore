@@ -31,3 +31,6 @@ Thumbs.db
 
 # Archivos de MediaPipe: los genera `uv run alas camera-assets` (§10.1)
 apps/web/public/mediapipe/
+
+# Entorno local de entrenamiento (Python 3.11 + TensorFlow) del equipo
+venv/
