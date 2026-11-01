@@ -32,8 +32,10 @@ export function SignVideoPlayer({
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [slow, setSlow] = useState(false);
-  const [failed, setFailed] = useState(false);
   const [reloads, setReloads] = useState(0);
+  // El error es del video actual: al cambiar de src (otro turno) se vuelve a intentar.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc === src;
   const images = mediaSource === "images";
   const placeholder = isPlaceholder || mediaSource === "placeholder";
 
@@ -47,8 +49,11 @@ export function SignVideoPlayer({
       .catch(() => setPlaying(false));
   };
 
+  // Los compactos (opciones, memoria, conversación) no tienen controles: se reproducen solos
+  // y en bucle, silenciados, para que la seña se vea en movimiento (§9.4).
+  const shouldPlay = autoPlay || compact;
   useEffect(() => {
-    if (autoPlay && !failed) play();
+    if (shouldPlay && !failed) play();
     // Solo al cambiar de video.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src, failed]);
@@ -83,7 +88,7 @@ export function SignVideoPlayer({
   }, [reloads]);
 
   const retry = () => {
-    setFailed(false);
+    setFailedSrc(null);
     setReloads((count) => count + 1);
   };
 
@@ -94,13 +99,16 @@ export function SignVideoPlayer({
         className={`flex flex-col items-center justify-center gap-3 rounded-2xl bg-slate-100 p-6 text-center ${compact ? "h-32" : "h-60"}`}
       >
         <p className="font-semibold text-[#45606A]">No pudimos cargar este video</p>
-        <button
-          type="button"
-          onClick={retry}
-          className="rounded-xl border border-slate-300 bg-white px-4 py-1.5 font-semibold"
-        >
-          Reintentar
-        </button>
+        {/* En los compactos el reproductor vive dentro de una opción: sin botón anidado. */}
+        {!compact && (
+          <button
+            type="button"
+            onClick={retry}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-1.5 font-semibold"
+          >
+            Reintentar
+          </button>
+        )}
       </div>
     );
   }
@@ -113,10 +121,10 @@ export function SignVideoPlayer({
         poster={poster}
         muted
         playsInline
-        loop={loop}
+        loop={loop || compact}
         preload="metadata"
         aria-label={label ?? `Video de la seña ${word}`}
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(src)}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         style={compact ? undefined : { maxHeight }}

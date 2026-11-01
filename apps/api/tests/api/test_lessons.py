@@ -464,7 +464,20 @@ def test_grupo_por_sena_en_l1(client: TestClient, user: tuple[str, str]) -> None
     token, _ = user
     exercises = exercises_of(start(client, token, L1))
     # OBSERVE · VIDEO_TO_MEANING · PRODUCE por seña y al final MEANING_TO_VIDEO de cada seña.
-    assert [e["group"] for e in exercises] == [0, 0, 0, 1, 1, 1, 2, 2, 2, 0, 1, 2]
+    assert [e["group"] for e in exercises] == [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        None,
+        None,
+        None,
+    ]  # bloque final sin grupo (revisión G5)
     assert [e["activity"] for e in exercises[:3]] == ["OBSERVE", "SELECT", "PRODUCE"]
 
 
@@ -1230,3 +1243,52 @@ def test_tiempos_de_la_sesion_los_fija_el_clock(
     assert closed.duration_sec == 240
     assert db_answer(sid, ids[0]).answered_at == T0 + timedelta(minutes=1)
     assert db_answer(sid, ids[-1]).answered_at == T0 + timedelta(minutes=2)
+
+
+# ---------------------------------------------------------------- revisión del Grupo 5
+
+
+def test_dos_errores_simultaneos_descuentan_dos_vidas(
+    client: TestClient, user: tuple[str, str]
+) -> None:
+    """La fila del usuario se bloquea y se relee: dos errores a la vez no pierden un descuento."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    token, user_id = user
+    approve_lessons_before(user_id, L2)
+    session = start(client, token, L2)
+    sid = session_id_of(session)
+    first, second = scored_ids(session)[:2]
+
+    def wrong(exercise_id: str) -> int:
+        body = wrong_answer(sid, exercise_id)
+        assert body is not None
+        with TestClient(client.app) as other:
+            response = other.post(
+                f"/api/lesson-sessions/{sid}/answers",
+                json={"exerciseId": exercise_id, "answer": body},
+                headers=auth(token),
+            )
+        return response.status_code
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        codes = list(pool.map(wrong, [first, second]))
+    assert codes == [200, 200]
+    assert db_user(user_id).hearts == 3
+    assert db_session(sid).hearts_lost == 2
+
+
+def test_respuesta_con_campos_enormes_es_422(client: TestClient, user: tuple[str, str]) -> None:
+    token, _ = user
+    session = start(client, token, L1)
+    sid = session_id_of(session)
+    exercise_id = ids_of_type(session, "VIDEO_TO_MEANING")[0]
+    response = post_answer(client, token, sid, exercise_id, {"optionToken": "x" * 5000})
+    assert response.status_code == 422
+
+
+def test_bloque_final_de_l1_no_tiene_grupo(client: TestClient, user: tuple[str, str]) -> None:
+    """Los MEANING_TO_VIDEO del final de L1 son un repaso de todas las señas, no de la primera."""
+    token, _ = user
+    groups = [exercise["group"] for exercise in exercises_of(start(client, token, L1))]
+    assert groups == [0, 0, 0, 1, 1, 1, 2, 2, 2, None, None, None]

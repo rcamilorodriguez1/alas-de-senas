@@ -139,16 +139,16 @@ class ObserveAnswer(_Model):
 class OptionAnswer(_Model):
     """VIDEO_TO_MEANING, MEANING_TO_VIDEO y SPELLING."""
 
-    option_token: str
+    option_token: str = Field(max_length=32)
 
 
 class MatchAttempt(_Model):
-    video_token: str
-    word_token: str
+    video_token: str = Field(max_length=32)
+    word_token: str = Field(max_length=32)
 
 
 class MemoryMatchAnswer(_Model):
-    attempts: list[MatchAttempt]
+    attempts: list[MatchAttempt] = Field(max_length=36)
 
 
 class ProduceAnswer(_Model):
@@ -158,7 +158,7 @@ class ProduceAnswer(_Model):
 
 
 class ConversationAnswer(_Model):
-    choices: list[str]
+    choices: list[Annotated[str, Field(max_length=32)]] = Field(max_length=6)
 
 
 Answer = ObserveAnswer | OptionAnswer | MemoryMatchAnswer | ProduceAnswer | ConversationAnswer
@@ -170,6 +170,9 @@ Answer = ObserveAnswer | OptionAnswer | MemoryMatchAnswer | ProduceAnswer | Conv
 class VideoRef(_Model):
     src: str
     poster: str
+    # Para la interfaz (§9.4, R9.13): «Video en preparación» / «Secuencia de imágenes».
+    placeholder: bool = False
+    source: Literal["video", "images", "placeholder"] = "video"
 
 
 class WordOption(_Model):

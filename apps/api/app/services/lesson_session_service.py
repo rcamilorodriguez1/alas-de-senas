@@ -135,7 +135,9 @@ class LessonSessionService:
     # ---- responder -----------------------------------------------------------------------
 
     def answer(self, user: User, session_id: uuid.UUID, data: AnswerIn) -> AnswerOut:
-        record = repo.get_user_session(self.session, session_id, user.id)
+        # Mismo orden de bloqueos que `complete` (sesión → usuario): sin bloqueos mutuos, y una
+        # sesión ya cerrada no acepta respuestas tardías.
+        record = repo.get_user_session(self.session, session_id, user.id, for_update=True)
         if record is None:
             raise _error(404, *SESSION_NOT_FOUND)
         if record.completed_at is not None:
@@ -202,7 +204,9 @@ class LessonSessionService:
         record = repo.get_user_session(db, session_id, user_id, for_update=True)
         if record is None:
             raise _error(404, *SESSION_NOT_FOUND)
-        if record.completed_at is not None and record.result is not None:
+        if record.completed_at is not None:
+            if record.result is None:  # cerrada antes de guardar resultados: no se paga otra vez
+                raise _error(409, "SESSION_COMPLETED", "Esta lección ya terminó.")
             return LessonCompletionOut.model_validate(record.result)  # idempotente (B2)
         exercises = self._check_open(record, db)
         answers = {a.exercise_id: a for a in repo.session_answers(db, record.id)}
@@ -320,14 +324,20 @@ def _referenced_signs(payloads: Sequence[ExercisePayload]) -> set[str]:
 
 
 def _groups(lesson: Lesson, exercises: Sequence[Exercise]) -> Mapping[str, int]:
-    """Agrupación por seña (§9.3) de L1 a L3; el reto final no se agrupa."""
+    """Agrupación por seña (§9.3) de L1 a L3; el reto final no se agrupa.
+
+    Cada seña forma un bloque contiguo. Cuando vuelve una seña ya vista (el repaso final de L1)
+    o aparece un ejercicio sin seña, empieza el bloque final, que no tiene grupo.
+    """
     if lesson.type is LessonType.CHALLENGE:
         return {}
     order: dict[str, int] = {}
     groups: dict[str, int] = {}
+    current: str | None = None
     for exercise in exercises:
-        if exercise.sign_id is None:
-            continue
-        index = order.setdefault(exercise.sign_id, len(order))
-        groups[exercise.id] = index
+        sign = exercise.sign_id
+        if sign is None or (sign in order and sign != current):
+            break
+        current = sign
+        groups[exercise.id] = order.setdefault(sign, len(order))
     return groups

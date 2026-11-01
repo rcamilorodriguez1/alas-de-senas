@@ -68,7 +68,8 @@ def decode_access_token(token: str, now: datetime, secret: str) -> AccessClaims 
             token,
             secret,
             algorithms=[JWT_ALGORITHM],  # explícito: rechaza «none» y otros algoritmos
-            # exp e iat se validan con el Clock (D22), no con la hora real del sistema.
+            # exp se valida con el Clock (D22) abajo; iat no se usa (PyJWT lo compararía con la
+            # hora real del sistema).
             options={"require": ["sub", "exp"], "verify_exp": False, "verify_iat": False},
         )
         expires = payload["exp"]

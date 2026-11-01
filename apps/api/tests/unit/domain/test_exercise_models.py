@@ -295,7 +295,12 @@ def test_public_models_dump_in_camel_case() -> None:
     observe = PublicObserve(video=video, word="Hola", how_to=None, usage_example="Hola, Ana.")
     assert observe.model_dump(mode="json", by_alias=True) == {
         "type": "OBSERVE",
-        "video": {"src": "/media/v/abc.mp4", "poster": "/media/p/abc.jpg"},
+        "video": {
+            "src": "/media/v/abc.mp4",
+            "poster": "/media/p/abc.jpg",
+            "placeholder": False,
+            "source": "video",
+        },
         "word": "Hola",
         "howTo": None,
         "usageExample": "Hola, Ana.",

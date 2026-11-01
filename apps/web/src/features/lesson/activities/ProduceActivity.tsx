@@ -19,6 +19,8 @@ export function ProduceActivity({ exercise, onSubmit, onContinue }: ActivityProp
         src={content.video.src}
         poster={content.video.poster}
         word={content.word}
+        isPlaceholder={content.video.placeholder}
+        mediaSource={content.video.source}
         maxHeight={260}
         autoPlay
       />

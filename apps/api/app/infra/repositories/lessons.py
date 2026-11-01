@@ -7,6 +7,7 @@ import json
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import datetime
+from typing import Literal
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
@@ -56,16 +57,35 @@ def sign_catalog(session: Session, sign_ids: Collection[str]) -> SignCatalog:
             word=sign.word,
             how_to=sign.how_to,
             usage_example=sign.usage_example,
-            video=VideoRef(src=sign.video_path, poster=sign.poster_path),
+            video=VideoRef(
+                src=sign.video_path,
+                poster=sign.poster_path,
+                placeholder=sign.is_placeholder,
+                source=_media_source(sign.media_source),
+            ),
         )
         for sign in rows
     }
 
 
+def _media_source(value: str) -> Literal["video", "images", "placeholder"]:
+    if value == "images":
+        return "images"
+    if value == "placeholder":
+        return "placeholder"
+    return "video"
+
+
 def lock_user(session: Session, user_id: uuid.UUID) -> User | None:
-    return session.execute(
-        select(User).where(User.id == user_id).with_for_update()
-    ).scalar_one_or_none()
+    """Bloquea y RELEE al usuario: sin populate_existing, SQLAlchemy devolvería el objeto ya
+    cargado en la sesión con vidas viejas y dos errores simultáneos descontarían una sola."""
+    statement = (
+        select(User)
+        .where(User.id == user_id)
+        .with_for_update(key_share=True)
+        .execution_options(populate_existing=True)
+    )
+    return session.execute(statement).scalar_one_or_none()
 
 
 def get_user_session(
@@ -75,7 +95,10 @@ def get_user_session(
         LessonSession.id == session_id, LessonSession.user_id == user_id
     )
     if for_update:
-        statement = statement.with_for_update()
+        # FOR NO KEY UPDATE: no choca con el KEY SHARE que toma la FK de session_answers.
+        statement = statement.with_for_update(key_share=True).execution_options(
+            populate_existing=True
+        )
     return session.execute(statement).scalar_one_or_none()
 
 

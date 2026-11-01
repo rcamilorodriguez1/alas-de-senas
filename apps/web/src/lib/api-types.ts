@@ -625,6 +625,17 @@ export interface components {
             src: string;
             /** Poster */
             poster: string;
+            /**
+             * Placeholder
+             * @default false
+             */
+            placeholder?: boolean;
+            /**
+             * Source
+             * @default video
+             * @enum {string}
+             */
+            source?: "video" | "images" | "placeholder";
         };
         /** WordOption */
         WordOption: {

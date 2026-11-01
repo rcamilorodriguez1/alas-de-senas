@@ -106,6 +106,7 @@ export function LessonPage() {
   const [index, setIndex] = useState(0);
   const [answered, setAnswered] = useState<Set<string>>(new Set());
   const [hearts, setHearts] = useState<Hearts | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const started = useRef<string | null>(null);
   const activeCard = useRef<HTMLLIElement>(null);
   const exerciseKey = phase.kind === "ready" ? `${phase.data.sessionId}:${index}` : "";
@@ -245,14 +246,20 @@ export function LessonPage() {
   const isLearn = data.lesson.type === "LEARN";
   const nextVideo = mainVideo(exercises[index + 1]);
 
+  // Un corte de red no tumba la lección: se avisa y se puede volver a intentar.
+  const recoverable = (error: unknown) =>
+    !(error instanceof ApiError) || error.status >= 500 || error.code === "NETWORK_ERROR";
+
   const submit = async (answer: AnswerBody) => {
+    setNotice(null);
     try {
       const result = await sendAnswer(data.sessionId, current.id, answer);
       setHearts(result.hearts);
       setAnswered((previous) => new Set(previous).add(current.id));
       return result;
     } catch (error) {
-      handleError(error);
+      if (recoverable(error)) setNotice("No pudimos enviar tu respuesta. Revisa tu conexión e intenta de nuevo.");
+      else handleError(error);
       return null;
     }
   };
@@ -267,7 +274,8 @@ export function LessonPage() {
       await queryClient.invalidateQueries({ queryKey: learningPathKey });
       setPhase({ kind: "done", data, result });
     } catch (error) {
-      handleError(error);
+      if (recoverable(error)) setNotice("No pudimos terminar la lección. Intenta de nuevo con «Continuar».");
+      else handleError(error);
     }
   };
 
@@ -308,6 +316,11 @@ export function LessonPage() {
           )}
         </div>
       </header>
+      {notice && (
+        <p role="alert" className="mb-3 rounded-xl bg-amber-50 p-3 text-amber-900">
+          {notice}
+        </p>
+      )}
       <ol className="divide-y divide-slate-200">
         {ACTIVITIES.map((activity) => {
           const isActive = current.activity === activity.kind; // hasta pulsar «Continuar»

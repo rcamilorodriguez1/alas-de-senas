@@ -32,6 +32,8 @@ export function SelectMeaningActivity({ exercise, onSubmit, onContinue }: Activi
         poster={content.video.poster}
         word="por adivinar"
         label="Video de la seña"
+        isPlaceholder={content.video.placeholder}
+        mediaSource={content.video.source}
         maxHeight={220}
         autoPlay
       />

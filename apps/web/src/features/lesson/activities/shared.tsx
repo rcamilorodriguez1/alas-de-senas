@@ -17,7 +17,8 @@ export function Feedback({ correct, word }: { correct: boolean; word?: string | 
 
 export function ContinueButton({ onContinue }: { onContinue: () => void }) {
   return (
-    <button type="button" onClick={onContinue} className={`mt-3 ${primaryButton}`}>
+    // Al comprobar, el botón «Comprobar» desaparece: el foco pasa a «Continuar» (teclado).
+    <button type="button" onClick={onContinue} autoFocus className={`mt-3 ${primaryButton}`}>
       Continuar
     </button>
   );

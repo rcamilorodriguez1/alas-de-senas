@@ -25,8 +25,12 @@ export function useChoiceKeys({
       const target = event.target;
       if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
       if (event.key === "Enter") {
-        // El Enter sobre un botón ya lo activa el navegador: no lo repetimos.
-        if (target instanceof HTMLButtonElement || target instanceof HTMLAnchorElement) return;
+        // El Enter sobre un botón normal ya lo activa el navegador; sobre una opción (radio)
+        // sí comprueba: así funciona elegir con el mouse y confirmar con Enter (R4.14).
+        const onOption = target instanceof HTMLElement && target.getAttribute("role") === "radio";
+        if (!onOption && (target instanceof HTMLButtonElement || target instanceof HTMLAnchorElement)) {
+          return;
+        }
         event.preventDefault();
         onEnter();
         return;
