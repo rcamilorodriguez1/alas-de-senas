@@ -49,6 +49,11 @@ class CurriculumService:
             modules=[self._module_out(module, progress, facts) for module in modules]
         )
 
+    def progress_map(self, user_id: uuid.UUID) -> ProgressMap:
+        """Estados derivados del usuario (para iniciar y completar lecciones)."""
+        modules = repo.load_curriculum(self.session)
+        return self._progress(modules, repo.lesson_facts(self.session, user_id))
+
     def get_node(self, user_id: uuid.UUID, node_id: str) -> NodeDetailOut:
         modules = repo.load_curriculum(self.session)
         module = next((m for m in modules for n in m.nodes if n.id == node_id), None)

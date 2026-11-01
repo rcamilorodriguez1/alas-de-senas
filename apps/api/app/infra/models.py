@@ -181,6 +181,10 @@ class LessonSession(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))  # Clock (D22)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     hearts_lost: Mapped[int] = mapped_column(default=0)
+    # Huella de los ejercicios al empezar: si el contenido se recarga, la sesión expira (§8.3.8).
+    exercises_hash: Mapped[str] = mapped_column(String(64), default="")
+    # LessonCompletionResult guardado: el `complete` repetido devuelve lo mismo (R4.10).
+    result: Mapped[dict[str, object] | None] = mapped_column(JSONB)
     score: Mapped[int | None]
     correct: Mapped[int | None]
     total: Mapped[int | None]

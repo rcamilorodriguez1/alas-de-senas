@@ -130,3 +130,13 @@
   9. **Accesibilidad:** verde de «completado» y «Empezar» con `#047857` (contraste AA con blanco); el popover recibe el foco una sola vez, lo devuelve al botón al cerrar, `aria-expanded`/`aria-controls`, y hay un solo popover abierto en toda la ruta.
   10. **Pendiente (Grupo 6):** entre 1024 y 1279 px el panel derecho queda oculto; cuando tenga racha y vidas, mostrarlo tras un botón (§9.7).
   11. **Riesgo de pruebas:** las pruebas de API comparten `alas_test`; si dos procesos de pytest corren a la vez (p. ej. un revisor y `alas check`), los que truncan contenido pueden hacer fallar a los otros. No correr dos suites de API en paralelo.
+
+## D-012 · Detalles de la sesión de lección (Grupo 5) · 01/11/2026
+- Decisiones:
+  1. **Dos columnas nuevas en `lesson_sessions`** (migración `f25914da6c54`): `exercises_hash` (huella de los ejercicios al empezar; si el contenido se recarga distinto, la sesión responde 410, §8.3.8) y `result` (JSONB con el `LessonCompletionResult`; el `complete` repetido devuelve exactamente lo mismo, R4.10).
+  2. **`group`** en cada ejercicio público = índice de su seña (agrupación de §9.3) en L1–L3; `null` en los finales y en todo el reto. No revela la respuesta (el número no dice qué seña es).
+  3. **`correctTokens`** además de `correctToken`: la conversación tiene un token correcto por turno.
+  4. **Racha y logros provisionales en `complete`** (`streak {0, false}`, `newAchievements []`): los aplica `GamificationService.apply_completion` en el Grupo 6. XP y néctar sí se suman ya al usuario.
+  5. **JWT sin `verify_iat`:** PyJWT comparaba `iat` con la hora real; ahora exp/iat se validan solo con el Clock (D22, B77).
+  6. **`/media` en FastAPI** sirve solo `v/` y `p/` con `Cache-Control: immutable` y `Range` (206); **`manifest.json` no se publica** (relaciona slug y video, B54). En desarrollo Vite sí lo sirve desde `public/`: el riesgo queda solo en local.
+  7. **Interfaz:** las 4 actividades siempre visibles; estado relativo al ejercicio actual (activa · ✔ Completada · 🔒 Pendiente). Video principal de 220–260 px y opciones en 2 columnas para que a 1366×768 se vean video, pregunta, opciones y «Comprobar respuesta» (medido con Playwright). `autoPlay` del reproductor apagado por defecto y activado en la lección.

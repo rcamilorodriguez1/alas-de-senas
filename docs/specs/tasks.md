@@ -69,12 +69,12 @@
 
 ## Grupo 5 — Lecciones
 
-- [ ] **5.1** `LessonSessionService.start` (403 `LESSON_LOCKED`, 403 `NO_HEARTS` salvo en Aprende, 404 `LESSON_NOT_FOUND`), `answer` (`ON CONFLICT DO NOTHING RETURNING`, tokens, 409/410, descuento de vidas solo si se insertó, usuario con `FOR UPDATE`), tiempos con `Clock` (D22), `complete` (sesión SERIALIZABLE propia, `FOR UPDATE`, reintentos ante `SerializationFailure`, idempotente, `SESSION_INCOMPLETE`, `SESSION_EXPIRED` por 24 h o contenido recargado, tope de 15 min). _R3.8, R4.4–4.10c_
-- [ ] **5.2** Pruebas de API (con `FakeClock`): respuestas ocultas y opciones sin slugs, segundo intento no cambia el resultado ni descuenta otra vida, doble `complete` no duplica XP, `complete` incompleto → 409, sesión de otro usuario → 404, sesión expirada → 410, error en L1 no quita vidas, 0 vidas bloquea L2 pero la lección empezada se termina. _R4.4, R4.6, R4.10–4.10b, R5.13–5.15_
-- [ ] **5.3** `SignVideoPlayer` (velocidad, repetir, error con reintento, etiqueta de relleno, etiqueta «Secuencia de imágenes» sin velocidad lenta, precarga). Prueba de que `/media` responde `206` a peticiones con `Range` y envía `Cache-Control: immutable`. _R4.3, R4.12, R9.3_
-- [ ] **5.4** `LessonPage`: encabezado, actividades en secuencia, agrupación por seña, confirmación al salir. _R4.1, R4.2, R4.11_
-- [ ] **5.5** Componentes `ObserveActivity`, `SelectMeaningActivity`, `MemoryMatchActivity`, `ProduceActivity` (autoevaluación por ahora), `ConversationActivity`, `SpellingActivity`; manejo de `SESSION_EXPIRED` y del doble montaje de StrictMode. _R4.5, R4.7, R4.8_
-- [ ] **5.6** Atajos 1–4 y Enter; ajuste para 1366×768. _R4.13, R4.14_
+- [x] **5.1** `LessonSessionService.start` (403 `LESSON_LOCKED`, 403 `NO_HEARTS` salvo en Aprende, 404 `LESSON_NOT_FOUND`), `answer` (`ON CONFLICT DO NOTHING RETURNING`, tokens, 409/410, descuento de vidas solo si se insertó, usuario con `FOR UPDATE`), tiempos con `Clock` (D22), `complete` (sesión SERIALIZABLE propia, `FOR UPDATE`, reintentos ante `SerializationFailure`, idempotente, `SESSION_INCOMPLETE`, `SESSION_EXPIRED` por 24 h o contenido recargado, tope de 15 min). _R3.8, R4.4–4.10c_
+- [x] **5.2** Pruebas de API (con `FakeClock`): respuestas ocultas y opciones sin slugs, segundo intento no cambia el resultado ni descuenta otra vida, doble `complete` no duplica XP, `complete` incompleto → 409, sesión de otro usuario → 404, sesión expirada → 410, error en L1 no quita vidas, 0 vidas bloquea L2 pero la lección empezada se termina. _R4.4, R4.6, R4.10–4.10b, R5.13–5.15_
+- [x] **5.3** `SignVideoPlayer` (velocidad, repetir, error con reintento, etiqueta de relleno, etiqueta «Secuencia de imágenes» sin velocidad lenta, precarga). Prueba de que `/media` responde `206` a peticiones con `Range` y envía `Cache-Control: immutable`. _R4.3, R4.12, R9.3_
+- [x] **5.4** `LessonPage`: encabezado, actividades en secuencia, agrupación por seña, confirmación al salir. _R4.1, R4.2, R4.11_
+- [x] **5.5** Componentes `ObserveActivity`, `SelectMeaningActivity`, `MemoryMatchActivity`, `ProduceActivity` (autoevaluación por ahora), `ConversationActivity`, `SpellingActivity`; manejo de `SESSION_EXPIRED` y del doble montaje de StrictMode. _R4.5, R4.7, R4.8_
+- [x] **5.6** Atajos 1–4 y Enter; ajuste para 1366×768. _R4.13, R4.14_
   **Verificar:** completar L1 desbloquea L2; en DevTools → Network no aparece la respuesta correcta antes de responder.
 
 ## Grupo 6 — Gamificación

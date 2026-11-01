@@ -68,7 +68,8 @@ def decode_access_token(token: str, now: datetime, secret: str) -> AccessClaims 
             token,
             secret,
             algorithms=[JWT_ALGORITHM],  # explícito: rechaza «none» y otros algoritmos
-            options={"require": ["sub", "exp"], "verify_exp": False},
+            # exp e iat se validan con el Clock (D22), no con la hora real del sistema.
+            options={"require": ["sub", "exp"], "verify_exp": False, "verify_iat": False},
         )
         expires = payload["exp"]
         if not isinstance(expires, int) or expires <= int(now.timestamp()):

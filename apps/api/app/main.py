@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from app.api import auth, curriculum, health
+from app.api import auth, curriculum, health, lessons
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
+from app.core.media_files import MediaFiles
 from app.core.security_headers import SecurityHeadersMiddleware
 from app.schemas.errors import ERROR_RESPONSES
 
@@ -29,6 +30,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(health.router, prefix="/api")
     app.include_router(auth.router, prefix="/api")
     app.include_router(curriculum.router, prefix="/api")
+    app.include_router(lessons.router, prefix="/api")
+    app.mount("/media", MediaFiles(directory=settings.media_dir, check_dir=False), name="media")
     return app
 
 

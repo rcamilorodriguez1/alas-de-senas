@@ -141,10 +141,96 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/lessons/{lesson_id}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Session */
+        post: operations["start_session_api_lessons__lesson_id__sessions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lesson-sessions/{session_id}/answers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer */
+        post: operations["answer_api_lesson_sessions__session_id__answers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lesson-sessions/{session_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete */
+        post: operations["complete_api_lesson_sessions__session_id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AchievementOut */
+        AchievementOut: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+        };
+        /**
+         * ActivityKind
+         * @enum {string}
+         */
+        ActivityKind: "OBSERVE" | "SELECT" | "PRODUCE" | "USE";
+        /** AnswerIn */
+        AnswerIn: {
+            /** Exerciseid */
+            exerciseId: string;
+            /** Answer */
+            answer: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+        };
+        /** AnswerOut */
+        AnswerOut: {
+            /** Correct */
+            correct: boolean;
+            /** Correcttoken */
+            correctToken: string | null;
+            /** Correcttokens */
+            correctTokens: string[];
+            /** Correctword */
+            correctWord: string | null;
+            /** Alreadyanswered */
+            alreadyAnswered: boolean;
+            hearts: components["schemas"]["HeartsOut"];
+        };
         /** AuthOut */
         AuthOut: {
             /** Accesstoken */
@@ -169,6 +255,11 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /**
+         * ExerciseType
+         * @enum {string}
+         */
+        ExerciseType: "OBSERVE" | "VIDEO_TO_MEANING" | "MEANING_TO_VIDEO" | "MEMORY_MATCH" | "PRODUCE" | "CONVERSATION" | "SPELLING";
         /** HealthOut */
         HealthOut: {
             /** Ok */
@@ -176,10 +267,81 @@ export interface components {
             /** Db */
             db: boolean;
         };
+        /** HeartsOut */
+        HeartsOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Current */
+            current: number;
+            /** Max */
+            max: number;
+            /** Nextheartat */
+            nextHeartAt: string | null;
+        };
+        JsonValue: unknown;
         /** LearningPathOut */
         LearningPathOut: {
             /** Modules */
             modules: components["schemas"]["ModuleOut"][];
+        };
+        /** LessonCompletionOut */
+        LessonCompletionOut: {
+            /** Score */
+            score: number;
+            /** Correct */
+            correct: number;
+            /** Total */
+            total: number;
+            /** Passed */
+            passed: boolean;
+            /** Xpearned */
+            xpEarned: number;
+            /** Nectarearned */
+            nectarEarned: number;
+            streak: components["schemas"]["StreakResultOut"];
+            /** Newachievements */
+            newAchievements: components["schemas"]["AchievementOut"][];
+            /** Unlocked */
+            unlocked: components["schemas"]["UnlockedOut"][];
+            /**
+             * Mascotmood
+             * @enum {string}
+             */
+            mascotMood: "happy" | "cheer" | "sad" | "thinking" | "sleeping";
+            /** Mascotmessage */
+            mascotMessage: string;
+        };
+        /** LessonInfoOut */
+        LessonInfoOut: {
+            /** Id */
+            id: string;
+            /** Order */
+            order: number;
+            type: components["schemas"]["LessonType"];
+            /** Title */
+            title: string;
+            /** Nodeid */
+            nodeId: string;
+            /** Nodetitle */
+            nodeTitle: string;
+            /** Nodeorder */
+            nodeOrder: number;
+            /** Moduleorder */
+            moduleOrder: number;
+            /** Estimatedxp */
+            estimatedXp: number;
+        };
+        /** LessonStartOut */
+        LessonStartOut: {
+            /**
+             * Sessionid
+             * Format: uuid
+             */
+            sessionId: string;
+            lesson: components["schemas"]["LessonInfoOut"];
+            /** Exercises */
+            exercises: components["schemas"]["PublicExerciseOut"][];
+            hearts: components["schemas"]["HeartsOut"];
         };
         /** LessonSummaryOut */
         LessonSummaryOut: {
@@ -286,6 +448,112 @@ export interface components {
          * @enum {string}
          */
         ProgressStatus: "LOCKED" | "AVAILABLE" | "IN_PROGRESS" | "COMPLETED" | "GOLDEN" | "COMING_SOON";
+        /** PublicConversation */
+        PublicConversation: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "CONVERSATION";
+            /** Turns */
+            turns: components["schemas"]["PublicConversationTurn"][];
+        };
+        /** PublicConversationTurn */
+        PublicConversationTurn: {
+            prompt: components["schemas"]["VideoRef"];
+            /** Options */
+            options: components["schemas"]["VideoOption"][];
+        };
+        /** PublicExerciseOut */
+        PublicExerciseOut: {
+            /** Id */
+            id: string;
+            /** Order */
+            order: number;
+            activity: components["schemas"]["ActivityKind"];
+            type: components["schemas"]["ExerciseType"];
+            /** Scored */
+            scored: boolean;
+            /** Group */
+            group: number | null;
+            /** Content */
+            content: components["schemas"]["PublicObserve"] | components["schemas"]["PublicVideoToMeaning"] | components["schemas"]["PublicMeaningToVideo"] | components["schemas"]["PublicMemoryMatch"] | components["schemas"]["PublicProduce"] | components["schemas"]["PublicConversation"] | components["schemas"]["PublicSpelling"];
+        };
+        /** PublicMeaningToVideo */
+        PublicMeaningToVideo: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "MEANING_TO_VIDEO";
+            /** Word */
+            word: string;
+            /** Options */
+            options: components["schemas"]["VideoOption"][];
+        };
+        /** PublicMemoryMatch */
+        PublicMemoryMatch: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "MEMORY_MATCH";
+            /** Videocards */
+            videoCards: components["schemas"]["VideoOption"][];
+            /** Wordcards */
+            wordCards: components["schemas"]["WordOption"][];
+        };
+        /** PublicObserve */
+        PublicObserve: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "OBSERVE";
+            video: components["schemas"]["VideoRef"];
+            /** Word */
+            word: string;
+            /** Howto */
+            howTo: string | null;
+            /** Usageexample */
+            usageExample: string;
+        };
+        /** PublicProduce */
+        PublicProduce: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "PRODUCE";
+            video: components["schemas"]["VideoRef"];
+            /** Word */
+            word: string;
+            /** Cameralabel */
+            cameraLabel: string | null;
+        };
+        /** PublicSpelling */
+        PublicSpelling: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "SPELLING";
+            /** Letters */
+            letters: components["schemas"]["VideoRef"][];
+            /** Options */
+            options: components["schemas"]["WordOption"][];
+        };
+        /** PublicVideoToMeaning */
+        PublicVideoToMeaning: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "VIDEO_TO_MEANING";
+            video: components["schemas"]["VideoRef"];
+            /** Options */
+            options: components["schemas"]["WordOption"][];
+        };
         /** RegisterIn */
         RegisterIn: {
             /** Email */
@@ -307,6 +575,23 @@ export interface components {
              */
             introCompleted?: boolean;
         };
+        /** StreakResultOut */
+        StreakResultOut: {
+            /** Current */
+            current: number;
+            /** Extended */
+            extended: boolean;
+        };
+        /** UnlockedOut */
+        UnlockedOut: {
+            /**
+             * Type
+             * @constant
+             */
+            type: "LESSON";
+            /** Id */
+            id: string;
+        };
         /** UserOut */
         UserOut: {
             /**
@@ -327,6 +612,26 @@ export interface components {
             dailyGoalMinutes: number;
             /** Dominanthand */
             dominantHand: string;
+        };
+        /** VideoOption */
+        VideoOption: {
+            /** Token */
+            token: string;
+            video: components["schemas"]["VideoRef"];
+        };
+        /** VideoRef */
+        VideoRef: {
+            /** Src */
+            src: string;
+            /** Poster */
+            poster: string;
+        };
+        /** WordOption */
+        WordOption: {
+            /** Token */
+            token: string;
+            /** Word */
+            word: string;
         };
     };
     responses: never;
@@ -682,6 +987,130 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NodeDetailOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    start_session_api_lessons__lesson_id__sessions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lesson_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonStartOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    answer_api_lesson_sessions__session_id__answers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnswerOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    complete_api_lesson_sessions__session_id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonCompletionOut"];
                 };
             };
             /** @description Error de la petición */
