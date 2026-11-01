@@ -66,6 +66,11 @@ class AppError(Exception):
         self.extra = extra or {}
 
 
+def unauthorized() -> AppError:
+    """401 de sesión terminada (token ausente, inválido o vencido)."""
+    return AppError(401, "UNAUTHORIZED", "Tu sesión terminó. Vuelve a ingresar.")
+
+
 def error_response(
     status_code: int, code: str, message: str, extra: Mapping[str, JsonValue] | None = None
 ) -> JSONResponse:

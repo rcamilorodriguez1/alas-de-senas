@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.core.errors import AppError
+from app.core.errors import AppError, unauthorized
 from app.core.security import (
     create_access_token,
     hash_password,
@@ -22,14 +22,11 @@ from app.core.security import (
 from app.domain.dates import Clock
 from app.infra.models import RefreshToken, Role, User
 from app.schemas.auth import LoginIn, MeUpdateIn, RegisterIn
+from app.services.gamification_service import GamificationService
 
 
 def _invalid_credentials() -> AppError:
     return AppError(401, "INVALID_CREDENTIALS", "Correo o contraseña incorrectos")
-
-
-def unauthorized() -> AppError:
-    return AppError(401, "UNAUTHORIZED", "Tu sesión terminó. Vuelve a ingresar.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +56,8 @@ class AuthService:
         except IntegrityError as exc:
             self.session.rollback()
             raise AppError(409, "EMAIL_TAKEN", "Ya existe una cuenta con este correo") from exc
+        if data.intro_completed:
+            GamificationService(self.session, self.clock, self.settings).grant_intro(user)
         return self._issue(user)
 
     def login(self, data: LoginIn) -> AuthResult:

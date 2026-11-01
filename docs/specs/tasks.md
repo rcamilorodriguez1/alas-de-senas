@@ -102,8 +102,8 @@
 
 ## Grupo 9 — Introducción
 
-- [ ] **9.1** `GET /api/intro` (público) y página `/bienvenida` con 6 tarjetas y mini-quiz; redirección inicial desde `/`. _R1.1–1.5_
-- [ ] **9.2** `introCompleted` en el registro y logro «Primer aleteo». _R1.6_
+- [x] **9.1** `GET /api/intro` (público) y página `/bienvenida` con 6 tarjetas y mini-quiz; redirección inicial desde `/`. _R1.1–1.5_
+- [x] **9.2** `introCompleted` en el registro y logro «Primer aleteo». _R1.6_
 
 ## Grupo 10 — Cámara (beta)
 

@@ -42,8 +42,17 @@ afterEach(() => {
 });
 
 describe("appRoutes", () => {
-  it("/ sin sesión lleva a /ingresar", async () => {
+  it("/ sin sesión y sin intro lleva a /bienvenida (R1.1)", async () => {
     signOut();
+    window.localStorage.removeItem("alas.introCompleted");
+    const router = renderApp("/");
+    await waitFor(() => expect(router.state.location.pathname).toBe("/bienvenida"));
+    expect(screen.getByRole("link", { name: "Ya tengo cuenta" })).toHaveAttribute("href", "/ingresar");
+  });
+
+  it("/ sin sesión con el intro completado lleva a /ingresar", async () => {
+    signOut();
+    window.localStorage.setItem("alas.introCompleted", "1");
     const router = renderApp("/");
     await waitFor(() => expect(router.state.location.pathname).toBe("/ingresar"));
     expect(await screen.findByRole("button", { name: "Ingresar" })).toBeInTheDocument();

@@ -137,3 +137,22 @@ Para retomar (en este orden):
 - Hecho: 8.1–8.2. 81 pruebas de API (normalización con ñ real «Baño», comodines literales, sugerencias, categorías, ficha con estado de la lección, favoritos idempotentes y con Clock) y 9 de Vitest (sin sesión, búsqueda en la URL, sugerencias, filtro, favoritos, lección bloqueada). Playwright sin sesión: «GRACÍAS» → 1 seña (Gracias); «grasias» → «¿Quisiste decir Gracias?»; ficha completa. Decisiones: D-015.
 - Revisión: verificador-fase APROBADO; revisor-codigo: 1 bloqueante (corazón en vez de ⭐ para favoritos) corregido, más foco del botón, DELETE en una sentencia y 2 pruebas nuevas (D-015.6).
 - Verificación manual pendiente (usuario): sin sesión, /diccionario carga; «GRACÍAS» → Gracias; «grasias» → «¿Quisiste decir Gracias?»; «baño» encuentra Baño y «bano» no; ficha con video, «Descripción en revisión», práctica rápida y lección (bloqueada sin enlace); con sesión, ⭐ guardar/quitar y «Tus favoritos». Probar en 1280×720, 1366×768 y 1920×1080 en Chrome, Edge y Firefox.
+
+## Grupo 9 — Introducción
+- Plan:
+  - 9.1 `services/intro_service.py` + `api/intro.py`: `GET /api/intro` público desde `content/intro.json` y la BD (palabra y video de cada seña; quiz con la correcta y 2 distractores de las tarjetas, ordenados por palabra; incluye la respuesta porque el intro no da XP, §8.2). Página `/bienvenida`: 6 tarjetas (video en bucle sin controles, palabra, mensaje de Tomi), mini-quiz de 3 preguntas con retroalimentación inmediata, marca en el navegador y paso al registro; «Ya tengo cuenta» siempre visible. `/` redirige a `/bienvenida` a quien no tiene sesión ni completó el intro.
+  - 9.2 `introCompleted` en el registro → `GamificationService.grant_intro` (FIRST_FLAP con `ON CONFLICT DO NOTHING RETURNING`, néctar una vez). `unauthorized` pasa a `core/errors.py` para evitar el ciclo auth ↔ gamificación.
+- Hecho: 9.1–9.2. 22 pruebas de API (intro público, orden, videos, quiz con una correcta y distractores del intro, FIRST_FLAP una vez con la fecha del Clock) y 2 de Vitest (recorrido completo y error); 2 pruebas de interfaz ajustadas al nuevo comportamiento (D-016.5). Playwright: `/` → `/bienvenida` → 6 tarjetas → quiz → registro → /logros «1 de 9 desbloqueados», néctar 10. Decisiones: D-016.
+- Revisión: verificador-fase APROBADO; revisor-codigo sin bloqueantes. Corregido: foco al título en cada paso, región de retroalimentación siempre montada, marca guardada al terminar el quiz (D-016.6).
+- Verificación manual pendiente (usuario): ventana privada → `/` lleva a `/bienvenida`; 6 tarjetas con video en bucle, palabra, Tomi y «Ya tengo cuenta»; quiz con retroalimentación; «Crear mi cuenta» → registro → «Primer aleteo» y 10 de néctar; después `/` sin sesión lleva a `/ingresar`. Revisar el tamaño del video de las tarjetas contra el mockup (D-016.7).
+
+## Grupo 10 — Cámara (beta)
+- Plan:
+  - 10.1 `@mediapipe/tasks-vision` (versión exacta, §3) y `alas camera-assets`: copia `wasm/*` a `apps/web/public/mediapipe/wasm/` y descarga `hand_landmarker.task` (si falla, imprime la URL oficial).
+  - 10.2 `src/camera/normalize.ts` `normalizeLandmarks` (espejo de la mano izquierda, origen en la muñeca, escala muñeca–punto 9, descarte < 1e-6, 63 valores) con pruebas de valores conocidos e invariancia a traslación y escala.
+  - 10.3 `src/camera/recognizer.ts`: singleton con promesa en caché, timestamps crecientes, pausa con `visibilitychange`, limpieza (pistas, rAF, `close()`), predicción en `tf.tidy()`, suavizado por mayoría de 10, umbral 0,70; `MockClassifier` sin modelo.
+  - 10.4 `/camara`: video en espejo con puntos, seña y confianza, aviso «Tu video no sale de tu dispositivo», errores de permiso/sin cámara/ocupada/sin HTTPS con autoevaluación.
+  - 10.5 `/admin/dataset` (ADMIN) que exporta `dataset.json` (`hand-v1`, 63, slug o `NINGUNA`, alias, versión de MediaPipe); `POST /recognition/results` (60/min, cuenta si correcto, confianza ≥ 0,7 y máx. una vez por seña cada 10 s) → HUMMINGBIRD_EYE.
+  - 10.6 `ml/train_static.py` (rechaza `dynamic`, validación, separación por persona, semillas, matriz de confusión, exportación con `labels.json` y `meta.json`) y cuaderno para Colab.
+  - 10.7 `ProduceActivity` con cámara si la seña está en `labels.json`; prueba de que `labels.json` coincide con las salidas del modelo.
+  - 10.8 **Requiere al equipo:** grabar muestras de ≥ 3 personas con letras `static` confirmadas por el intérprete y entrenar. Sin modelo, todo funciona en modo simulado (R8.6).

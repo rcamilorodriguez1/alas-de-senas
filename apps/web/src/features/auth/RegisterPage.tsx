@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
+import { isIntroCompleted } from "../intro/intro-storage";
 import { ApiError, register as registerAccount } from "../../lib/api";
 import { AuthLayout, FieldError, buttonClass, inputClass } from "./AuthLayout";
 import {
@@ -34,7 +35,7 @@ export function RegisterPage() {
   const onSubmit = handleSubmit(async (values) => {
     setServerError(null);
     try {
-      await registerAccount({ ...values, acceptedDataPolicy: true });
+      await registerAccount({ ...values, acceptedDataPolicy: true, introCompleted: isIntroCompleted() });
       await navigate("/aprender", { replace: true });
     } catch (error) {
       if (!(error instanceof ApiError)) {

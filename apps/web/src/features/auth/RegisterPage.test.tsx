@@ -230,6 +230,7 @@ describe("RegisterPage: éxito", () => {
       password: "ñññaa",
       dailyGoalMinutes: 15,
       acceptedDataPolicy: true,
+      introCompleted: false, // R1.6: sin el intro no se pide «Primer aleteo»
     });
     expect(bearer(request)).toBeNull();
     expect(useSessionStore.getState().status).toBe("authenticated");

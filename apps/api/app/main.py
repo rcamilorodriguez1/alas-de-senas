@@ -10,6 +10,7 @@ from app.api import (
     dictionary,
     gamification,
     health,
+    intro,
     lessons,
     progress,
     reviews,
@@ -44,6 +45,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(progress.router, prefix="/api")
     app.include_router(reviews.router, prefix="/api")
     app.include_router(dictionary.router, prefix="/api")
+    app.include_router(intro.router, prefix="/api")
     app.mount("/media", MediaFiles(directory=settings.media_dir, check_dir=False), name="media")
     return app
 

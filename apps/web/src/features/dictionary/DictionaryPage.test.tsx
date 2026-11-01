@@ -87,7 +87,11 @@ describe("/diccionario", () => {
     anonymous();
     const api = mockFetch(server());
     renderAt("/diccionario");
-    expect(await screen.findByRole("link", { name: /Gracias/ })).toHaveAttribute("href", "/diccionario/gracias");
+    // Primera carga de la página: margen amplio para cuando la suite completa va lenta.
+    expect(await screen.findByRole("link", { name: /Gracias/ }, { timeout: 5000 })).toHaveAttribute(
+      "href",
+      "/diccionario/gracias",
+    );
     expect(screen.getByRole("link", { name: "Crear cuenta" })).toBeInTheDocument();
     expect(api.requests.some((r) => r.path.startsWith("/api/gamification"))).toBe(false);
     expect(api.requests.some((r) => r.path.startsWith("/api/dictionary/favorites"))).toBe(false);

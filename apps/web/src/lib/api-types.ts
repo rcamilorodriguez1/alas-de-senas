@@ -465,6 +465,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/intro": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Intro */
+        get: operations["intro_api_intro_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -619,6 +636,36 @@ export interface components {
             pageSize: number;
             /** Total */
             total: number;
+        };
+        /** IntroCardOut */
+        IntroCardOut: {
+            /** Slug */
+            slug: string;
+            /** Word */
+            word: string;
+            video: components["schemas"]["VideoRef"];
+        };
+        /** IntroOptionOut */
+        IntroOptionOut: {
+            /** Word */
+            word: string;
+            /** Correct */
+            correct: boolean;
+        };
+        /** IntroOut */
+        IntroOut: {
+            /** Cards */
+            cards: components["schemas"]["IntroCardOut"][];
+            /** Quiz */
+            quiz: components["schemas"]["IntroQuestionOut"][];
+        };
+        /** IntroQuestionOut */
+        IntroQuestionOut: {
+            /** Slug */
+            slug: string;
+            video: components["schemas"]["VideoRef"];
+            /** Options */
+            options: components["schemas"]["IntroOptionOut"][];
         };
         JsonValue: unknown;
         /** LearningPathOut */
@@ -2326,6 +2373,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    intro_api_intro_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntroOut"];
+                };
             };
             /** @description Error de la petición */
             "4XX": {

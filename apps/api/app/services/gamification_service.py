@@ -14,9 +14,14 @@ from typing import Literal
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.core.errors import AppError
+from app.core.errors import AppError, unauthorized
 from app.domain.dates import Clock, to_local_day
-from app.domain.policies.achievements import ACHIEVEMENTS, AchievementStats, evaluate_achievements
+from app.domain.policies.achievements import (
+    ACHIEVEMENTS,
+    AchievementStats,
+    FirstFlap,
+    evaluate_achievements,
+)
 from app.domain.policies.hearts import MAX_HEARTS, REFILL_COST, HeartsPolicy, HeartsState
 from app.domain.policies.review import ReviewScheduler
 from app.domain.policies.review import SignReview as ReviewState
@@ -27,10 +32,10 @@ from app.infra.repositories import gamification as repo
 from app.infra.repositories import lessons as lessons_repo
 from app.schemas.gamification import AchievementStatusOut, StatsOut, StreakStatsOut, TodayOut
 from app.schemas.lessons import AchievementOut, HeartsOut, StreakResultOut
-from app.services.auth_service import unauthorized
 
 NOT_ENOUGH_NECTAR = ("NOT_ENOUGH_NECTAR", "No tienes suficiente néctar")
 _RULES = {rule.id: rule for rule in ACHIEVEMENTS}
+FIRST_FLAP = FirstFlap()
 
 
 @dataclass(frozen=True, slots=True)
@@ -153,6 +158,21 @@ class GamificationService:
         user.nectar += sum(rule.nectar_reward for rule in new)
         self.session.flush()
         return [AchievementOut(id=r.id, title=r.title, nectar=r.nectar_reward) for r in new]
+
+    def grant_intro(self, user: User) -> list[AchievementOut]:
+        """Logro «Primer aleteo» al registrarse con el intro completo (R1.6), una sola vez."""
+        inserted = repo.insert_achievements(
+            self.session, user.id, [FIRST_FLAP.id], self.clock.now()
+        )
+        if not inserted:
+            return []
+        user.nectar += FIRST_FLAP.nectar_reward
+        self.session.flush()
+        return [
+            AchievementOut(
+                id=FIRST_FLAP.id, title=FIRST_FLAP.title, nectar=FIRST_FLAP.nectar_reward
+            )
+        ]
 
     # ---- consultas -----------------------------------------------------------------------
 

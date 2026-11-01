@@ -195,10 +195,23 @@ def unlocked_ids(session: Session, user_id: uuid.UUID) -> set[str]:
 def insert_achievements(
     session: Session, user_id: uuid.UUID, achievement_ids: Iterable[str], unlocked_at: datetime
 ) -> list[str]:
-    """INSERT … ON CONFLICT DO NOTHING RETURNING: solo los ids realmente insertados (B5)."""
+    """INSERT … ON CONFLICT DO NOTHING RETURNING: solo los ids realmente insertados (B5).
+
+    Solo los logros del catálogo sembrado: sin el catálogo (BD sin contenido) no se otorga nada
+    en lugar de romper la FK y, con ella, el registro o el `complete`.
+    """
+    wanted = list(achievement_ids)
+    if not wanted:
+        return []
+    known = set(
+        session.execute(
+            select(Achievement.id).where(Achievement.id.in_(wanted)).order_by(Achievement.id)
+        ).scalars()
+    )
     rows = [
         {"user_id": user_id, "achievement_id": achievement_id, "unlocked_at": unlocked_at}
-        for achievement_id in achievement_ids
+        for achievement_id in wanted
+        if achievement_id in known
     ]
     if not rows:
         return []

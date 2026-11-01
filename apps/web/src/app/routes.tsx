@@ -7,6 +7,7 @@ import { ProgressPage } from "../features/progress/ProgressPage";
 import { ReviewPage } from "../features/review/ReviewPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
 import { LearnPage } from "../features/learn/LearnPage";
+import { IntroPage } from "../features/intro/IntroPage";
 import { LessonPage } from "../features/lesson/LessonPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { RootRedirect } from "../pages/RootRedirect";
@@ -14,6 +15,14 @@ import { GuestOnly, RequireAuth } from "./guards";
 
 export const appRoutes: RouteObject[] = [
   { path: "/", element: <RootRedirect /> },
+  {
+    path: "/bienvenida",
+    element: (
+      <GuestOnly>
+        <IntroPage />
+      </GuestOnly>
+    ),
+  },
   {
     path: "/ingresar",
     element: (

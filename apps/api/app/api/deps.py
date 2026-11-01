@@ -10,11 +10,12 @@ from sqlalchemy.orm import Session
 from app.core import rate_limit
 from app.core.clock import get_clock
 from app.core.config import Settings, get_settings
+from app.core.errors import unauthorized
 from app.core.security import decode_access_token
 from app.domain.dates import Clock
 from app.infra.db import get_db
 from app.infra.models import User
-from app.services.auth_service import AuthService, unauthorized
+from app.services.auth_service import AuthService
 
 DbSession = Annotated[Session, Depends(get_db)]
 ClockDep = Annotated[Clock, Depends(get_clock)]

@@ -37,7 +37,7 @@ class RegisterIn(_EmailIn):
     password: str
     daily_goal_minutes: DailyGoal
     accepted_data_policy: bool
-    intro_completed: bool = False  # se usa en la tarea 9.2 (logro «Primer aleteo»)
+    intro_completed: bool = False  # logro «Primer aleteo» (R1.6)
 
     @field_validator("name", mode="after")
     @classmethod
