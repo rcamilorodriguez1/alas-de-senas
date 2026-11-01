@@ -28,7 +28,7 @@ from app.domain.exercises.models import (
     SpellingPayload,
     parse_payload,
 )
-from app.domain.policies.hearts import MAX_HEARTS, HeartsPolicy, HeartsState
+from app.domain.policies.hearts import HeartsPolicy, HeartsState
 from app.domain.policies.rewards import RewardPolicy
 from app.domain.policies.scoring import score_session
 from app.infra.db import serializable_session
@@ -42,10 +42,10 @@ from app.schemas.lessons import (
     LessonInfoOut,
     LessonStartOut,
     PublicExerciseOut,
-    StreakResultOut,
     UnlockedOut,
 )
 from app.services.curriculum_service import CurriculumService
+from app.services.gamification_service import GamificationService, hearts_out
 from app.services.option_tokens import make_tokenizer
 
 SESSION_TTL = timedelta(hours=24)
@@ -240,6 +240,9 @@ class LessonSessionService:
         user.total_xp += reward.xp
         user.nectar += reward.nectar
         db.flush()
+        gamification = GamificationService(db, self.clock, self.settings).apply_completion(
+            user, exercises, answers, seconds=record.duration_sec, xp=reward.xp
+        )
 
         after = curriculum.progress_map(user_id).lessons
         unlocked = [
@@ -254,9 +257,8 @@ class LessonSessionService:
             passed=score.passed,
             xp_earned=reward.xp,
             nectar_earned=reward.nectar,
-            # Racha y logros: GamificationService.apply_completion (Grupo 6).
-            streak=StreakResultOut(current=0, extended=False),
-            new_achievements=[],
+            streak=gamification.streak,
+            new_achievements=gamification.new_achievements,
             unlocked=unlocked,
             mascot_mood="cheer" if score.passed else "happy",
             mascot_message="¡Vas volando!"
@@ -286,13 +288,7 @@ class LessonSessionService:
         return HeartsState(hearts=user.hearts, updated_at=user.hearts_updated_at)
 
     def _hearts_out(self, user: User) -> HeartsOut:
-        current, next_heart = self.hearts.current(self._hearts_state(user), self.clock.now())
-        return HeartsOut(
-            enabled=self.settings.hearts_enabled,
-            current=current,
-            max=MAX_HEARTS,
-            next_heart_at=next_heart,
-        )
+        return hearts_out(user, self.clock, self.settings)
 
 
 def _with_retries[T](work: Callable[[Session], T]) -> T:

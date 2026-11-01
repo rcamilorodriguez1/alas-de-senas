@@ -1,8 +1,7 @@
 import { Lock } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { AppLayout } from "../../components/layout/AppLayout";
-import { Mascot } from "../../components/mascot/Mascot";
-import { useSessionStore } from "../../lib/session-store";
+import { StatsPanel } from "../gamification/StatsPanel";
 import { useLearningPath, type LearningModule, type LearningNode } from "./learn-api";
 import { LessonPopover } from "./LessonPopover";
 import { LESSON_STATUS_TEXT, NODE_STATUS_TEXT, STATUS_STYLE } from "./status";
@@ -200,18 +199,9 @@ function LearningPathView({ modules }: { modules: LearningModule[] }) {
 }
 
 export function LearnPage() {
-  const user = useSessionStore((state) => state.user);
   const { data, isPending, isError, refetch } = useLearningPath();
-  const aside = (
-    <div className="sticky top-8 rounded-2xl bg-white p-4 shadow">
-      <Mascot
-        mood="happy"
-        message={user?.name ? `¡Hola, ${user.name}! Sigue tu ruta.` : "¡Hola! Sigue tu ruta."}
-      />
-    </div>
-  );
   return (
-    <AppLayout aside={aside}>
+    <AppLayout aside={<StatsPanel />}>
       <h1 className="sr-only">Ruta de aprendizaje</h1>
       {isPending && <p role="status">Cargando tu ruta…</p>}
       {isError && (

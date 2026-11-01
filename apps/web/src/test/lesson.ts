@@ -318,7 +318,7 @@ export const COMPLETION_PASSED: LessonCompletionOut = {
   xpEarned: 16,
   nectarEarned: 4,
   streak: { current: 3, extended: true },
-  newAchievements: [{ id: "primer-vuelo", title: "Primer vuelo" }],
+  newAchievements: [{ id: "primer-vuelo", title: "Primer vuelo", nectar: 10 }],
   unlocked: [{ type: "LESSON", id: "M1-N1-L2" }],
   mascotMood: "cheer",
   mascotMessage: "¡Volaste alto! Ya sabes saludar en LSC.",

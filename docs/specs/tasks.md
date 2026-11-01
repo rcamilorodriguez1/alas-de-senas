@@ -79,11 +79,11 @@
 
 ## Grupo 6 — Gamificación
 
-- [ ] **6.1** `GamificationService.apply_completion` dentro de la transacción de `complete` (logros con `on_conflict_do_nothing` + `RETURNING`). _R5.1–5.8, R5.10_
-- [ ] **6.2** `GET /gamification/stats` (con `hearts`), `/achievements`, `POST /gamification/streak-freeze`, `POST /gamification/hearts-refill`; `HEARTS_ENABLED`. _R5.9, R5.11, R5.14, R5.16_
-- [ ] **6.3** `CelebrationModal` y panel derecho actualizado (racha, néctar, vidas). _R4.9, R5.12_
-- [ ] **6.4** Página `/logros`.
-- [ ] **6.5** Vidas en la interfaz: contador ❤️ (barra superior, panel, encabezado de lección), animación al perder una, modal «Sin vidas» con repasar / recargar / esperar (cuenta regresiva). _R5.13–5.15_
+- [x] **6.1** `GamificationService.apply_completion` dentro de la transacción de `complete` (logros con `on_conflict_do_nothing` + `RETURNING`). _R5.1–5.8, R5.10_
+- [x] **6.2** `GET /gamification/stats` (con `hearts`), `/achievements`, `POST /gamification/streak-freeze`, `POST /gamification/hearts-refill`; `HEARTS_ENABLED`. _R5.9, R5.11, R5.14, R5.16_
+- [x] **6.3** `CelebrationModal` y panel derecho actualizado (racha, néctar, vidas). _R4.9, R5.12_
+- [x] **6.4** Página `/logros`.
+- [x] **6.5** Vidas en la interfaz: contador ❤️ (barra superior, panel, encabezado de lección), animación al perder una, modal «Sin vidas» con repasar / recargar / esperar (cuenta regresiva). _R5.13–5.15_
   **Verificar:** comprar un protector descuenta 50 de néctar; un logro aparece una sola vez; con 0 vidas L2 muestra el modal y L1 se puede hacer.
 
 ## Grupo 7 — Progreso y repaso

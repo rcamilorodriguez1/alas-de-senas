@@ -73,6 +73,7 @@ class StreakResultOut(ApiModel):
 class AchievementOut(ApiModel):
     id: str
     title: str
+    nectar: int  # recompensa del logro (ya sumada al néctar del usuario)
 
 
 class UnlockedOut(ApiModel):

@@ -1,5 +1,6 @@
 import type { RouteObject } from "react-router";
 import { LoginPage } from "../features/auth/LoginPage";
+import { AchievementsPage } from "../features/gamification/AchievementsPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
 import { LearnPage } from "../features/learn/LearnPage";
 import { LessonPage } from "../features/lesson/LessonPage";
@@ -38,6 +39,14 @@ export const appRoutes: RouteObject[] = [
     element: (
       <RequireAuth>
         <LessonPage />
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/logros",
+    element: (
+      <RequireAuth>
+        <AchievementsPage />
       </RequireAuth>
     ),
   },

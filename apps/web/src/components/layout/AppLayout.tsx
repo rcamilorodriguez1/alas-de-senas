@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router";
 import { logout } from "../../lib/api";
 import { useSessionStore } from "../../lib/session-store";
+import { streakLabel, useStats } from "../../features/gamification/gamification-api";
 import { TomiSvg } from "../mascot/Tomi";
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
@@ -31,6 +32,7 @@ const NAV: { to: string; label: string; icon: LucideIcon }[] = [
 export function AppLayout({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
   const navigate = useNavigate();
   const user = useSessionStore((state) => state.user);
+  const { data: stats } = useStats();
   const onLogout = async () => {
     await logout();
     await navigate("/ingresar", { replace: true });
@@ -64,6 +66,17 @@ export function AppLayout({ children, aside }: { children: ReactNode; aside?: Re
       </nav>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-end gap-4 border-b border-slate-200 bg-white px-6 py-3">
+          {stats && (
+            <div className="mr-auto flex items-center gap-4 font-semibold">
+              <span aria-label={`Racha: ${streakLabel(stats.streak.current)}`}>
+                🔥 {stats.streak.current}
+              </span>
+              <span aria-label={`Néctar: ${stats.nectar}`}>🌸 {stats.nectar}</span>
+              {stats.hearts.enabled && (
+                <span aria-label={`Vidas: ${stats.hearts.current}`}>❤️ {stats.hearts.current}</span>
+              )}
+            </div>
+          )}
           <span className="font-semibold">{user?.name}</span>
           <button
             type="button"

@@ -5,6 +5,20 @@
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --color-tomi-500: #16a34a;
   --color-tomi-600: #15803d;
+  --animate-heartbeat: heartbeat 0.7s ease-in-out;
+
+  @keyframes heartbeat {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    30% {
+      transform: scale(1.35);
+    }
+    60% {
+      transform: scale(0.9);
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

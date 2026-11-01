@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, vi } from "vitest";
 import { mediaQueryList, setViewportWidth } from "./media";
 
 // jsdom no trae `matchMedia`: por defecto, ninguna consulta coincide (sin movimiento reducido).
@@ -26,3 +26,6 @@ afterEach(() => {
 if (typeof window !== "undefined") {
   setViewportWidth(1366);
 }
+
+// jsdom no tiene <canvas>: el confeti de la celebración se simula en todas las pruebas.
+vi.mock("canvas-confetti", () => ({ default: vi.fn() }));

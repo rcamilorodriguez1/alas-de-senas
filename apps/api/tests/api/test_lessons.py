@@ -1098,7 +1098,8 @@ def test_completar_l1_perfecta_da_recompensas_y_desbloquea_l2(
     assert learning_path_status(client, token, L2) == "AVAILABLE"
     stored = db_user(user_id)
     assert stored.total_xp == 20
-    assert stored.nectar == 5
+    # 5 de la lección + 10 del logro FIRST_LESSON (§7.9, Grupo 6).
+    assert stored.nectar == 5 + 10
     closed = db_session(sid)
     assert closed.score == 100
     assert closed.passed is True
@@ -1120,7 +1121,7 @@ def test_doble_complete_devuelve_lo_mismo_sin_duplicar_xp(
     assert second == first
     stored = db_user(user_id)
     assert stored.total_xp == 20
-    assert stored.nectar == 5
+    assert stored.nectar == 5 + 10  # lección + FIRST_LESSON, una sola vez
 
 
 def test_repetir_leccion_aprobada_da_la_mitad_de_xp(

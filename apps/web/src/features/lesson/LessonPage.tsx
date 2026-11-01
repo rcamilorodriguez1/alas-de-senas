@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { Link, useNavigate, useParams } from "react-router";
 import { Mascot } from "../../components/mascot/Mascot";
 import { ApiError } from "../../lib/api";
+import { CelebrationModal } from "../gamification/CelebrationModal";
+import { achievementsKey, statsKey } from "../gamification/gamification-api";
+import { NoHeartsModal } from "../gamification/NoHeartsModal";
 import { learningPathKey } from "../learn/learn-api";
+import { usePrefersReducedMotion } from "../../lib/motion";
 import { ConversationActivity } from "./activities/ConversationActivity";
 import { MemoryMatchActivity } from "./activities/MemoryMatchActivity";
 import { ObserveActivity } from "./activities/ObserveActivity";
@@ -35,6 +39,7 @@ const EXIT_CONFIRM = "¿Salir de la lección? Perderás el avance de esta sesió
 type Phase =
   | { kind: "loading" }
   | { kind: "blocked"; message: string }
+  | { kind: "noHearts"; nextHeartAt: string | null }
   | { kind: "expired" }
   | { kind: "error" }
   | { kind: "ready"; data: LessonStart }
@@ -107,6 +112,13 @@ export function LessonPage() {
   const [answered, setAnswered] = useState<Set<string>>(new Set());
   const [hearts, setHearts] = useState<Hearts | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [heartbeat, setHeartbeat] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
+  useEffect(() => {
+    if (!heartbeat) return;
+    const timer = window.setTimeout(() => setHeartbeat(false), 700);
+    return () => window.clearTimeout(timer);
+  }, [heartbeat]);
   const started = useRef<string | null>(null);
   const activeCard = useRef<HTMLLIElement>(null);
   const exerciseKey = phase.kind === "ready" ? `${phase.data.sessionId}:${index}` : "";
@@ -128,7 +140,7 @@ export function LessonPage() {
       return;
     }
     if (error instanceof ApiError && error.code === "NO_HEARTS") {
-      setPhase({ kind: "blocked", message: "Te quedaste sin vidas por ahora" });
+      setPhase({ kind: "noHearts", nextHeartAt: error.nextHeartAt });
       return;
     }
     setPhase({ kind: "error" });
@@ -184,13 +196,17 @@ export function LessonPage() {
           <p role="alert" className="text-lg font-semibold">
             {phase.kind === "blocked" ? phase.message : "No pudimos abrir la lección."}
           </p>
-          {phase.kind === "blocked" && phase.message.includes("vidas") && (
-            <p>Las lecciones «Aprende» siempre están disponibles.</p>
-          )}
           <Link to="/aprender" className="font-semibold text-[#047857] underline">
             Volver a la ruta
           </Link>
         </div>
+      </Shell>
+    );
+  }
+  if (phase.kind === "noHearts") {
+    return (
+      <Shell>
+        <NoHeartsModal nextHeartAt={phase.nextHeartAt} onRefilled={() => void start()} />
       </Shell>
     );
   }
@@ -214,25 +230,9 @@ export function LessonPage() {
     );
   }
   if (phase.kind === "done") {
-    const { result } = phase;
     return (
       <Shell>
-        <div className="flex flex-col items-center gap-3 text-center">
-          <Mascot mood={result.mascotMood} message={result.mascotMessage} size={110} />
-          <h1 className="font-display text-3xl font-extrabold">
-            {result.passed ? "¡Lección completada!" : "¡Buen intento!"}
-          </h1>
-          <p className="text-2xl font-bold">{result.score} %</p>
-          <p className="font-semibold text-[#047857]">+{result.xpEarned} XP</p>
-          <p className="font-semibold text-[#45606A]">+{result.nectarEarned} néctar</p>
-          <button
-            type="button"
-            onClick={() => void navigate("/aprender")}
-            className="mt-2 rounded-xl border-b-4 border-emerald-950 bg-[#047857] px-6 py-3 font-display font-bold text-white"
-          >
-            Volver a la ruta
-          </button>
-        </div>
+        <CelebrationModal result={phase.result} onClose={() => void navigate("/aprender")} />
       </Shell>
     );
   }
@@ -254,6 +254,10 @@ export function LessonPage() {
     setNotice(null);
     try {
       const result = await sendAnswer(data.sessionId, current.id, answer);
+      // Latido del contador al perder una vida (sin animación con movimiento reducido).
+      if (hearts && result.hearts.current < hearts.current && !reducedMotion) {
+        setHeartbeat(true);
+      }
       setHearts(result.hearts);
       setAnswered((previous) => new Set(previous).add(current.id));
       return result;
@@ -271,6 +275,8 @@ export function LessonPage() {
     }
     try {
       const result = await completeLessonSession(data.sessionId);
+      void queryClient.invalidateQueries({ queryKey: statsKey });
+      void queryClient.invalidateQueries({ queryKey: achievementsKey });
       await queryClient.invalidateQueries({ queryKey: learningPathKey });
       setPhase({ kind: "done", data, result });
     } catch (error) {
@@ -309,7 +315,11 @@ export function LessonPage() {
             <span className="text-sm text-[#45606A]">Sin vidas en juego</span>
           ) : (
             hearts?.enabled && (
-              <span aria-label={`Vidas: ${hearts.current}`} className="font-semibold">
+              <span
+                aria-label={`Vidas: ${hearts.current}`}
+                data-heartbeat={heartbeat ? "true" : undefined}
+                className={`inline-block font-semibold ${heartbeat ? "animate-heartbeat" : ""}`}
+              >
                 ❤️ {hearts.current}
               </span>
             )

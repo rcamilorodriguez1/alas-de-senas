@@ -398,7 +398,7 @@ describe("LessonPage — completar (R4.9, R4.10)", () => {
     expect(bearer(api.to(COMPLETE, "POST")[0])).toBe("Bearer t");
     expect(screen.getByText(/83\s%/)).toBeInTheDocument();
     expect(screen.getByText(containingText("+16 XP"))).toBeInTheDocument();
-    expect(screen.getByText(containingText("+4 néctar"))).toBeInTheDocument();
+    expect(screen.getByText(containingText("+4 de néctar"))).toBeInTheDocument();
     expect(screen.getByText(containingText(COMPLETION_PASSED.mascotMessage))).toBeInTheDocument();
   });
 
@@ -415,7 +415,7 @@ describe("LessonPage — completar (R4.9, R4.10)", () => {
     expect(screen.queryByText(containingText("¡Lección completada!"))).not.toBeInTheDocument();
     expect(screen.getByText(/50\s%/)).toBeInTheDocument();
     expect(screen.getByText(containingText("+5 XP"))).toBeInTheDocument();
-    expect(screen.getByText(containingText("+1 néctar"))).toBeInTheDocument();
+    expect(screen.getByText(containingText("+1 de néctar"))).toBeInTheDocument();
     expect(screen.getByText(containingText(COMPLETION_FAILED.mascotMessage))).toBeInTheDocument();
   });
 

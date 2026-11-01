@@ -42,12 +42,15 @@ async function send(method: Method, path: string, body: unknown, token: string |
 }
 
 async function toError(response: Response): Promise<ApiError> {
-  const data = (await response.json().catch(() => ({}))) as Partial<ErrorOut>;
+  const data = (await response.json().catch(() => ({}))) as Partial<ErrorOut> & {
+    nextHeartAt?: unknown;
+  };
   return new ApiError(
     response.status,
     data.code ?? "HTTP_ERROR",
     data.message ?? "No se pudo completar la petición.",
     data.fields ?? undefined,
+    typeof data.nextHeartAt === "string" ? data.nextHeartAt : null,
   );
 }
 

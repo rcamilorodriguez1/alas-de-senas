@@ -5,13 +5,22 @@ export class ApiError extends Error {
   readonly code: string;
   /** Mensajes en español por campo (solo VALIDATION_ERROR). */
   readonly fields?: Record<string, string>;
+  /** Cuándo llega la próxima vida (solo NO_HEARTS, §7.10). */
+  readonly nextHeartAt: string | null;
 
-  constructor(status: number, code: string, message: string, fields?: Record<string, string>) {
+  constructor(
+    status: number,
+    code: string,
+    message: string,
+    fields?: Record<string, string>,
+    nextHeartAt: string | null = null,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
     this.fields = fields;
+    this.nextHeartAt = nextHeartAt;
   }
 }
 

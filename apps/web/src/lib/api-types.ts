@@ -192,6 +192,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gamification/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stats */
+        get: operations["stats_api_gamification_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gamification/achievements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Achievements */
+        get: operations["achievements_api_gamification_achievements_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gamification/streak-freeze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Buy Streak Freeze */
+        post: operations["buy_streak_freeze_api_gamification_streak_freeze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gamification/hearts-refill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refill Hearts */
+        post: operations["refill_hearts_api_gamification_hearts_refill_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -202,6 +270,23 @@ export interface components {
             id: string;
             /** Title */
             title: string;
+            /** Nectar */
+            nectar: number;
+        };
+        /** AchievementStatusOut */
+        AchievementStatusOut: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Icon */
+            icon: string;
+            /** Nectar */
+            nectar: number;
+            /** Unlockedat */
+            unlockedAt: string | null;
         };
         /**
          * ActivityKind
@@ -575,12 +660,42 @@ export interface components {
              */
             introCompleted?: boolean;
         };
+        /** StatsOut */
+        StatsOut: {
+            /** Totalxp */
+            totalXp: number;
+            /** Nectar */
+            nectar: number;
+            streak: components["schemas"]["StreakStatsOut"];
+            today: components["schemas"]["TodayOut"];
+            hearts: components["schemas"]["HeartsOut"];
+        };
         /** StreakResultOut */
         StreakResultOut: {
             /** Current */
             current: number;
             /** Extended */
             extended: boolean;
+        };
+        /** StreakStatsOut */
+        StreakStatsOut: {
+            /** Current */
+            current: number;
+            /** Longest */
+            longest: number;
+            /** Freezesavailable */
+            freezesAvailable: number;
+            /** Atrisk */
+            atRisk: boolean;
+        };
+        /** TodayOut */
+        TodayOut: {
+            /** Seconds */
+            seconds: number;
+            /** Goalseconds */
+            goalSeconds: number;
+            /** Xp */
+            xp: number;
         };
         /** UnlockedOut */
         UnlockedOut: {
@@ -1122,6 +1237,158 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LessonCompletionOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    stats_api_gamification_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatsOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    achievements_api_gamification_achievements_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AchievementStatusOut"][];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    buy_streak_freeze_api_gamification_streak_freeze_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatsOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    refill_hearts_api_gamification_hearts_refill_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatsOut"];
                 };
             };
             /** @description Error de la petición */
