@@ -1,6 +1,6 @@
 // Nombres de los videos del colector «desde videos» (D-019).
 import { describe, expect, it } from "vitest";
-import { parseVideoName } from "./video-extract";
+import { HOLD_END, HOLD_START, parseVideoName, sampleTimes } from "./video-extract";
 
 describe("parseVideoName", () => {
   it("lee etiqueta y persona del nombre", () => {
@@ -13,5 +13,20 @@ describe("parseVideoName", () => {
     expect(parseVideoName("numero-3.mp4")).toBeNull();
     expect(parseVideoName("numero-3__p17__t0.avi")).toBeNull();
     expect(parseVideoName("Número 3__p17__t0.mp4")).toBeNull();
+  });
+});
+
+describe("sampleTimes", () => {
+  it("las señas se muestrean solo en la parte central del clip (sin subir ni bajar la mano)", () => {
+    const times = sampleTimes(4, "numero-3");
+    expect(times.length).toBeGreaterThan(0);
+    expect(Math.min(...times)).toBeGreaterThanOrEqual(4 * HOLD_START);
+    expect(Math.max(...times)).toBeLessThan(4 * HOLD_END);
+  });
+
+  it("NINGUNA usa el clip completo", () => {
+    const times = sampleTimes(2, "NINGUNA");
+    expect(Math.min(...times)).toBeLessThan(0.1);
+    expect(times.length).toBe(20);
   });
 });
