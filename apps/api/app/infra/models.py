@@ -17,6 +17,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     MetaData,
     String,
     Text,
@@ -150,6 +151,10 @@ class User(Base):
     hearts: Mapped[int] = mapped_column(default=5)  # §7.10
     hearts_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_demo: Mapped[bool] = mapped_column(default=False)  # §17.4
+    # Foto de perfil (D-023): WebP de 256 x 256 re-codificada (sin metadatos); diferida para no
+    # leerla en cada consulta del usuario.
+    avatar: Mapped[bytes | None] = mapped_column(LargeBinary, deferred=True)
+    avatar_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )  # auditoría (D22 lo permite)

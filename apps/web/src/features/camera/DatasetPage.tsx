@@ -10,7 +10,7 @@ import {
   type CameraSession,
 } from "../../camera/session";
 import { useSessionStore } from "../../lib/session-store";
-import { extractFromVideos, type ExtractProgress } from "../../camera/video-extract";
+import { extractFromImages, extractFromVideos, isImageFile, type ExtractProgress } from "../../camera/video-extract";
 import { useSignSearch } from "../dictionary/dictionary-api";
 
 const COUNTDOWN_S = 3;
@@ -118,12 +118,19 @@ export function DatasetPage() {
     setExtracting(true);
     setVideoNote(null);
     try {
-      const { samples: found, skipped } = await extractFromVideos(Array.from(list), setProgress);
+      const files = Array.from(list);
+      // Fotos (letras estáticas) y videos se procesan cada uno con su modo de MediaPipe.
+      const images = files.filter((file) => isImageFile(file.name));
+      const videos = files.filter((file) => !isImageFile(file.name));
+      const fromImages = images.length ? await extractFromImages(images, setProgress) : { samples: [], skipped: [] };
+      const fromVideos = videos.length ? await extractFromVideos(videos, setProgress) : { samples: [], skipped: [] };
+      const found = [...fromImages.samples, ...fromVideos.samples];
+      const skipped = [...fromImages.skipped, ...fromVideos.skipped];
       if (!mounted.current) return;
       setSamples((previous) => [...previous, ...found]);
       setVideoNote(
         skipped.length
-          ? `Listo. Se omitieron ${skipped.length} archivo(s) por nombre o formato: ${skipped.slice(0, 3).join(", ")}…`
+          ? `Listo: ${found.length} muestras. Se omitieron ${skipped.length} archivo(s) (nombre, formato o sin mano detectada): ${skipped.slice(0, 3).join(", ")}…`
           : `Listo: ${found.length} muestras de ${list.length} video(s).`,
       );
     } catch {
@@ -224,15 +231,15 @@ export function DatasetPage() {
           Desde videos
         </h2>
         <p className="mt-1 text-sm text-[#45606A]">
-          Elige videos MP4 nombrados <code>etiqueta__persona__toma.mp4</code> (por ejemplo{" "}
-          <code>numero-3__p17__t0.mp4</code> o <code>NINGUNA__p1__t2.mp4</code>). Se procesan en este navegador
+          Elige videos MP4 o fotos nombrados <code>etiqueta__persona__toma.mp4</code> (por ejemplo{" "}
+          <code>numero-3__p17__t0.mp4</code> o <code>letra-a__p12__foto3.jpg</code>). Se procesan en este navegador
           con el mismo método de la cámara; los videos no se suben.
         </p>
         <label className="mt-3 block font-semibold">
           Videos
           <input
             type="file"
-            accept="video/mp4,video/webm"
+            accept="video/mp4,video/webm,image/jpeg,image/png,image/webp"
             multiple
             disabled={extracting}
             onChange={(event) => void fromVideos(event.target.files)}

@@ -322,8 +322,9 @@ def _referenced_signs(payloads: Sequence[ExercisePayload]) -> set[str]:
 def _groups(lesson: Lesson, exercises: Sequence[Exercise]) -> Mapping[str, int]:
     """Agrupación por seña (§9.3) de L1 a L3; el reto final no se agrupa.
 
-    Cada seña forma un bloque contiguo. Cuando vuelve una seña ya vista (el repaso final de L1)
-    o aparece un ejercicio sin seña, empieza el bloque final, que no tiene grupo.
+    Cada seña forma un bloque contiguo. Con el orden de D-021 (observar todas y luego recordar
+    mezclado) los bloques son las observaciones; cuando vuelve una seña ya vista o aparece un
+    ejercicio sin seña, empieza la parte de recordar, que no tiene grupo.
     """
     if lesson.type is LessonType.CHALLENGE:
         return {}

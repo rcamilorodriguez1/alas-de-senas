@@ -100,11 +100,48 @@ export interface paths {
         get: operations["me_api_me_get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Me */
+        delete: operations["delete_me_api_me_delete"];
         options?: never;
         head?: never;
         /** Update Me */
         patch: operations["update_me_api_me_patch"];
+        trace?: never;
+    };
+    "/api/me/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Me */
+        get: operations["export_me_api_me_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Avatar */
+        get: operations["get_avatar_api_me_avatar_get"];
+        /** Set Avatar */
+        put: operations["set_avatar_api_me_avatar_put"];
+        post?: never;
+        /** Remove Avatar */
+        delete: operations["remove_avatar_api_me_avatar_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/learning-path": {
@@ -503,6 +540,38 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountExportOut */
+        AccountExportOut: {
+            /**
+             * Exportedat
+             * Format: date-time
+             */
+            exportedAt: string;
+            profile: components["schemas"]["ProfileExportOut"];
+            streak: components["schemas"]["StreakExportOut"] | null;
+            /** Lessonsessions */
+            lessonSessions: components["schemas"]["LessonSessionExportOut"][];
+            /** Reviewsessions */
+            reviewSessions: components["schemas"]["ReviewSessionExportOut"][];
+            /** Dailyactivity */
+            dailyActivity: components["schemas"]["DailyActivityExportOut"][];
+            /** Achievements */
+            achievements: components["schemas"]["AchievementExportOut"][];
+            /** Favorites */
+            favorites: components["schemas"]["FavoriteExportOut"][];
+            /** Signreviews */
+            signReviews: components["schemas"]["SignReviewExportOut"][];
+        };
+        /** AchievementExportOut */
+        AchievementExportOut: {
+            /** Id */
+            id: string;
+            /**
+             * Unlockedat
+             * Format: date-time
+             */
+            unlockedAt: string;
+        };
         /** AchievementOut */
         AchievementOut: {
             /** Id */
@@ -561,6 +630,11 @@ export interface components {
             accessToken: string;
             user: components["schemas"]["UserOut"];
         };
+        /** AvatarIn */
+        AvatarIn: {
+            /** Image */
+            image: string;
+        };
         /** CategoryOut */
         CategoryOut: {
             /** Id */
@@ -576,6 +650,24 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /** DailyActivityExportOut */
+        DailyActivityExportOut: {
+            /** Day */
+            day: string;
+            /** Seconds */
+            seconds: number;
+            /** Xp */
+            xp: number;
+            /** Lessons */
+            lessons: number;
+            /** Reviews */
+            reviews: number;
+        };
+        /** DeleteAccountIn */
+        DeleteAccountIn: {
+            /** Password */
+            password: string;
         };
         /** ErrorOut */
         ErrorOut: {
@@ -600,6 +692,16 @@ export interface components {
          * @enum {string}
          */
         ExerciseType: "OBSERVE" | "VIDEO_TO_MEANING" | "MEANING_TO_VIDEO" | "MEMORY_MATCH" | "PRODUCE" | "CONVERSATION" | "SPELLING";
+        /** FavoriteExportOut */
+        FavoriteExportOut: {
+            /** Sign */
+            sign: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+        };
         /** HealthOut */
         HealthOut: {
             /** Ok */
@@ -736,6 +838,26 @@ export interface components {
             moduleOrder: number;
             /** Estimatedxp */
             estimatedXp: number;
+        };
+        /** LessonSessionExportOut */
+        LessonSessionExportOut: {
+            /** Lessonid */
+            lessonId: string;
+            /**
+             * Startedat
+             * Format: date-time
+             */
+            startedAt: string;
+            /** Completedat */
+            completedAt: string | null;
+            /** Score */
+            score: number | null;
+            /** Passed */
+            passed: boolean | null;
+            /** Xpearned */
+            xpEarned: number | null;
+            /** Nectarearned */
+            nectarEarned: number | null;
         };
         /** LessonStartOut */
         LessonStartOut: {
@@ -887,6 +1009,34 @@ export interface components {
             averageScore: number | null;
             /** Accuracy */
             accuracy: number | null;
+        };
+        /** ProfileExportOut */
+        ProfileExportOut: {
+            /** Name */
+            name: string;
+            /** Email */
+            email: string;
+            /** Role */
+            role: string;
+            /** Dailygoalminutes */
+            dailyGoalMinutes: number;
+            /** Dominanthand */
+            dominantHand: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Totalxp */
+            totalXp: number;
+            /** Nectar */
+            nectar: number;
+            /** Hearts */
+            hearts: number;
+            /** Recognitionscorrect */
+            recognitionsCorrect: number;
+            /** Hasavatar */
+            hasAvatar: boolean;
         };
         /**
          * ProgressStatus
@@ -1106,6 +1256,20 @@ export interface components {
             /** Signs */
             signs: components["schemas"]["QueueSignOut"][];
         };
+        /** ReviewSessionExportOut */
+        ReviewSessionExportOut: {
+            /**
+             * Startedat
+             * Format: date-time
+             */
+            startedAt: string;
+            /** Completedat */
+            completedAt: string | null;
+            /** Correct */
+            correct: number | null;
+            /** Total */
+            total: number | null;
+        };
         /** ReviewStartOut */
         ReviewStartOut: {
             /**
@@ -1143,6 +1307,15 @@ export interface components {
             /** Isfavorite */
             isFavorite: boolean;
         };
+        /** SignReviewExportOut */
+        SignReviewExportOut: {
+            /** Sign */
+            sign: string;
+            /** Strength */
+            strength: number;
+            /** Nextreviewday */
+            nextReviewDay: string;
+        };
         /** SignSearchOut */
         SignSearchOut: {
             /** Items */
@@ -1165,6 +1338,17 @@ export interface components {
             streak: components["schemas"]["StreakStatsOut"];
             today: components["schemas"]["TodayOut"];
             hearts: components["schemas"]["HeartsOut"];
+        };
+        /** StreakExportOut */
+        StreakExportOut: {
+            /** Current */
+            current: number;
+            /** Longest */
+            longest: number;
+            /** Freezesavailable */
+            freezesAvailable: number;
+            /** Lastactiveday */
+            lastActiveDay: string | null;
         };
         /** StreakResultOut */
         StreakResultOut: {
@@ -1235,6 +1419,8 @@ export interface components {
             dailyGoalMinutes: number;
             /** Dominanthand */
             dominantHand: string;
+            /** Avatarupdatedat */
+            avatarUpdatedAt?: string | null;
         };
         /** VideoOption */
         VideoOption: {
@@ -1523,6 +1709,46 @@ export interface operations {
             };
         };
     };
+    delete_me_api_me_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAccountIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
     update_me_api_me_patch: {
         parameters: {
             query?: never;
@@ -1535,6 +1761,160 @@ export interface operations {
                 "application/json": components["schemas"]["MeUpdateIn"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    export_me_api_me_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountExportOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    get_avatar_api_me_avatar_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    set_avatar_api_me_avatar_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvatarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Error de la petición */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Error del servidor */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    remove_avatar_api_me_avatar_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

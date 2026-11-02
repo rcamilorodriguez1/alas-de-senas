@@ -30,3 +30,15 @@ describe("sampleTimes", () => {
     expect(times.length).toBe(20);
   });
 });
+
+describe("parseImageName", () => {
+  it("lee etiqueta y persona de fotos (letras estáticas)", async () => {
+    const { parseImageName, isImageFile } = await import("./video-extract");
+    expect(parseImageName("letra-a__p12__foto3.jpg")).toEqual({ label: "letra-a", collector: "p12" });
+    expect(parseImageName("NINGUNA__p1__x.png")).toEqual({ label: "NINGUNA", collector: "p1" });
+    expect(parseImageName("letra-a__p12__foto3.mp4")).toBeNull();
+    expect(parseImageName("Letra-A__p12__foto3.jpg")).toBeNull();
+    expect(isImageFile("a.JPG")).toBe(true);
+    expect(isImageFile("a.mp4")).toBe(false);
+  });
+});

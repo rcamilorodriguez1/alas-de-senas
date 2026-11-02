@@ -755,3 +755,10 @@ def test_render_sin_errores_lo_indica() -> None:
     assert "M1" in text
     assert "45" in text
     assert text.strip()
+
+
+def test_labels_acepta_ninguna(content_dir: Path, media_dir: Path, tmp_path: Path) -> None:
+    """§10.5: el modelo siempre incluye la clase «NINGUNA» (sin seña); no es un slug."""
+    labels = _labels(tmp_path, ["NINGUNA", "letra-a", "letra-b"])
+    report = _check(content_dir, media_dir, labels_path=labels)
+    assert report.errors == []

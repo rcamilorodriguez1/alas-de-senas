@@ -220,3 +220,42 @@
   7. **Modelo publicado** (`apps/web/public/models/lsc-alfabeto/`, entrenado en Colab con el dataset recortado: NINGUNA + numero-1…5, 18 personas). En TensorFlow.js sobre todo el dataset: NINGUNA 95 %, números 63–72 %. Prueba de punta a punta con una «cámara falsa» de Chrome que reproduce videos de una persona no usada en la validación local: `/camara` reconoce el número correcto en 4 de 5 (el 1 a veces sale como 5).
   8. **MediaPipe en CPU también en la cámara en vivo:** con GPU, en un navegador sin aceleración (como los de laboratorio o automatizados) HandLandmarker no detectaba manos y no daba error; una mano a 30 fps cabe en CPU. Los números se muestran como dígitos («numero-3» → «3»).
   9. **Pendiente:** el intérprete confirma que los números 1–5 son estáticos; para mejorar el modelo, grabar con la cámara del equipo (más variedad de personas y fondos) y volver a entrenar.
+
+## D-021 · Primero observar, después recordar (lecciones L1 a L3) · 01/11/2026
+- Contexto: el usuario notó que en «Aprende» se mostraba una seña (video + palabra) e inmediatamente se preguntaba por ella, así que la pregunta no hacía recordar nada. Lo mismo pasaba en L2 y L3. Aprobó la opción «primero ver todas, después preguntar mezclado».
+- Decisión (cambia la agrupación por seña de §9.3):
+  - **L1 Aprende:** observar todas las señas nuevas → «¿Qué significa?» en orden mezclado → producir cada una → «¿Cuál es la seña de…?» mezcladas.
+  - **L2 Reconoce:** observar todas (repaso) → las dos preguntas mezcladas → actividad final.
+  - **L3 Practica:** observar todas → preguntas mezcladas → producir → memoria → actividad final.
+  - El orden mezclado sale del rng de la lección (reproducible) y la primera pregunta nunca es la última seña mostrada. L4 (reto) no cambia.
+  - `group` solo marca las observaciones («Seña 1 de 3»…); las preguntas no pertenecen a una seña y van sin grupo.
+- Pruebas: estructura nueva de L1–L3, «la primera pregunta nunca es la última seña mostrada» y «las preguntas no siguen el orden observado» (generador); grupos nuevos en las pruebas de API.
+- Mejora futura (opción 2): mostrar en las preguntas la seña hecha por otra persona cuando haya varios videos por seña.
+
+## D-022 · Página de perfil y derechos sobre los datos (Ley 1581 de 2012) · 02/11/2026
+- Contexto: `/perfil` estaba en el menú y en las rutas de diseño, pero ninguna tarea la construía. El usuario aprobó las secciones 1, 2 y 4.
+- Decisiones:
+  1. **Tus datos:** nombre, meta diaria (5/10/15/20) y mano dominante con el `PATCH /me` existente; la sesión local se actualiza con el usuario devuelto.
+  2. **Tu resumen:** XP, racha actual y más larga, néctar, señas aprendidas y logros, con los endpoints existentes (sin API nueva).
+  3. **Privacidad y cuenta:** enlace a la política, «Descargar mis datos» (`GET /me/export`, JSON con perfil, racha, sesiones, actividad, logros, favoritos y repasos; nunca la contraseña ni tokens) y «Eliminar mi cuenta» (`DELETE /me` con la contraseña; borra al usuario y todo lo suyo por `ON DELETE CASCADE`, borra la cookie). Para evitar fuerza bruta usa el mismo límite que el ingreso; en la interfaz exige escribir «ELIMINAR».
+  4. **`/privacidad`** (pública): la enlazaba el registro pero no existía; explica qué se guarda, qué no (la cámara) y los derechos.
+- Funciones nuevas fuera de §8.2 (endpoints de exportación y supresión): justificadas por los derechos de acceso y supresión de la Ley 1581 (§11 de la especificación).
+
+## D-023 · Foto de perfil · 02/11/2026
+- Contexto: el usuario pidió poder tener foto de perfil y cambiarla con una imagen de sus archivos.
+- Decisiones:
+  1. **En el navegador** se recorta al centro y se reduce a 256 × 256 (WebP) antes de enviarla; se aceptan JPG, PNG y WebP de hasta 15 MB de origen.
+  2. **En el servidor** (`PUT /me/avatar`, JSON con la imagen en base64: no se agrega `python-multipart`) se valida que sea JPG/PNG/WebP real con Pillow, ≤ 300 KB y ≤ 4096 px por lado, y se **re-codifica** como WebP 256 × 256: así se descartan los metadatos (EXIF, ubicación GPS) y lo guardado es siempre una imagen válida.
+  3. **Se guarda en `users.avatar`** (`LargeBinary`, diferida) con `avatar_updated_at` (migración `3c8e1f5a9d27`). `GET /me/avatar` solo para el dueño, con `Cache-Control: private, no-store`; el cliente la pide con el token y la muestra como `blob:` (permitido por la CSP). `DELETE /me/avatar` la quita.
+  4. **`UserOut.avatarUpdatedAt`** (null = sin foto) sirve para saber si hay foto y para refrescarla. La exportación de datos indica `hasAvatar`; al eliminar la cuenta se borra con el usuario.
+  5. **Dónde se ve:** perfil (subir, cambiar, quitar) y barra superior junto al nombre (enlace a `/perfil`); sin foto se muestra Tomi.
+
+## D-024 · Modelo de la cámara con el alfabeto (LSC70) · 02/11/2026
+- Contexto: el usuario pidió que la cámara reconozca el abecedario y que se busquen datasets libres; eligió LSC70 (Universidad del Cauca, Mendeley Data, DOI 10.17632/9ssyn8tff5.2, **CC BY 4.0**: 70 personas, fotos del alfabeto y números validadas por expertos).
+- Decisiones:
+  1. **Datos:** fotos de cuerpo completo (LSC70AN) de las 24 letras estáticas de `signs.csv` y los números 1, 4, 5, procesadas en el navegador con el colector («Desde videos» acepta fotos, MediaPipe en modo IMAGE, misma normalización, D11) + los videos de LSC-54 (números 1–5 y NINGUNA). 14.782 muestras de 88 personas. J, Ñ y Z (movimiento) siguen con autoevaluación.
+  2. **Elegir la mano que hace la seña** (`pickSigningHand`): MediaPipe busca 2 manos y se usa la más alta. Con 1 mano tomaba a veces la que cuelga en reposo, que parece la «Q» (todo se confundía con Q). Aplicado igual en la extracción y en la cámara en vivo. Validación cruzada por persona de las letras: 64,7 % → 86,6 %.
+  3. **Entrenamiento local** con TensorFlow 2.15 del `venv` del equipo y **exportador propio** a TensorFlow.js en `train_static.py` (si `tensorflowjs` no está, escribe `model.json` + `group1-shard1of1.bin`); sin scikit-learn, la separación por persona y la matriz de confusión usan numpy. La salida en TensorFlow.js coincide con Keras (diferencia máx. 3e-7). Colab sigue sirviendo.
+  4. **Resultado publicado** (30 clases): validación cruzada por persona 82,7 % por cuadro (letras 75–96 %, salvo H 60 % y S 58 %; números de LSC-54 57–84 %). Con la cámara falsa: A, L, Y, O reconocidas de forma estable; B se confunde con 4 (formas casi iguales) y los números de LSC-54 no alcanzan el umbral. En uso real mejora con el suavizado (6 de 10, ≥ 0,70).
+  5. **Créditos** de LSC70 y LSC-54 en `/creditos` (CC BY 4.0 exige atribución). No se publican las fotos ni los videos, solo el modelo.
+- Pendiente: grabar al equipo con su cámara para mejorar H, S, B/4 y los números; el intérprete confirma las letras y números estáticos.

@@ -13,6 +13,7 @@ import { NavLink, useNavigate } from "react-router";
 import { logout } from "../../lib/api";
 import { useSessionStore } from "../../lib/session-store";
 import { streakLabel, useStats } from "../../features/gamification/gamification-api";
+import { AvatarImage } from "../../features/profile/AvatarImage";
 import { TomiSvg } from "../mascot/Tomi";
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
@@ -82,7 +83,10 @@ export function AppLayout({ children, aside }: { children: ReactNode; aside?: Re
           )}
           {user ? (
             <>
-              <span className="font-semibold">{user.name}</span>
+              <NavLink to="/perfil" className="flex items-center gap-2 font-semibold">
+                <AvatarImage size={32} label={`Foto de perfil de ${user.name}`} />
+                {user.name}
+              </NavLink>
               <button
                 type="button"
                 onClick={() => void onLogout()}

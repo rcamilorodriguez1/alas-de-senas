@@ -12,6 +12,8 @@ import { LearnPage } from "../features/learn/LearnPage";
 import { IntroPage } from "../features/intro/IntroPage";
 import { LessonPage } from "../features/lesson/LessonPage";
 import { CreditsPage } from "../pages/CreditsPage";
+import { PrivacyPage } from "../pages/PrivacyPage";
+import { ProfilePage } from "../features/profile/ProfilePage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { RootRedirect } from "../pages/RootRedirect";
 import { GuestOnly, RequireAuth } from "./guards";
@@ -102,5 +104,14 @@ export const appRoutes: RouteObject[] = [
   { path: "/diccionario", element: <DictionaryPage /> },
   { path: "/diccionario/:slug", element: <SignPage /> },
   { path: "/creditos", element: <CreditsPage /> },
+  { path: "/privacidad", element: <PrivacyPage /> },
+  {
+    path: "/perfil",
+    element: (
+      <RequireAuth>
+        <ProfilePage />
+      </RequireAuth>
+    ),
+  },
   { path: "*", element: <NotFoundPage /> },
 ];

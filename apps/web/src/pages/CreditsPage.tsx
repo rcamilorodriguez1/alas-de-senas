@@ -70,6 +70,35 @@ export function CreditsPage() {
           ))}
         </ul>
       </section>
+      <section aria-labelledby="modelo-camara" className="mt-6 rounded-2xl bg-white p-5 shadow">
+        <h2 id="modelo-camara" className="font-display text-xl font-extrabold">
+          Modelo de la cámara: LSC70 y LSC-54
+        </h2>
+        <p className="mt-2">
+          El reconocimiento del alfabeto y los números se entrenó con los puntos de la mano extraídos (en el
+          navegador) de fotos de <strong>LSC70</strong> — Universidad del Cauca, «The dynamic Colombian sign language
+          dataset for basic conversation LSC70», <em>Data in Brief</em> (2025),{" "}
+          <a
+            href="https://doi.org/10.17632/9ssyn8tff5.2"
+            className="font-semibold text-[#047857] underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            doi.org/10.17632/9ssyn8tff5.2
+          </a>{" "}
+          (licencia{" "}
+          <a
+            href="https://creativecommons.org/licenses/by/4.0/deed.es"
+            className="font-semibold text-[#047857] underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            CC BY 4.0
+          </a>
+          ) — y de videos de <strong>LSC-54</strong> (números y señas sin número). No se guardan ni se publican esas
+          fotos o videos: solo el modelo entrenado.
+        </p>
+      </section>
       <section aria-labelledby="proyecto" className="mt-6 rounded-2xl bg-white p-5 shadow">
         <h2 id="proyecto" className="font-display text-xl font-extrabold">
           Alas de Señas

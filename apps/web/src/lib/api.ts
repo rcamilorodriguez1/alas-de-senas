@@ -11,12 +11,14 @@ export type UserOut = components["schemas"]["UserOut"];
 export type RegisterIn = components["schemas"]["RegisterIn"];
 export type LoginIn = components["schemas"]["LoginIn"];
 
-type Method = "GET" | "POST" | "PATCH" | "DELETE";
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 interface RequestOptions {
   body?: unknown;
   /** Envía el token de acceso y renueva la sesión ante un 401 (por defecto, sí). */
   auth?: boolean;
+  /** «blob» para respuestas binarias (la foto de perfil, D-023); por defecto JSON. */
+  responseType?: "json" | "blob";
 }
 
 type RefreshOutcome = "ok" | "rejected" | "error";
@@ -54,9 +56,10 @@ async function toError(response: Response): Promise<ApiError> {
   );
 }
 
-async function parse<T>(response: Response): Promise<T> {
+async function parse<T>(response: Response, responseType: "json" | "blob" = "json"): Promise<T> {
   if (!response.ok) throw await toError(response);
   if (response.status === 204) return undefined as T;
+  if (responseType === "blob") return (await response.blob()) as T;
   return (await response.json()) as T;
 }
 
@@ -105,17 +108,17 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { body, auth = true } = options;
+  const { body, auth = true, responseType = "json" } = options;
   const token = auth ? useSessionStore.getState().accessToken : null;
   const response = await send(method, path, body, token);
-  if (response.status !== 401 || !auth) return parse<T>(response);
+  if (response.status !== 401 || !auth) return parse<T>(response, responseType);
 
   // 401 tardío: otra petición ya renovó el token mientras esta iba; se reintenta sin rotar.
   const current = useSessionStore.getState().accessToken;
   const outcome = current !== null && current !== token ? "ok" : await renew();
   if (outcome === "ok") {
     const retry = await send(method, path, body, useSessionStore.getState().accessToken);
-    if (retry.status !== 401) return parse<T>(retry);
+    if (retry.status !== 401) return parse<T>(retry, responseType);
   } else if (outcome === "error") {
     throw new ApiError(503, "NETWORK_ERROR", "No pudimos conectarnos. Intenta de nuevo.");
   }

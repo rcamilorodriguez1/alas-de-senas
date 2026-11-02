@@ -53,7 +53,7 @@ PASSWORD_MESSAGE = "La contraseña debe tener entre 8 y 72 bytes (las tildes y l
 EMAIL_MESSAGE = "Correo no válido"
 POLICY_MESSAGE = "Debes aceptar la política de tratamiento de datos."
 MISSING_MESSAGE = "Este campo es obligatorio."
-USER_KEYS = {"id", "name", "email", "role", "dailyGoalMinutes", "dominantHand"}
+USER_KEYS = {"id", "name", "email", "role", "dailyGoalMinutes", "dominantHand", "avatarUpdatedAt"}
 
 
 # ---------- Fixtures y utilidades ----------

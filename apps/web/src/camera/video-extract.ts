@@ -2,7 +2,7 @@
 // normalizeLandmarks, D11) aplicado a videos locales, p. ej. los de LSC-54. Los videos no se suben.
 import type { HandLandmarker } from "@mediapipe/tasks-vision";
 import type { Sample } from "./dataset";
-import { normalizeLandmarks, type Handedness } from "./normalize";
+import { normalizeLandmarks, pickSigningHand } from "./normalize";
 
 const WASM_DIR = "/mediapipe/wasm";
 const HAND_MODEL = "/mediapipe/hand_landmarker.task";
@@ -19,21 +19,77 @@ export function sampleTimes(duration: number, label: string): number[] {
   return times;
 }
 
-/** «numero-3__p17__t0.mp4» → etiqueta y persona; null si el nombre no sigue el formato. */
-export function parseVideoName(name: string): { label: string; collector: string } | null {
-  const match = /^([a-z0-9-]+|NINGUNA)__([A-Za-z0-9-]+)__[A-Za-z0-9-]+\.(mp4|webm|mov|m4v)$/.exec(name);
-  return match ? { label: match[1], collector: match[2] } : null;
+const NAME = /^([a-z0-9-]+|NINGUNA)__([A-Za-z0-9-]+)__[A-Za-z0-9-]+\.([a-z0-9]+)$/i;
+const VIDEO_EXT = new Set(["mp4", "webm", "mov", "m4v"]);
+const IMAGE_EXT = new Set(["jpg", "jpeg", "png", "webp"]);
+
+function parseName(name: string, allowed: Set<string>): { label: string; collector: string } | null {
+  const match = NAME.exec(name);
+  if (!match || !allowed.has(match[3].toLowerCase()) || match[1] !== match[1].toLowerCase() && match[1] !== "NINGUNA") {
+    return null;
+  }
+  return { label: match[1], collector: match[2] };
 }
 
-async function createLandmarker(): Promise<HandLandmarker> {
+/** «numero-3__p17__t0.mp4» → etiqueta y persona; null si el nombre no sigue el formato. */
+export function parseVideoName(name: string): { label: string; collector: string } | null {
+  return parseName(name, VIDEO_EXT);
+}
+
+/** «letra-a__p12__foto3.jpg» → etiqueta y persona (fotos de letras estáticas, p. ej. LSC70). */
+export function parseImageName(name: string): { label: string; collector: string } | null {
+  return parseName(name, IMAGE_EXT);
+}
+
+export function isImageFile(name: string): boolean {
+  return IMAGE_EXT.has(name.split(".").pop()?.toLowerCase() ?? "");
+}
+
+async function createLandmarker(runningMode: "VIDEO" | "IMAGE" = "VIDEO"): Promise<HandLandmarker> {
   const { FilesetResolver, HandLandmarker } = await import("@mediapipe/tasks-vision");
   const fileset = await FilesetResolver.forVisionTasks(WASM_DIR);
   // CPU: funciona igual en equipos sin GPU y en navegadores automatizados.
   return HandLandmarker.createFromOptions(fileset, {
     baseOptions: { modelAssetPath: HAND_MODEL, delegate: "CPU" },
-    runningMode: "VIDEO",
-    numHands: 1,
+    runningMode,
+    numHands: 2, // se elige la mano que hace la seña (pickSigningHand, D-020)
   });
+}
+
+/** Una muestra por foto (letras estáticas): mismo HandLandmarker y normalización (D11). */
+export async function extractFromImages(
+  files: readonly File[],
+  onProgress: (progress: ExtractProgress) => void,
+): Promise<{ samples: Sample[]; skipped: string[] }> {
+  const landmarker = await createLandmarker("IMAGE");
+  const samples: Sample[] = [];
+  const skipped: string[] = [];
+  try {
+    for (const [index, file] of files.entries()) {
+      const meta = parseImageName(file.name);
+      if (!meta) {
+        skipped.push(file.name);
+        continue;
+      }
+      try {
+        const bitmap = await createImageBitmap(file);
+        const result = landmarker.detect(bitmap);
+        bitmap.close();
+        const hand = pickSigningHand(result.landmarks, result.handedness);
+        const features = hand ? normalizeLandmarks(hand.points, hand.side) : null;
+        if (features) samples.push({ label: meta.label, features, collector: meta.collector });
+        else skipped.push(file.name);
+      } catch {
+        skipped.push(file.name);
+      }
+      if ((index + 1) % 25 === 0 || index + 1 === files.length) {
+        onProgress({ file: file.name, index: index + 1, total: files.length, samples: samples.length });
+      }
+    }
+  } finally {
+    landmarker.close();
+  }
+  return { samples, skipped };
 }
 
 function waitFor(video: HTMLVideoElement, event: "loadeddata" | "seeked"): Promise<void> {
@@ -88,10 +144,9 @@ export async function extractFromVideos(
           await waitFor(video, "seeked");
           timestamp += SAMPLE_STEP_S * 1000;
           const result = landmarker.detectForVideo(video, timestamp);
-          const points = result.landmarks[0];
-          if (!points) continue;
-          const side = result.handedness[0]?.[0]?.categoryName === "Left" ? "Left" : "Right";
-          const features = normalizeLandmarks(points, side as Handedness);
+          const hand = pickSigningHand(result.landmarks, result.handedness);
+          if (!hand) continue;
+          const features = normalizeLandmarks(hand.points, hand.side);
           if (features) samples.push({ label: meta.label, features, collector: meta.collector });
         }
       } catch {

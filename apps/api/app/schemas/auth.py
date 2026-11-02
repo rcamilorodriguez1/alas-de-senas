@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import uuid
+from datetime import datetime
 from typing import Literal
 
 from pydantic import Field, field_validator
@@ -73,6 +74,12 @@ class UserOut(ApiModel):
     role: Literal["LEARNER", "ADMIN"]
     daily_goal_minutes: int
     dominant_hand: str
+    avatar_updated_at: datetime | None = None  # foto de perfil (D-023); null = sin foto
+
+
+class AvatarIn(ApiModel):
+    # Imagen en base64 (sin el prefijo «data:»). ~300 KB de imagen como máximo.
+    image: str = Field(min_length=1, max_length=420_000)
 
 
 class AuthOut(ApiModel):

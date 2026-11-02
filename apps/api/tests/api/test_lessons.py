@@ -455,7 +455,7 @@ def test_contenido_publico_en_camel_case(client: TestClient, user: tuple[str, st
     video = as_obj(observe["video"])
     assert VIDEO_SRC.match(as_str(video["src"]))
     assert POSTER_SRC.match(as_str(video["poster"]))
-    produce = as_obj(exercises[2]["content"])
+    produce = next(as_obj(e["content"]) for e in exercises if e["type"] == "PRODUCE")
     assert produce["type"] == "PRODUCE"
     assert "cameraLabel" in produce
 
@@ -463,22 +463,10 @@ def test_contenido_publico_en_camel_case(client: TestClient, user: tuple[str, st
 def test_grupo_por_sena_en_l1(client: TestClient, user: tuple[str, str]) -> None:
     token, _ = user
     exercises = exercises_of(start(client, token, L1))
-    # OBSERVE · VIDEO_TO_MEANING · PRODUCE por seña y al final MEANING_TO_VIDEO de cada seña.
-    assert [e["group"] for e in exercises] == [
-        0,
-        0,
-        0,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        None,
-        None,
-        None,
-    ]  # bloque final sin grupo (revisión G5)
-    assert [e["activity"] for e in exercises[:3]] == ["OBSERVE", "SELECT", "PRODUCE"]
+    # D-021: se observan las 3 señas (grupos 0, 1, 2) y después se recuerdan mezcladas: las
+    # preguntas y la producción no pertenecen a una sola seña, así que no llevan grupo.
+    assert [e["group"] for e in exercises] == [0, 1, 2] + [None] * 9
+    assert [e["activity"] for e in exercises[:3]] == ["OBSERVE"] * 3
 
 
 def test_grupo_null_en_la_conversacion_final_de_l2(
@@ -487,7 +475,7 @@ def test_grupo_null_en_la_conversacion_final_de_l2(
     token, user_id = user
     complete_lesson(user_id, L1, 100, True)
     exercises = exercises_of(start(client, token, L2))
-    assert [e["group"] for e in exercises] == [0, 0, 0, 1, 1, 1, 2, 2, 2, None]
+    assert [e["group"] for e in exercises] == [0, 1, 2] + [None] * 7  # D-021
     assert exercises[-1]["type"] == "CONVERSATION"
     assert exercises[-1]["activity"] == "USE"
 
@@ -498,15 +486,16 @@ def test_grupo_null_en_memory_match_y_spelling(client: TestClient, user: tuple[s
     exercises = exercises_of(start(client, token, "M1-N3-L3"))
     rows = db_exercises("M1-N3-L3")
 
-    first_seen: list[str] = []
+    # D-021: solo las señas que se observan llevan grupo (en orden); el resto, ninguno.
+    observed: list[str] = []
     for public, row in zip(exercises, rows, strict=True):
-        if public["type"] in UNGROUPED_TYPES:
+        if public["type"] == "OBSERVE":
+            assert row.sign_id is not None
+            observed.append(row.sign_id)
+            assert public["group"] == len(observed) - 1, public["id"]
+        else:
             assert public["group"] is None, public["id"]
-            continue
-        assert row.sign_id is not None
-        if row.sign_id not in first_seen:
-            first_seen.append(row.sign_id)
-        assert public["group"] == first_seen.index(row.sign_id), public["id"]
+    assert observed
     assert {"MEMORY_MATCH", "SPELLING"} <= {e["type"] for e in exercises}
 
 
@@ -1004,7 +993,7 @@ def test_sesion_de_menos_de_24_horas_sigue_activa(
 @pytest.fixture
 def reloaded_exercise() -> Iterator[str]:
     """Ejercicio de L1 cuyo payload cambia («contenido recargado»); se restaura al final."""
-    exercise_id = "M1-N1-L1-02"
+    exercise_id = "M1-N1-L1-04"  # primera pregunta «¿qué significa?» (D-021)
     with Session(get_engine()) as db:
         original = db.execute(
             select(Exercise.payload).where(Exercise.id == exercise_id)
@@ -1289,7 +1278,7 @@ def test_respuesta_con_campos_enormes_es_422(client: TestClient, user: tuple[str
 
 
 def test_bloque_final_de_l1_no_tiene_grupo(client: TestClient, user: tuple[str, str]) -> None:
-    """Los MEANING_TO_VIDEO del final de L1 son un repaso de todas las señas, no de la primera."""
+    """Después de observar, las preguntas mezcladas repasan todas las señas: sin grupo (D-021)."""
     token, _ = user
     groups = [exercise["group"] for exercise in exercises_of(start(client, token, L1))]
-    assert groups == [0, 0, 0, 1, 1, 1, 2, 2, 2, None, None, None]
+    assert groups[3:] == [None] * 9

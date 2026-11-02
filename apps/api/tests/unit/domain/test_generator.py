@@ -369,6 +369,39 @@ def test_every_lesson_has_at_least_four_scored_exercises() -> None:
         assert len(scored) >= 4, f"{lesson.id} tiene {len(scored)} ejercicios con puntaje"
 
 
+def _choice_for(
+    content: GeneratedContent, lesson_id: str, kind: ExerciseType, sign: str
+) -> ExerciseSpec:
+    found = [
+        e
+        for e in exercises_of(content, lesson_id)
+        if e.type is kind and getattr(e.payload, "correct_id", None) == sign
+    ]
+    assert len(found) == 1, (lesson_id, kind, sign)
+    return found[0]
+
+
+def _produce_for(content: GeneratedContent, lesson_id: str, sign: str) -> ExerciseSpec:
+    found = [
+        e
+        for e in exercises_of(content, lesson_id)
+        if isinstance(e.payload, ProducePayload) and e.payload.sign_id == sign
+    ]
+    assert len(found) == 1, (lesson_id, sign)
+    return found[0]
+
+
+def _assert_recall_block(
+    block: list[ExerciseSpec], kind: ExerciseType, signs: tuple[str, ...]
+) -> None:
+    """Una pregunta por seña, en orden mezclado y sin empezar por la última que se mostró."""
+    assert [e.type for e in block] == [kind] * len(signs)
+    asked = [e.sign_id or "" for e in block]
+    assert sorted(asked) == sorted(signs)
+    if len(signs) > 1:
+        assert asked[0] != signs[-1]
+
+
 # ---------- L1 Aprende ------------------------------------------------------------------------
 
 
@@ -377,28 +410,27 @@ def test_l1_structure(node: str) -> None:
     content = generated()
     lesson = lessons_by_id(content)[f"{node}-L1"]
     exercises = exercises_of(content, lesson.id)
-    expected_types: list[ExerciseType] = []
-    expected_signs: list[str | None] = []
-    for sign in lesson.sign_ids:
-        expected_types += [T.OBSERVE, T.VIDEO_TO_MEANING, T.PRODUCE]
-        expected_signs += [sign, sign, sign]
-    expected_types += [T.MEANING_TO_VIDEO] * len(lesson.sign_ids)
-    expected_signs += list(lesson.sign_ids)
-    assert types_of(exercises) == expected_types
-    assert [e.sign_id for e in exercises] == expected_signs
+    signs = tuple(lesson.sign_ids)
+    n = len(signs)
+    assert len(exercises) == 4 * n
+    assert types_of(exercises[:n]) == [T.OBSERVE] * n
+    assert [e.sign_id for e in exercises[:n]] == list(signs)
+    _assert_recall_block(exercises[n : 2 * n], T.VIDEO_TO_MEANING, signs)
+    assert types_of(exercises[2 * n : 3 * n]) == [T.PRODUCE] * n
+    assert [e.sign_id for e in exercises[2 * n : 3 * n]] == list(signs)
+    _assert_recall_block(exercises[3 * n :], T.MEANING_TO_VIDEO, signs)
 
 
 def test_m1_n1_l1_exact_shape() -> None:
     exercises = exercises_of(generated(), "M1-N1-L1")
     assert len(exercises) == 12
-    assert [e.activity for e in exercises] == [1, 2, 3] * 3 + [2, 2, 2]
+    assert [e.activity for e in exercises] == [1, 1, 1, 2, 2, 2, 3, 3, 3, 2, 2, 2]
     assert exercises[0].payload == ObservePayload(sign_id="hola")
-    assert exercises[2].payload == ProducePayload(sign_id="hola", camera_label=None)
+    assert exercises[6].payload == ProducePayload(sign_id="hola", camera_label=None)
 
 
 def test_first_sign_of_content_has_three_distractors() -> None:
-    first_choice = exercises_of(generated(), "M1-N1-L1")[1]
-    assert first_choice.type is T.VIDEO_TO_MEANING
+    first_choice = _choice_for(generated(), "M1-N1-L1", T.VIDEO_TO_MEANING, "hola")
     payload = first_choice.payload
     assert isinstance(payload, VideoToMeaningPayload)
     assert payload.correct_id == "hola"
@@ -413,13 +445,14 @@ def test_l2_structure(node: str) -> None:
     content = generated()
     lesson = lessons_by_id(content)[f"{node}-L2"]
     exercises = exercises_of(content, lesson.id)
-    expected: list[ExerciseType] = []
-    for _ in lesson.sign_ids:
-        expected += [T.OBSERVE, T.VIDEO_TO_MEANING, T.MEANING_TO_VIDEO]
-    expected.append(T.SPELLING if node in ALPHABET_NODE_IDS else T.CONVERSATION)
-    assert types_of(exercises) == expected
-    per_sign = [e.sign_id for e in exercises[:-1]]
-    assert per_sign == [s for s in lesson.sign_ids for _ in range(3)]
+    signs = tuple(lesson.sign_ids)
+    n = len(signs)
+    assert len(exercises) == 3 * n + 1
+    assert [e.sign_id for e in exercises[:n]] == list(signs)
+    assert types_of(exercises[:n]) == [T.OBSERVE] * n
+    _assert_recall_block(exercises[n : 2 * n], T.VIDEO_TO_MEANING, signs)
+    _assert_recall_block(exercises[2 * n : 3 * n], T.MEANING_TO_VIDEO, signs)
+    assert exercises[-1].type is (T.SPELLING if node in ALPHABET_NODE_IDS else T.CONVERSATION)
 
 
 # ---------- L3 Practica -----------------------------------------------------------------------
@@ -430,14 +463,17 @@ def test_l3_structure(node: str) -> None:
     content = generated()
     lesson = lessons_by_id(content)[f"{node}-L3"]
     exercises = exercises_of(content, lesson.id)
-    expected: list[ExerciseType] = []
-    for _ in lesson.sign_ids:
-        expected += [T.OBSERVE, T.VIDEO_TO_MEANING, T.MEANING_TO_VIDEO, T.PRODUCE]
-    expected.append(T.MEMORY_MATCH)
-    expected.append(T.SPELLING if node in ALPHABET_NODE_IDS else T.CONVERSATION)
-    assert types_of(exercises) == expected
-    per_sign = [e.sign_id for e in exercises[:-2]]
-    assert per_sign == [s for s in lesson.sign_ids for _ in range(4)]
+    signs = tuple(lesson.sign_ids)
+    n = len(signs)
+    assert len(exercises) == 4 * n + 2
+    assert [e.sign_id for e in exercises[:n]] == list(signs)
+    assert types_of(exercises[:n]) == [T.OBSERVE] * n
+    _assert_recall_block(exercises[n : 2 * n], T.VIDEO_TO_MEANING, signs)
+    _assert_recall_block(exercises[2 * n : 3 * n], T.MEANING_TO_VIDEO, signs)
+    assert types_of(exercises[3 * n : 4 * n]) == [T.PRODUCE] * n
+    assert [e.sign_id for e in exercises[3 * n : 4 * n]] == list(signs)
+    assert exercises[-2].type is T.MEMORY_MATCH
+    assert exercises[-1].type is (T.SPELLING if node in ALPHABET_NODE_IDS else T.CONVERSATION)
 
 
 # ---------- L4 Reto final ---------------------------------------------------------------------
@@ -573,7 +609,7 @@ def test_distractors_priority_and_rules_on_fixture() -> None:
 
 
 def test_m1_n1_l1_first_question_uses_lesson_then_node() -> None:
-    payload = exercises_of(generated(), "M1-N1-L1")[1].payload
+    payload = _choice_for(generated(), "M1-N1-L1", T.VIDEO_TO_MEANING, "hola").payload
     assert isinstance(payload, VideoToMeaningPayload)
     distractors = set(payload.option_ids[1:])
     assert {"buenos-dias", "buenas-tardes"} <= distractors
@@ -669,7 +705,7 @@ def test_distractors_never_repeat_words_nor_use_unpublished_signs() -> None:
 
 def test_distractor_with_duplicate_word_falls_back_to_previous_nodes() -> None:
     content = generate_content(MINI_MODULES, _mini_signs(), _mini_conversations())
-    first = exercises_of(content, "X1-N2-L1")[1].payload
+    first = _choice_for(content, "X1-N2-L1", T.VIDEO_TO_MEANING, "casa").payload
     assert isinstance(first, VideoToMeaningPayload)
     assert first.correct_id == "casa"
     distractors = first.option_ids[1:]
@@ -922,7 +958,7 @@ def test_dynamic_letters_use_self_evaluation(slug: str) -> None:
 
 
 def test_static_letter_has_camera_label() -> None:
-    produce = exercises_of(generated(), "M1-N3-L1")[2].payload
+    produce = _produce_for(generated(), "M1-N3-L1", "letra-a").payload
     assert produce == ProducePayload(sign_id="letra-a", camera_label="letra-a")
 
 
@@ -1033,3 +1069,32 @@ def test_node_with_too_few_signs_raises() -> None:
     signs = [s for s in build_signs() if s.node_id != "M1-N1" or s.order <= 3]
     with pytest.raises(GenerationError, match="no alcanzan para repartirlas"):
         generate_content(build_modules(), signs, build_conversations())
+
+
+# ---------- Recordar, no repetir (D-021) -------------------------------------------------------
+
+
+@pytest.mark.parametrize("suffix", ["L1", "L2", "L3"])
+def test_first_question_is_never_the_sign_just_shown(suffix: str) -> None:
+    content = generated()
+    for lesson in content.lessons:
+        if not lesson.id.endswith(suffix) or len(lesson.sign_ids) < 2:
+            continue
+        exercises = exercises_of(content, lesson.id)
+        first_question = next(e for e in exercises if e.type is T.VIDEO_TO_MEANING)
+        assert first_question.sign_id != lesson.sign_ids[-1], lesson.id
+
+
+def test_questions_are_not_in_the_observed_order() -> None:
+    """El orden de las preguntas es mezclado: en el contenido real casi nunca coincide."""
+    content = generated()
+    same = total = 0
+    for lesson in content.lessons:
+        if lesson.id.endswith(("L1", "L2", "L3")) and len(lesson.sign_ids) >= 3:
+            questions = [
+                e.sign_id for e in exercises_of(content, lesson.id) if e.type is T.VIDEO_TO_MEANING
+            ]
+            total += 1
+            same += questions == list(lesson.sign_ids)
+    assert total > 0
+    assert same < total / 2

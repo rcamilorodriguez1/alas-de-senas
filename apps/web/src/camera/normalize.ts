@@ -34,3 +34,19 @@ export function normalizeLandmarks(points: readonly Landmark[], handedness: Hand
   }
   return values;
 }
+
+/**
+ * Elige la mano que hace la seña: la más alta en la imagen (muñeca con menor `y`). Con una sola
+ * mano detectada, la otra (en reposo, colgando) se tomaba a veces por la seña (D-020).
+ */
+export function pickSigningHand<T extends { y: number }>(
+  hands: readonly (readonly T[])[],
+  handedness: readonly (readonly { categoryName: string }[])[],
+): { points: readonly T[]; side: Handedness } | null {
+  let best = -1;
+  for (let i = 0; i < hands.length; i += 1) {
+    if (hands[i]?.length && (best < 0 || hands[i][0].y < hands[best][0].y)) best = i;
+  }
+  if (best < 0) return null;
+  return { points: hands[best], side: handedness[best]?.[0]?.categoryName === "Left" ? "Left" : "Right" };
+}

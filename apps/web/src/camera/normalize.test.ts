@@ -70,3 +70,21 @@ describe("normalizeLandmarks", () => {
     expect(points).toEqual(copy);
   });
 });
+
+describe("pickSigningHand (D-020)", () => {
+  it("elige la mano más alta (la que hace la seña), no la que cuelga en reposo", async () => {
+    const { pickSigningHand } = await import("./normalize");
+    const resting = Array.from({ length: 21 }, () => ({ x: 0.3, y: 0.9, z: 0 }));
+    const signing = Array.from({ length: 21 }, () => ({ x: 0.6, y: 0.4, z: 0 }));
+    const picked = pickSigningHand([resting, signing], [[{ categoryName: "Left" }], [{ categoryName: "Right" }]]);
+    expect(picked?.points).toBe(signing);
+    expect(picked?.side).toBe("Right");
+  });
+
+  it("sin manos devuelve null y con una sola la usa", async () => {
+    const { pickSigningHand } = await import("./normalize");
+    expect(pickSigningHand([], [])).toBeNull();
+    const only = Array.from({ length: 21 }, () => ({ x: 0.5, y: 0.5, z: 0 }));
+    expect(pickSigningHand([only], [[{ categoryName: "Left" }]])?.side).toBe("Left");
+  });
+});

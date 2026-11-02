@@ -35,6 +35,7 @@ MAX_VIDEO_SECONDS = 8
 ALPHABET_CATEGORY = "alfabeto"
 # Números: motion opcional; los estáticos pueden reconocerse con la cámara (D-019).
 NUMBERS_CATEGORY = "numeros"
+NONE_LABEL = "NINGUNA"
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 CATEGORY_SUGGESTION_DISTANCE = 2
 REQUIRED_TEXT = ("word", "meaning", "usage_example")
@@ -217,6 +218,8 @@ def _check_labels(rows: Sequence[SignRow], labels_path: Path, report: Report) ->
         return
     by_slug = {row.slug: row for row in rows}
     for label in labels:
+        if label == NONE_LABEL:  # clase «sin seña» del modelo (§10.5): no es un slug
+            continue
         row = by_slug.get(str(label))
         if row is None:
             report.errors.append(f"El modelo del alfabeto incluye {label}, que no es una seña.")

@@ -156,27 +156,13 @@ def train(samples: Samples, out: Path, reports: Path) -> dict[str, float]:
     set_seeds()
     import numpy as np
     import tensorflow as tf
-    import tensorflowjs as tfjs
-    from sklearn.metrics import confusion_matrix
-    from sklearn.model_selection import GroupShuffleSplit, train_test_split
 
     classes = label_order(samples.labels)
     index = {label: i for i, label in enumerate(classes)}
     x = np.array(samples.features, dtype="float32")
     y = np.array([index[label] for label in samples.labels], dtype="int32")
     people = sorted(set(samples.collectors))
-    if len(people) >= MIN_PEOPLE_FOR_GROUP_SPLIT:
-        splitter = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=SEED)
-        train_idx, val_idx = next(splitter.split(x, y, groups=samples.collectors))
-        print(f"Separación por persona: {len(people)} personas.")
-    else:
-        print(
-            f"ADVERTENCIA: solo {len(people)} persona(s); se usa 80/20 estratificado. "
-            "La meta es ≥ 3 personas para medir cómo generaliza."
-        )
-        train_idx, val_idx = train_test_split(
-            np.arange(len(y)), test_size=0.2, random_state=SEED, stratify=y
-        )
+    train_idx, val_idx = split_indices(y, samples.collectors)
 
     layers = tf.keras.layers
     model = tf.keras.Sequential(
@@ -208,7 +194,7 @@ def train(samples: Samples, out: Path, reports: Path) -> dict[str, float]:
         print(f"  {label:>16}: {per_class[label]:.2%} ({int(mask.sum())} muestras de validación)")
 
     out.mkdir(parents=True, exist_ok=True)
-    tfjs.converters.save_keras_model(model, str(out))
+    export_tfjs(model, out)
     (out / "labels.json").write_text(json.dumps(classes, ensure_ascii=False), encoding="utf-8")
     meta = {
         "featureVersion": FEATURE_VERSION,
@@ -224,13 +210,83 @@ def train(samples: Samples, out: Path, reports: Path) -> dict[str, float]:
 
     # La matriz va después de exportar: si la gráfica falla, el modelo ya quedó guardado.
     reports.mkdir(parents=True, exist_ok=True)
-    matrix = confusion_matrix(y[val_idx], predicted, labels=list(range(len(classes))))
+    matrix = np.zeros((len(classes), len(classes)), dtype=int)
+    for real, guess in zip(y[val_idx], predicted, strict=True):
+        matrix[real, guess] += 1
     try:
         save_confusion(matrix, classes, reports / "confusion.png")
     except Exception as exc:  # un reporte no puede tumbar el entrenamiento
         print(f"ADVERTENCIA: no se pudo dibujar la matriz de confusión ({exc}).")
         print(matrix)
     return per_class
+
+
+def split_indices(y: object, collectors: list[str]) -> tuple[object, object]:
+    """Validación con personas que el modelo no ve (≈ 20 % de las personas, semilla fija); con
+    menos de 3 personas, 80/20 al azar con aviso. Sin scikit-learn (no siempre instala)."""
+    import numpy as np
+
+    people = sorted(set(collectors))
+    rng = random.Random(SEED)  # noqa: S311 — separación reproducible, no criptográfica
+    if len(people) >= MIN_PEOPLE_FOR_GROUP_SPLIT:
+        held = set(rng.sample(people, max(1, round_up_fifth(len(people)))))
+        mask = np.array([c in held for c in collectors])
+        print(f"Separación por persona: {len(people)} personas; validación con {sorted(held)}.")
+    else:
+        print(
+            f"ADVERTENCIA: solo {len(people)} persona(s); se usa 80/20 al azar. "
+            "La meta es ≥ 3 personas para medir cómo generaliza."
+        )
+        order = list(range(len(collectors)))
+        rng.shuffle(order)
+        mask = np.zeros(len(collectors), dtype=bool)
+        mask[order[: len(order) // 5]] = True
+    indices = np.arange(len(collectors))
+    return indices[~mask], indices[mask]
+
+
+def round_up_fifth(n: int) -> int:
+    """Una quinta parte, redondeando hacia arriba con enteros (sin round())."""
+    return (n + 4) // 5
+
+
+def export_tfjs(model: object, out: Path) -> None:
+    """Exporta a TensorFlow.js. Usa `tensorflowjs` si está; si no (no instala en Windows), escribe
+    el formato de capas directamente: `model.json` + `group1-shard1of1.bin` (D-020)."""
+    try:
+        import tensorflowjs as tfjs
+    except ImportError:
+        tfjs = None
+    if tfjs is not None:
+        tfjs.converters.save_keras_model(model, str(out))
+        return
+    import numpy as np
+    import tensorflow as tf
+
+    if not isinstance(model, tf.keras.Model):
+        raise TypeError("Se esperaba un modelo de Keras.")
+    keras_model = model
+    specs: list[dict[str, object]] = []
+    chunks: list[bytes] = []
+    for weight in keras_model.weights:
+        values = np.asarray(weight.numpy(), dtype="<f4")
+        specs.append(
+            {"name": weight.name.split(":")[0], "shape": list(values.shape), "dtype": "float32"}
+        )
+        chunks.append(values.tobytes())
+    (out / "group1-shard1of1.bin").write_bytes(b"".join(chunks))
+    manifest = {
+        "format": "layers-model",
+        "generatedBy": f"keras v{tf.__version__}",
+        "convertedBy": "alas-de-senas export_tfjs (D-020)",
+        "modelTopology": {
+            "keras_version": tf.__version__,
+            "backend": "tensorflow",
+            "model_config": json.loads(keras_model.to_json()),
+        },
+        "weightsManifest": [{"paths": ["group1-shard1of1.bin"], "weights": specs}],
+    }
+    (out / "model.json").write_text(json.dumps(manifest), encoding="utf-8")
 
 
 def save_confusion(matrix: object, classes: list[str], path: Path) -> None:

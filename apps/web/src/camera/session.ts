@@ -2,7 +2,7 @@
 // Nada de la imagen sale del navegador (R8.3): solo se usan los 21 puntos de la mano.
 import type { HandLandmarker, NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { loadClassifier, MonotonicTimestamps, Smoother, type Classifier, type Prediction } from "./classifier";
-import { normalizeLandmarks, type Handedness } from "./normalize";
+import { normalizeLandmarks, pickSigningHand } from "./normalize";
 
 const WASM_DIR = "/mediapipe/wasm";
 const HAND_MODEL = "/mediapipe/hand_landmarker.task";
@@ -20,7 +20,7 @@ async function createLandmarker(): Promise<HandLandmarker> {
     // drivers) y una mano a 30 fps cabe de sobra en CPU (D-019).
     baseOptions: { modelAssetPath: HAND_MODEL, delegate: "CPU" },
     runningMode: "VIDEO",
-    numHands: 1,
+    numHands: 2, // se elige la mano que hace la seña (pickSigningHand, D-020)
   });
 }
 
@@ -77,9 +77,6 @@ export interface CameraSession {
   stop(): void;
 }
 
-function handednessOf(label: string | undefined): Handedness {
-  return label === "Left" ? "Left" : "Right";
-}
 
 /** Enciende la cámara y procesa cuadros hasta `stop()`; se pausa con la pestaña oculta. */
 export async function startCameraSession(
@@ -128,11 +125,12 @@ export async function startCameraSession(
         frame = requestAnimationFrame(tick); // un cuadro fallido no detiene el bucle
         return;
       }
-      const points = result.landmarks[0] ?? null;
+      const hand = pickSigningHand(result.landmarks, result.handedness);
+      const points = hand ? [...hand.points] : null;
       let detected: Prediction | null = null;
       let features: number[] | null = null;
       if (points) {
-        features = normalizeLandmarks(points, handednessOf(result.handedness[0]?.[0]?.categoryName));
+        features = normalizeLandmarks(points, hand?.side ?? "Right");
         if (features) detected = smoother.push(model.classify(features));
       } else {
         smoother.reset();

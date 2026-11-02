@@ -209,29 +209,49 @@ class _LessonBuilder:
             for i, (kind, sign_id, payload) in enumerate(self.items, start=1)
         ]
 
+    # Primero se observan todas las señas nuevas y después se recuerdan en orden mezclado (D-021):
+    # preguntar justo después de mostrar la respuesta no hacía recordar nada.
+
     def _learn(self) -> None:
-        for sign in self.new:
-            self._observe(sign)
+        self._observe_all()
+        for sign in self._mixed():
             self._choice(ExerciseType.VIDEO_TO_MEANING, sign)
-            self._produce(sign)
         for sign in self.new:
+            self._produce(sign)
+        for sign in self._mixed():
             self._choice(ExerciseType.MEANING_TO_VIDEO, sign)
 
     def _recognize(self) -> None:
-        for sign in self.new:
-            self._observe(sign)
+        self._observe_all()
+        for sign in self._mixed():
             self._choice(ExerciseType.VIDEO_TO_MEANING, sign)
+        for sign in self._mixed():
             self._choice(ExerciseType.MEANING_TO_VIDEO, sign)
         self._final_activity(turns=2)
 
     def _practice(self) -> None:
-        for sign in self.new:
-            self._observe(sign)
+        self._observe_all()
+        for sign in self._mixed():
             self._choice(ExerciseType.VIDEO_TO_MEANING, sign)
+        for sign in self._mixed():
             self._choice(ExerciseType.MEANING_TO_VIDEO, sign)
+        for sign in self.new:
             self._produce(sign)
         self._memory_match()
         self._final_activity(turns=2)
+
+    def _observe_all(self) -> None:
+        for sign in self.new:
+            self._observe(sign)
+
+    def _mixed(self) -> list[SignSpec]:
+        """Señas nuevas en orden aleatorio reproducible (rng de la lección); la primera nunca es
+        la última que se acaba de mostrar, para que haya que recordar y no solo repetir."""
+        signs = list(self.new)
+        self.rng.shuffle(signs)
+        if len(signs) > 1 and signs[0] == self.new[-1]:
+            signs[0], signs[1] = signs[1], signs[0]
+        return signs
 
     def _challenge(self) -> None:
         signs = list(self.ctx.signs)
