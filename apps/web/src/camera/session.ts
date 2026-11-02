@@ -16,7 +16,9 @@ async function createLandmarker(): Promise<HandLandmarker> {
   const { FilesetResolver, HandLandmarker } = await import("@mediapipe/tasks-vision");
   const fileset = await FilesetResolver.forVisionTasks(WASM_DIR);
   return HandLandmarker.createFromOptions(fileset, {
-    baseOptions: { modelAssetPath: HAND_MODEL, delegate: "GPU" },
+    // CPU: la GPU falla sin aviso en equipos sin aceleración (laboratorios, navegadores sin
+    // drivers) y una mano a 30 fps cabe de sobra en CPU (D-019).
+    baseOptions: { modelAssetPath: HAND_MODEL, delegate: "CPU" },
     runningMode: "VIDEO",
     numHands: 1,
   });
@@ -162,9 +164,10 @@ export async function startCameraSession(
   };
 }
 
-/** «letra-a» → «A», «letra-n-tilde» → «Ñ»; el resto se muestra tal cual. */
+/** «letra-a» → «A», «letra-n-tilde» → «Ñ», «numero-3» → «3»; el resto se muestra tal cual. */
 export function displayLabel(label: string): string {
   if (label === "letra-n-tilde") return "Ñ";
   if (label.startsWith("letra-")) return label.slice("letra-".length).toUpperCase();
+  if (label.startsWith("numero-")) return label.slice("numero-".length);
   return label;
 }

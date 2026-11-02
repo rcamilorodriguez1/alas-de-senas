@@ -114,7 +114,7 @@
 - [x] **10.5** Colector `/admin/dataset` que exporta `dataset.json` (`hand-v1`, 63 valores, etiquetas = slugs de la seña o `NINGUNA`, alias, versión de MediaPipe). `POST /recognition/results` evalúa el logro HUMMINGBIRD_EYE. _R8.7_
 - [x] **10.6** Entorno `ml/` con el `ml/pyproject.toml` del kit (versiones verificadas: no cambiarlas sin regenerar `ml/fixtures/tfjs-smoke` y pasar `tfjs-compat`; si TensorFlow no instala en un computador, usar Colab) y `ml/train_static.py` (rechaza letras `motion = dynamic`): validación, separación por persona, semillas fijas, matriz de confusión, exportación con `labels.json` y `meta.json`; cuaderno equivalente para Colab. _R8.7_
 - [x] **10.7** `ProduceActivity` con cámara cuando la seña está en `labels.json`; prueba Vitest de que `labels.json` coincide con las salidas del modelo. _R4.8_
-- [ ] **10.8** Entrenar y copiar el modelo de 5–10 letras `static` confirmadas por el intérprete, con datos de ≥ 3 personas (copiar la carpeta tal cual: `model.json` + `group1-shard*.bin`).
+- [x] **10.8** Entrenar y copiar el modelo de 5–10 letras `static` confirmadas por el intérprete, con datos de ≥ 3 personas (copiar la carpeta tal cual: `model.json` + `group1-shard*.bin`).
   **Verificar:** la letra entrenada se reconoce; sin mano aparece «NINGUNA»; la cámara se apaga al salir.
 
 ## Grupo 10B — Cámara holística: dos manos + rostro (opcional, después del Grupo 10)

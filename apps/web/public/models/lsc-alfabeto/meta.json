@@ -1,0 +1,16 @@
+{
+  "featureVersion": "hand-v1",
+  "featureSize": 63,
+  "threshold": 0.7,
+  "createdAt": "2026-11-02T00:43:45+00:00",
+  "classes": 6,
+  "samples": {
+    "NINGUNA": 1004,
+    "numero-1": 424,
+    "numero-2": 445,
+    "numero-3": 449,
+    "numero-4": 443,
+    "numero-5": 459
+  },
+  "people": 18
+}

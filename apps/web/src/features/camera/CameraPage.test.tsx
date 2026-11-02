@@ -106,6 +106,7 @@ describe("apoyo de la cámara", () => {
   it("muestra las letras como letras", () => {
     expect(displayLabel("letra-a")).toBe("A");
     expect(displayLabel("letra-n-tilde")).toBe("Ñ");
+    expect(displayLabel("numero-3")).toBe("3");
     expect(displayLabel("hola")).toBe("hola");
   });
 });
