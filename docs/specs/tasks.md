@@ -140,3 +140,15 @@
 - [ ] **11.4** `Dockerfile` multi-etapa (§17: `UV_NO_SYNC`, binarios de `.venv`, `CONTENT_DIR`/`MEDIA_DIR`/`WEB_DIST_DIR`), probar `docker build` y arranque local con `alas db seed` sin `raw/`; despliegue (Render + Neon), `README.md` y checklist de la demostración.
 - [ ] **11.5** `alas db seed-demo` (`app/content/demo.py`, §17.4): servicios reales con reloj simulado, fechas relativas a hoy, `--reset`, bloqueo en producción; prueba de API con `FakeClock` que verifica el estado final. Actualizar el checklist de §17.3 en `README.md`. _R10.9_
   **Verificar:** `alas e2e` en verde; la app desplegada responde en HTTPS; `alas db seed-demo --reset` deja racha 5, repaso pendiente y M2-N1-L1 disponible.
+
+## Grupo 12 — Tienda: accesorios de Tomi (opcional, después del Grupo 11)
+
+> Detalle en `docs/DECISIONES.md` D-033. **Requiere que el equipo apruebe D-033** (amplía el alcance de §1). No debe retrasar el Grupo 11.
+
+- [ ] **12.1** `domain/policies/shop.py` (pruebas primero): `can_purchase` → `ALREADY_OWNED` / `NOT_ENOUGH_NECTAR` / `ITEM_LOCKED` (módulo requerido sin terminar); `can_equip` solo con accesorios comprados; un accesorio a la vez. Cobertura del dominio ≥ 95 %. _D-033_
+- [ ] **12.2** `content/shop.json` (id, nombre, precio, `requiredModule` opcional, dibujo) validado por `alas content check` (ids únicos, precios > 0, módulo existente) y cargado por `alas db seed`. _D-033_
+- [ ] **12.3** Modelos `ShopItem` y `UserItem` (PK compuesta `user_id` + `item_id`, `purchased_at` con `clock.now()`), `users.equipped_item_id` y migración Alembic; los accesorios entran en la exportación de la cuenta y se borran con ella. _D-033_
+- [ ] **12.4** `GET /shop` (accesorios con `owned`/`equipped`/`locked`, néctar del usuario) y `POST /shop/items/{id}/purchase` (usuario `FOR UPDATE`, `ON CONFLICT DO NOTHING RETURNING`, descuenta solo si se insertó; 409 con el código del dominio); accesorio puesto en `PATCH /me` y `GET /me`; `alas gen-api`. Pruebas de API: dos compras a la vez descuentan una sola vez; sin néctar; bloqueado; poner uno no comprado → 409. _D-033_
+- [ ] **12.5** Página `/tienda` y enlace «Tienda» en la barra lateral (mockup §3.1): secciones «Tu racha» (protector), «Vidas» (recarga cuando falta alguna y `HEARTS_ENABLED`) y «Accesorios de Tomi»; confirmar antes de comprar; mensajes «No tienes suficiente néctar» y «Termina el Módulo N para desbloquearlo». _D-033, R5.9, R5.14_
+- [ ] **12.6** `Tomi` con accesorio (SVG encima de la mascota, sin cambiar sus pruebas actuales) en la ruta, la celebración y el perfil; texto alternativo con el accesorio; respeta movimiento reducido. _D-033_
+  **Verificar:** comprar la gorra descuenta 40 de néctar y no se puede comprar otra vez; el birrete aparece bloqueado hasta terminar el Módulo 3; ponerse un accesorio lo muestra en la ruta y en la celebración; con 3 vidas la tienda ofrece recargar; la exportación de la cuenta incluye los accesorios.

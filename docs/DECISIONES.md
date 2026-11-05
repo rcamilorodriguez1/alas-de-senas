@@ -321,3 +321,25 @@
 ## D-032 · Las 4 partes del proyecto sin mover carpetas · 04/11/2026
 - Contexto: para la sustentación el equipo quiere ver el proyecto como 4 partes (Frontend, API, Backend, Base de datos). Mover las carpetas rompería la CI del kit (`ci.yml` busca `apps/api` y `apps/web` y no se puede reescribir), los hooks de `.claude/`, las rutas de la especificación protegida y los `import` del paquete `app`; el `LEEME-PRIMERO.md` del kit pide no moverlas.
 - Decisión: no se mueve nada. `alas-de-senas.code-workspace` muestra en VS Code las 4 partes con nombres numerados (cada parte apunta a sus carpetas reales: Frontend `apps/web`; API `app/api` + `app/schemas`; Backend `app/domain` + `app/services`; Base de datos `app/infra` + `alembic`), más contenido, entrenamiento, documentación y la raíz para los comandos. `.vscode/settings.json` oculta lo que generan las herramientas (cachés, `node_modules`, entornos virtuales, `openapi.json`). `docs/ESTRUCTURA.md` explica las 4 partes, cómo se comunican (diagrama) y un ejemplo de punta a punta.
+
+## D-033 · Tienda con accesorios de Tomi para gastar el néctar · 04/11/2026
+- Contexto / problema: el néctar solo se gasta en el protector de racha (50, máximo 2, R5.9) y en recargar vidas (30, R5.14). La recarga solo se ofrece en el modal «Sin vidas». Quien ya tiene 2 protectores y casi nunca se queda sin vidas acumula néctar sin ningún uso. El mockup §3.1 ya tiene «🛍 Tienda» en la barra lateral, pero la especificación (§1, tabla de alcance) deja «Accesorios de Tomi en la tienda» **fuera de alcance**, en la hoja de ruta.
+- Opciones consideradas:
+  1. **Tienda con accesorios de Tomi** (cosméticos) + protector y recarga de vidas en el mismo lugar: ya está en el mockup y en la hoja de ruta; no toca evaluación, puntaje ni vidas. En contra: pide tabla nueva, migración y dibujos SVG.
+  2. **Pistas en los ejercicios** (pagar para quitar una opción incorrecta): útil para aprender. En contra: toca la evaluación y el puntaje, que es la parte más delicada (D20, D23); abarata los retos y obliga a revisar que no se filtre la respuesta.
+  3. **Temas de color de la ruta:** fácil. En contra: aporta poco y no usa a la mascota.
+  4. **Contenido extra pagado:** no hay contenido listo (el Módulo 4 dice «Próximamente») y cobrar por aprender va en contra del objetivo de la plataforma.
+  5. **No hacer nada:** cero riesgo. En contra: el néctar se acumula sin uso y la tienda del mockup no existe.
+- Decisión: opción 1, como **Grupo 12 opcional, después del Grupo 11**, igual que se hizo con el 10B; no debe retrasar el cierre ni la entrega.
+  1. **Catálogo en `content/shop.json`** (como las señas): `id` (slug), nombre, precio, `requiredModule` opcional y el dibujo. `alas content check` lo valida y `alas db seed` lo carga. Propuesta inicial, a ajustar por el equipo: gorra 40 · gafas 60 · bufanda 80 · flor 100 · birrete 120 (requiere terminar el Módulo 3) · corona 150.
+  2. **Reglas en el dominio** (`domain/policies/shop.py`, Python puro y probado primero): no se compra dos veces (`ALREADY_OWNED`), hace falta néctar suficiente (`NOT_ENOUGH_NECTAR`, el mismo código del protector) y el módulo requerido (`ITEM_LOCKED`). Solo se pueden poner accesorios comprados. Tomi lleva **un accesorio a la vez**.
+  3. **Compra** como la del protector (D-013.5): bloquea al usuario (`FOR UPDATE`), clave primaria compuesta en `user_items` con `ON CONFLICT DO NOTHING RETURNING`, y el néctar solo se descuenta si se insertó la fila (igual que los logros, B5). `purchased_at` lo fija el servicio con `clock.now()` (D22).
+  4. **Recarga de vidas en la tienda** siempre que falten vidas (y `HEARTS_ENABLED`): la API ya lo permite (solo devuelve `HEARTS_FULL` con 5); cambia solo la interfaz.
+  5. **Derechos de datos:** los accesorios comprados y el puesto entran en la exportación de la cuenta y se borran con ella.
+- Consecuencias:
+  - **Base de datos:** tablas `shop_items` y `user_items`, columna `users.equipped_item_id` (nula), una migración nueva.
+  - **API:** `GET /shop`, `POST /shop/items/{id}/purchase`, el accesorio puesto en `PATCH /me` y `GET /me`; tipos regenerados con `alas gen-api`.
+  - **Web:** página `/tienda`, enlace «Tienda» en la barra lateral (mockup §3.1) y `Tomi` con el accesorio en la ruta, la celebración y el perfil.
+  - **Pruebas:** dominio, API (compra simultánea doble → un solo descuento, sin néctar, bloqueado, exportación) y Vitest.
+  - Tareas en `docs/specs/tasks.md`, Grupo 12.
+- Secciones afectadas de la especificación: **contradice la tabla de alcance de §1** («Accesorios de Tomi en la tienda» está fuera de alcance) y amplía §5 (modelos), §8 (API) y §9 (interfaz). La especificación está protegida: **el equipo debe aprobar este cambio** antes de empezar el Grupo 12. Si no se aprueba, se puede hacer solo el punto 4 (recarga de vidas visible siempre), que no contradice la especificación.
