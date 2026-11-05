@@ -18,11 +18,11 @@ import {
   type CameraSession,
 } from "../../camera/session";
 import { StatsPanel } from "../gamification/StatsPanel";
+import { GesturePractice } from "./GesturePractice";
 
 const REPORT_EVERY_MS = 10_000; // el servidor tampoco cuenta la misma seña antes de 10 s
 
-/** Solo números al servidor (R8.3): la seña, si fue correcta y la confianza. */
-function reportRecognition(signId: string, confidence: number) {
+/** Solo números al servidor (R8.3): la seña, si fue correcta y la confianza. */function reportRecognition(signId: string, confidence: number) {
   const body: components["schemas"]["RecognitionIn"] = { signId, correct: true, confidence };
   void apiRequest("POST", "/recognition/results", { body }).catch(() => undefined);
 }
@@ -78,8 +78,54 @@ function SelfCheck() {
   );
 }
 
-/** Cámara beta (R8): video en espejo, puntos de la mano, seña detectada y confianza. */
+type Tab = "alphabet" | "gestures";
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: "alphabet", label: "Alfabeto y números" },
+  { id: "gestures", label: "Señas con movimiento" },
+];
+
+/**
+ * Cámara beta (R8) con dos modos (D-031): el alfabeto (una mano, reconocimiento continuo) y las
+ * señas con movimiento (cámara holística, cuenta regresiva y 2 s). Cambiar de pestaña desmonta el
+ * modo anterior, y con él se apaga su cámara (R8.5).
+ */
 export function CameraPage() {
+  const [tab, setTab] = useState<Tab>("alphabet");
+  return (
+    <AppLayout aside={<StatsPanel />}>
+      <h1 className="font-display text-3xl font-extrabold">Cámara beta</h1>
+      <p className="mt-2 inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 font-semibold text-[#047857]">
+        <ShieldCheck aria-hidden="true" size={18} />
+        Tu video no sale de tu dispositivo
+      </p>
+      <div role="tablist" aria-label="Modo de la cámara" className="mt-4 flex gap-2">
+        {TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            id={`tab-${id}`}
+            aria-selected={tab === id}
+            aria-controls={`panel-${id}`}
+            onClick={() => setTab(id)}
+            className={`rounded-xl px-4 py-2 font-bold ${
+              tab === id ? "bg-[#047857] text-white" : "border border-slate-300 bg-white text-[#0E2A2F] hover:bg-slate-50"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+        {tab === "alphabet" ? <AlphabetCamera /> : <GesturePractice />}
+      </div>
+    </AppLayout>
+  );
+}
+
+/** Alfabeto y números: video en espejo, puntos de la mano, seña detectada y confianza. */
+function AlphabetCamera() {
   const isAdmin = useSessionStore((state) => state.user?.role === "ADMIN");
   const video = useRef<HTMLVideoElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -158,12 +204,7 @@ export function CameraPage() {
       : "Acerca la mano a la cámara para empezar.";
 
   return (
-    <AppLayout aside={<StatsPanel />}>
-      <h1 className="font-display text-3xl font-extrabold">Cámara beta</h1>
-      <p className="mt-2 inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 font-semibold text-[#047857]">
-        <ShieldCheck aria-hidden="true" size={18} />
-        Tu video no sale de tu dispositivo
-      </p>
+    <>
       {simulated && isAdmin && (
         <p role="status" className="mt-3 rounded-xl bg-amber-50 p-3 text-amber-900">
           Modelo en entrenamiento: por ahora solo se dibujan los puntos de la mano.
@@ -227,6 +268,6 @@ export function CameraPage() {
           </button>
         </div>
       )}
-    </AppLayout>
+    </>
   );
 }

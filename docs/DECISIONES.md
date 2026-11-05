@@ -312,3 +312,8 @@
 - Contexto: las herramientas de datos de la cámara (`/admin/gestos`, `/admin/importar`, `/admin/dataset`) solo se abrían escribiendo la dirección. El usuario pidió reunirlas en un apartado que solo vea el administrador.
 - Decisión: enlace «Administración» al final de la barra lateral, visible solo con rol ADMIN, y página `/admin` con las tres herramientas y su explicación. Cada herramienta tiene «← Administración» para volver. Las páginas siguen comprobando el rol por su cuenta: ocultar el enlace no es la protección.
 - La cuenta ADMIN se crea con `ADMIN_EMAIL` y `ADMIN_PASSWORD` del archivo `.env` (en la raíz) al ejecutar `uv run alas db seed`.
+
+## D-031 · «Señas con movimiento» en Cámara beta · 04/11/2026
+- Contexto: la especificación solo pide la cámara de gestos dentro de las lecciones (A.10). El usuario pidió poder practicar con las dos manos también en «Cámara beta».
+- Decisión: dos pestañas en `/camara`. **«Alfabeto y números»** (por defecto) sigue igual: una mano y reconocimiento continuo. **«Señas con movimiento»** (`GesturePractice`) usa la misma cámara holística y el mismo modelo que las lecciones: lista las señas que conoce el modelo publicado, «Hacer la seña» con cuenta regresiva y 2 s, y muestra la seña reconocida con su confianza; si no es ninguna de esas señas lo dice («NINGUNA»). Cada seña reconocida se reporta como en el alfabeto (solo números, suma para «Ojo de colibrí»). Cambiar de pestaña desmonta el modo anterior y apaga su cámara (R8.5). Sin modelo publicado, la pestaña lo avisa.
+- No se reemplazó la cámara del alfabeto por la holística: funcionan distinto (continuo frente a ventana de 2 s), el modelo del alfabeto se entrenó con `hand-v1` y la holística es más pesada.

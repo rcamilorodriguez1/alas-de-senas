@@ -76,6 +76,27 @@ describe("/camara", () => {
   });
 });
 
+describe("/camara: pestañas (D-031)", () => {
+  it("empieza en «Alfabeto y números»; la otra pestaña es «Señas con movimiento»", async () => {
+    renderCamera();
+    const alphabet = await screen.findByRole("tab", { name: "Alfabeto y números" });
+    expect(alphabet).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Señas con movimiento" })).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("cambiar a «Señas con movimiento» apaga la cámara del alfabeto (R8.5)", async () => {
+    const user = userEvent.setup();
+    startCameraSession.mockResolvedValue({ classifier: { simulated: true }, stop });
+    renderCamera();
+    await user.click(await screen.findByRole("button", { name: "Activar cámara" }));
+    await screen.findByRole("button", { name: "Apagar cámara" });
+    await user.click(screen.getByRole("tab", { name: "Señas con movimiento" }));
+    await waitFor(() => expect(stop).toHaveBeenCalled());
+    // Sin modelo de gestos publicado en la prueba: lo dice en vez de fallar.
+    expect(await screen.findByText(/aún no está disponible/)).toBeInTheDocument();
+  });
+});
+
 describe("/camara: salir mientras se enciende (B40, R8.5)", () => {
   it("si sale antes de que termine de encender, la cámara se apaga al terminar", async () => {
     const user = userEvent.setup();
