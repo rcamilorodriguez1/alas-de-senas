@@ -41,10 +41,13 @@ FROM api
 COPY --from=web /repo/apps/web/dist ./apps/web/dist
 # Los comandos se ejecutan desde .venv/bin y no con `uv run` (intentaría sincronizar al arrancar).
 # Vite copia public/ dentro de dist/, por eso MEDIA_DIR apunta a dist/media.
+# IP del cliente (D-035): uvicorn NO lee X-Forwarded-For (con `--forwarded-allow-ips='*'` tomaría
+# el primer valor, que escribe el cliente); la app usa el valor que agregó el proxy de Render.
 ENV PYTHONUNBUFFERED=1 APP_ENV=production UV_NO_SYNC=1 PATH="/app/.venv/bin:$PATH" \
-    CONTENT_DIR=/app/content MEDIA_DIR=/app/apps/web/dist/media WEB_DIST_DIR=/app/apps/web/dist
+    CONTENT_DIR=/app/content MEDIA_DIR=/app/apps/web/dist/media WEB_DIST_DIR=/app/apps/web/dist \
+    TRUSTED_PROXY_HOPS=1
 # Usuario sin privilegios; el código y .venv quedan de root (solo lectura para el proceso).
 RUN useradd --create-home --uid 10001 alas
 USER alas
 EXPOSE 8000
-CMD ["sh", "-c", "alembic -c apps/api/alembic.ini upgrade head && alas db seed && uvicorn app.main:app --app-dir apps/api --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'"]
+CMD ["sh", "-c", "alembic -c apps/api/alembic.ini upgrade head && alas db seed && uvicorn app.main:app --app-dir apps/api --host 0.0.0.0 --port ${PORT:-8000} --no-proxy-headers"]

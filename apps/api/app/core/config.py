@@ -40,8 +40,13 @@ class Settings(BaseSettings):
     content_dir: Path = Path("content")
     media_dir: Path = Path("apps/web/public/media")
     web_dist_dir: Path = Path("apps/web/dist")
+    # IP real del cliente detrás de proxies (D-035). 0 = no se confía en X-Forwarded-For.
+    trusted_proxy_hops: int = Field(default=0, ge=0, le=5)
+    client_ip_header: str | None = None  # p. ej. True-Client-IP, solo si se verificó
 
-    @field_validator("admin_email", "admin_password", "demo_password", mode="before")
+    @field_validator(
+        "admin_email", "admin_password", "demo_password", "client_ip_header", mode="before"
+    )
     @classmethod
     def _empty_as_none(cls, value: object) -> object:
         # `.env.example` deja estas variables vacías («ADMIN_EMAIL=»): significan «no configurado».

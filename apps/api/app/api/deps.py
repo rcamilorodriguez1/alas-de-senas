@@ -8,6 +8,7 @@ from fastapi import Depends, Request
 from sqlalchemy.orm import Session
 
 from app.core import rate_limit
+from app.core.client_ip import resolve_client_ip
 from app.core.clock import get_clock
 from app.core.config import Settings, get_settings
 from app.core.errors import unauthorized
@@ -56,4 +57,12 @@ OptionalUser = Annotated[User | None, Depends(optional_user)]
 
 
 def client_ip(request: Request) -> str:
-    return request.client.host if request.client else "desconocida"
+    """IP para los límites de peticiones: nunca la que el cliente escribe en X-Forwarded-For."""
+    settings = get_settings()
+    header = settings.client_ip_header
+    return resolve_client_ip(
+        request.client.host if request.client else None,
+        ",".join(request.headers.getlist("x-forwarded-for")) or None,
+        request.headers.get(header) if header else None,
+        hops=settings.trusted_proxy_hops,
+    )

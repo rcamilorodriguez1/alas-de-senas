@@ -481,6 +481,51 @@ def test_login_limite_no_afecta_a_otro_correo_desde_la_misma_ip(client: TestClie
     assert response.status_code == 200, response.text
 
 
+def test_login_no_se_salta_el_limite_falsificando_x_forwarded_for(client: TestClient) -> None:
+    """Sin proxies de confianza (por defecto) `X-Forwarded-For` se ignora: cambiarlo en cada
+    intento no da intentos nuevos (D-035)."""
+    register(client)
+    for n in range(5):
+        response = client.post(
+            "/api/auth/login",
+            json={"email": "ana@ejemplo.com", "password": "mala-clave-1"},
+            headers={"X-Forwarded-For": f"6.6.6.{n}"},
+        )
+        assert response.status_code == 401
+
+    response = client.post(
+        "/api/auth/login",
+        json={"email": "ana@ejemplo.com", "password": PASSWORD},
+        headers={"X-Forwarded-For": "6.6.6.99"},
+    )
+
+    assert response.status_code == 429
+
+
+def test_detras_de_un_proxy_el_limite_usa_la_ip_que_agrego_el_proxy(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Con TRUSTED_PROXY_HOPS=1 (Render) cuenta la IP que agregó el proxy, no la que inventa el
+    cliente al principio; y dos personas reales detrás del mismo proxy no se bloquean entre sí."""
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "trusted_proxy_hops", 1)
+    register(client)
+
+    def attempt(forwarded: str, password: str) -> int:
+        response = client.post(
+            "/api/auth/login",
+            json={"email": "ana@ejemplo.com", "password": password},
+            headers={"X-Forwarded-For": forwarded},
+        )
+        return response.status_code
+
+    for n in range(5):
+        assert attempt(f"6.6.6.{n}, 1.2.3.4", "mala-clave-1") == 401
+    assert attempt("6.6.6.99, 1.2.3.4", PASSWORD) == 429  # mismo atacante, otro valor falso
+    assert attempt("5.6.7.8", PASSWORD) == 200  # otra persona real, otra IP
+
+
 def test_registro_undecimo_desde_la_misma_ip_da_429(client: TestClient) -> None:
     for i in range(10):
         assert register(client, email=f"persona{i}@ejemplo.com").status_code == 201

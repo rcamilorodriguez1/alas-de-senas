@@ -243,6 +243,6 @@ Para retomar (en este orden):
 - Pendiente / riesgos:
   - **11.2:** falta medir Lighthouse.
   - **11.4, despliegue en Render + Neon:** lo hace el equipo y necesita el repositorio en GitHub (0.8 / D-006).
-  - **`--forwarded-allow-ips='*'` (CMD literal de §17.1):** uvicorn tomaría la IP que el cliente pone en `X-Forwarded-For`, y con eso se podría saltar el límite de 5 intentos de login por minuto por IP. Hay que revisarlo con `/decision` al desplegar: restringirlo a la red del proxy de Render.
+  - ~~`--forwarded-allow-ips='*'`~~ **Resuelto (D-035):** la IP del límite de inicio de sesión y de registro sale del valor que agrega el proxy de confianza (`TRUSTED_PROXY_HOPS`), nunca del que escribe el cliente; la imagen arranca con `--no-proxy-headers`. Cambia el comando de §17.1: **el equipo debe aprobarlo**. Al desplegar, comprobar en Render que dos personas distintas reciben IP distintas.
   - **`alas e2e` y `alas check`:** no deben correr a la vez, porque comparten `alas_test`.
   - **Docker:** la red dentro del contenedor cortó `npm ci` una vez; se agregaron reintentos.

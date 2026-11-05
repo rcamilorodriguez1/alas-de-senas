@@ -75,6 +75,9 @@ solo servicio que sirve la API y la web. Al arrancar aplica las migraciones y ca
    - `JWT_SECRET=` (texto aleatorio de 32 caracteres o más)
    - `ADMIN_EMAIL` y `ADMIN_PASSWORD` (opcionales, crean la cuenta de administración)
    - `DEMO_PASSWORD` (solo si se va a crear la demo en producción)
+   - `TRUSTED_PROXY_HOPS` ya viene en 1 en la imagen (el proxy de Render). No uses
+     `--forwarded-allow-ips='*'`: dejaría que cualquiera falsifique su IP y se salte el límite de
+     intentos de inicio de sesión (D-035).
 4. Comprueba `https://<tu-app>.onrender.com/api/health` → `{"ok":true,"db":true}`.
 
 Probar la imagen en el propio computador:

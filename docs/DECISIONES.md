@@ -370,3 +370,18 @@
   8. `alas e2e` y las pruebas de API comparten `alas_test`: **no se ejecutan a la vez** (lo dice el `README.md`).
 - Consecuencias: pruebas nuevas en `tests/unit/test_spa.py`, `tests/api/test_demo.py`, `tests/unit/test_demo_guard.py`, `tests/e2e/test_main_flow.py` y Vitest de las tarjetas de actividades.
 - Secciones afectadas de la especificación: ninguna contradicha; §17.1 se amplía con la etapa de MediaPipe y §17.4 se cumple con el «Necesito repasar» del punto 3.
+
+## D-035 · IP del cliente detrás del proxy (límites de inicio de sesión y registro) · 05/11/2026
+- Contexto / problema: el arranque de §17.1 usa `uvicorn --proxy-headers --forwarded-allow-ips='*'`. Con `'*'`, uvicorn 0.54 toma el **primer** valor de `X-Forwarded-For` (`x_forwarded_for_hosts[0]`), que escribe el propio cliente. Un atacante cambiaría ese valor en cada intento y se saltaría el límite de inicio de sesión (5/min por IP + correo, §11) y el de registro (10/min por IP). Render no documenta con claridad su cadena de proxies: hay reportes de que no limpia el `X-Forwarded-For` del cliente y solo agrega la IP que ve al final.
+- Opciones consideradas:
+  1. **Confiar solo en los últimos N valores** (`TRUSTED_PROXY_HOPS`, que agregaron proxies de confianza) y, ante cualquier duda, en la conexión directa. No se puede falsificar y no depende de conocer las IP internas de Render. En contra: si delante hay otro proxy que no se contó (p. ej. Cloudflare), todos comparten su IP. El límite por IP + correo sigue funcionando; el de registro sería más estricto.
+  2. **Restringir `--forwarded-allow-ips` a la red interna de Render.** Correcto en teoría. En contra: Render no publica esos rangos de forma estable.
+  3. **Leer `True-Client-IP`.** En contra: no está confirmado que Render la reescriba siempre; si no lo hace, también se falsifica.
+  4. **Dejar `'*'`, como está en §17.1.** Cero cambios. En contra: el límite de inicio de sesión no protege nada.
+- Decisión: opción 1, con la 3 disponible de forma opcional.
+  - `app/core/client_ip.py` (`resolve_client_ip`): `X-Forwarded-For` nunca se usa con `TRUSTED_PROXY_HOPS=0` (por defecto en local). Con N > 0 se usa el valor N contando desde el final. Si faltan valores o no es una IP válida, se usa la conexión directa.
+  - `CLIENT_IP_HEADER` (opcional, p. ej. `True-Client-IP`) tiene prioridad solo si trae una IP válida. Se debe configurar únicamente después de comprobar en el despliegue que el proxy la reescribe.
+  - La imagen arranca uvicorn con `--no-proxy-headers` (nunca reescribe la IP con lo que mande el cliente) y `TRUSTED_PROXY_HOPS=1`.
+- Consecuencias: `Settings.trusted_proxy_hops` y `Settings.client_ip_header`, `deps.client_ip` usa la regla nueva. Pruebas en `tests/unit/test_client_ip.py` (17) y 2 de API en `test_auth.py`, que reproducen el ataque rotando `X-Forwarded-For`. Con la conexión HTTP interna, `request.url.scheme` queda en `http`; la app no arma URLs absolutas y la cookie `Secure` depende de `APP_ENV`, no del esquema.
+- Secciones afectadas de la especificación: **cambia el comando literal de §17.1** (`--proxy-headers --forwarded-allow-ips='*'` → `--no-proxy-headers` + `TRUSTED_PROXY_HOPS=1`) y concreta §11 («leer la IP real de X-Forwarded-For solo desde el proxy de confianza»). La especificación está protegida: **el equipo debe aprobar este cambio**. La intención de §11 se cumple; lo que cambia es el mecanismo, porque el de §17.1 no la cumplía.
+- Al desplegar: comprobar en los registros de Render que dos personas distintas reciben IP distintas. Si todas salen iguales, delante hay otro proxy y se debe subir `TRUSTED_PROXY_HOPS` a 2.
