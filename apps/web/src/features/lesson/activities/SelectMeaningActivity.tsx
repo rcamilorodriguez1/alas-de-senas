@@ -106,7 +106,7 @@ export function SelectMeaningActivity({ exercise, onSubmit, onContinue }: Activi
               aria-label={option.video ? `Opción ${index + 1}` : undefined}
               disabled={result !== null}
               onClick={() => setSelected(index)}
-              className={`flex w-full items-center gap-3 rounded-xl border-2 px-3 py-2 text-left font-semibold ${tone}`}
+              className={`flex w-full items-center gap-3 rounded-xl border-2 px-3 py-2 text-left font-semibold transition-colors duration-200 ${tone} ${isCorrect ? "animate-pop" : isWrong ? "animate-shake" : ""}`}
             >
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-300 text-sm">
                 {index + 1}

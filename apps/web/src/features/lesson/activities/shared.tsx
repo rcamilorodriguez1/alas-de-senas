@@ -9,7 +9,7 @@ export function Feedback({ correct, word }: { correct: boolean; word?: string | 
       : "¡Exacto!"
     : "Casi. Mira de nuevo la seña.";
   return (
-    <div className="mt-3">
+    <div className="mt-3 animate-rise">
       <Mascot mood={correct ? "cheer" : "thinking"} size={56} message={message} />
     </div>
   );

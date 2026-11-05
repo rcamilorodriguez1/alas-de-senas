@@ -38,7 +38,7 @@ export function LessonPopover({ lesson, id, onClose }: LessonPopoverProps) {
       role="dialog"
       aria-labelledby={titleId}
       tabIndex={-1}
-      className="mt-3 w-72 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-xl focus:outline-none"
+      className="mt-3 w-72 origin-top animate-pop-in rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-xl focus:outline-none"
     >
       <h3 id={titleId} className="font-display text-lg font-extrabold">
         Lección {lesson.order} · {lesson.title}

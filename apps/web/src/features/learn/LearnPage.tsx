@@ -66,12 +66,13 @@ function NodeItem({
         </span>
       </button>
       {expanded && (
-        <div className="mt-3 flex flex-col items-center">
+        <div className="mt-3 flex animate-rise flex-col items-center">
           <ol className="flex gap-2">
             {node.lessons.map((lesson) => (
               <li key={lesson.id}>
                 <button
                   data-testid={`lesson-${lesson.id}`}
+                  data-next={lesson.status === "AVAILABLE" ? "true" : undefined}
                   type="button"
                   ref={(element) => {
                     if (element) triggers.current.set(lesson.id, element);
@@ -80,7 +81,7 @@ function NodeItem({
                   aria-expanded={openLesson === lesson.id}
                   aria-controls={openLesson === lesson.id ? `popover-${lesson.id}` : undefined}
                   onClick={() => onOpen(openLesson === lesson.id ? null : lesson.id)}
-                  className={`flex flex-col items-center rounded-full border-b-4 px-3 py-2 text-sm font-bold ${STATUS_STYLE[lesson.status]}`}
+                  className={`flex flex-col items-center rounded-full border-b-4 px-3 py-2 text-sm font-bold ${STATUS_STYLE[lesson.status]} ${lesson.status === "AVAILABLE" ? "animate-aleteo" : ""}`}
                 >
                   <span className="flex items-center gap-1">
                     {lesson.status === "LOCKED" && <Lock aria-hidden="true" size={14} />}

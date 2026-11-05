@@ -10,7 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { NavLink, useNavigate } from "react-router";
+import { NavLink, useLocation, useNavigate } from "react-router";
 import { logout } from "../../lib/api";
 import { useSessionStore } from "../../lib/session-store";
 import { streakLabel, useStats } from "../../features/gamification/gamification-api";
@@ -33,6 +33,7 @@ const NAV: { to: string; label: string; icon: LucideIcon }[] = [
  */
 export function AppLayout({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const user = useSessionStore((state) => state.user);
   const { data: stats } = useStats();
   const onLogout = async () => {
@@ -120,7 +121,10 @@ export function AppLayout({ children, aside }: { children: ReactNode; aside?: Re
           )}
         </header>
         <div className="flex flex-1 justify-center gap-6 px-6 py-8">
-          <main className="w-full max-w-[720px] min-w-0">{children}</main>
+          {/* Fundido corto al cambiar de sección: se nota que la pantalla cambió. */}
+          <main key={pathname} className="w-full max-w-[720px] min-w-0 animate-fade-in">
+            {children}
+          </main>
           <aside aria-label="Panel lateral" className="hidden w-80 shrink-0 xl:block">
             {aside}
           </aside>

@@ -38,12 +38,12 @@ export function NoHeartsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#0E2A2F]/40 p-4">
+    <div className="fixed inset-0 z-40 flex animate-fade-in items-center justify-center bg-[#0E2A2F]/40 p-4">
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Sin vidas"
-        className="flex w-full max-w-md flex-col items-center gap-3 rounded-2xl bg-white p-6 text-center shadow-xl"
+        className="flex w-full max-w-md animate-pop-in flex-col items-center gap-3 rounded-2xl bg-white p-6 text-center shadow-xl"
       >
         <Mascot mood="sad" message="Descansemos un momento y seguimos." size={96} />
         <h1 className="font-display text-2xl font-extrabold">Te quedaste sin vidas por ahora</h1>

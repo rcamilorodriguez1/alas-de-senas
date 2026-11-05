@@ -475,6 +475,26 @@ describe("LearnPage: lecciones de un nodo", () => {
     expect(lessonButtons("4 · Reto final", "Bloqueada")).toHaveLength(2);
   });
 
+  it("solo la próxima lección por hacer «aletea» (animación que señala el siguiente paso)", async () => {
+    mockFetch(serve(PATH_GOLDEN));
+    const user = userEvent.setup();
+    renderLearn();
+    await loaded();
+    await user.click(nodeButton("Saludos")); // también se ven lecciones completadas y doradas
+
+    const next = lessonButton("1 · Aprende", "Disponible");
+    expect(next).toHaveAttribute("data-next", "true");
+    expect(next.className).toContain("animate-aleteo");
+    const others = screen
+      .getAllByTestId(/^lesson-/)
+      .filter((button) => button !== next);
+    expect(others.length).toBeGreaterThan(0);
+    for (const button of others) {
+      expect(button).not.toHaveAttribute("data-next");
+      expect(button.className).not.toContain("animate-aleteo");
+    }
+  });
+
   it("en un nodo dorado el reto dice «Dorada» y las demás «Completada»", async () => {
     mockFetch(serve(PATH_GOLDEN));
     const user = userEvent.setup();

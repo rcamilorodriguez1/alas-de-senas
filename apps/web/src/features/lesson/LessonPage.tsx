@@ -305,7 +305,10 @@ export function LessonPage() {
             aria-valuemax={100}
             className="h-3 flex-1 overflow-hidden rounded-full bg-slate-200"
           >
-            <div className="h-full bg-[#10B981]" style={{ width: `${percent}%` }} />
+            <div
+              className="h-full bg-[#10B981] transition-[width] duration-500 ease-out"
+              style={{ width: `${percent}%` }}
+            />
           </div>
           {current.group !== null && groupCount > 0 && (
             <span className="text-sm font-semibold">
@@ -366,12 +369,14 @@ export function LessonPage() {
               </div>
               {isActive && (
                 <div className="mt-3" data-testid="active-exercise">
-                  <ActivityView
-                    key={current.id}
-                    exercise={current}
-                    onSubmit={submit}
-                    onContinue={() => void next()}
-                  />
+                  {/* Cada ejercicio nuevo entra desde la derecha: se ve que la lección avanza. */}
+                  <div key={current.id} className="animate-exercise-in">
+                    <ActivityView
+                      exercise={current}
+                      onSubmit={submit}
+                      onContinue={() => void next()}
+                    />
+                  </div>
                 </div>
               )}
             </li>

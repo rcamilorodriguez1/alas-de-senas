@@ -6,6 +6,16 @@
   --color-tomi-500: #16a34a;
   --color-tomi-600: #15803d;
   --animate-heartbeat: heartbeat 0.7s ease-in-out;
+  /* Transiciones (D-036): responden a lo que hace la persona y muestran qué cambió. */
+  --animate-exercise-in: exercise-in 0.24s ease-out;
+  --animate-rise: rise 0.22s ease-out;
+  --animate-pop-in: pop-in 0.18s ease-out;
+  --animate-fade-in: fade-in 0.16s ease-out;
+  --animate-pop: pop 0.32s ease-out;
+  --animate-shake: shake 0.32s ease-in-out;
+  /* El único movimiento que no responde a un clic: la próxima lección aletea como un colibrí
+     que se queda flotando, para señalar el siguiente paso. Dos veces y se detiene. */
+  --animate-aleteo: aleteo 0.9s ease-in-out 0.35s 2;
 
   @keyframes heartbeat {
     0%,
@@ -19,6 +29,106 @@
       transform: scale(0.9);
     }
   }
+
+  /* El ejercicio siguiente llega desde la derecha: se avanza en la lección. */
+  @keyframes exercise-in {
+    from {
+      opacity: 0;
+      transform: translateX(16px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Diálogos y detalles que se abren: crecen desde donde se tocó. */
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Respuesta correcta: un pulso corto. */
+  @keyframes pop {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.04);
+    }
+  }
+
+  /* Respuesta incorrecta: un temblor leve (nunca un regaño, §9.3). */
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-4px);
+    }
+    75% {
+      transform: translateX(4px);
+    }
+  }
+
+  /* Colibrí suspendido: sube y baja rápido con un leve giro, como el batir de las alas. */
+  @keyframes aleteo {
+    0%,
+    100% {
+      transform: translateY(0) rotate(0);
+    }
+    20% {
+      transform: translateY(-5px) rotate(-2deg);
+    }
+    40% {
+      transform: translateY(-2px) rotate(1.5deg);
+    }
+    60% {
+      transform: translateY(-6px) rotate(-1.5deg);
+    }
+    80% {
+      transform: translateY(-1px) rotate(1deg);
+    }
+  }
+}
+
+/* Botones «presionables» (el estilo con borde inferior grueso): se hunden al pulsarlos, como
+   una tecla. Una sola regla para todos, en vez de repetirla en cada componente. */
+:is(button, a).border-b-4 {
+  transition:
+    transform 90ms ease-out,
+    background-color 150ms ease-out;
+}
+:is(button, a).border-b-4:not(:disabled):active {
+  transform: translateY(2px);
 }
 
 @media (prefers-reduced-motion: reduce) {

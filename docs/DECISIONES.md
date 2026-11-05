@@ -385,3 +385,25 @@
 - Consecuencias: `Settings.trusted_proxy_hops` y `Settings.client_ip_header`, `deps.client_ip` usa la regla nueva. Pruebas en `tests/unit/test_client_ip.py` (17) y 2 de API en `test_auth.py`, que reproducen el ataque rotando `X-Forwarded-For`. Con la conexión HTTP interna, `request.url.scheme` queda en `http`; la app no arma URLs absolutas y la cookie `Secure` depende de `APP_ENV`, no del esquema.
 - Secciones afectadas de la especificación: **cambia el comando literal de §17.1** (`--proxy-headers --forwarded-allow-ips='*'` → `--no-proxy-headers` + `TRUSTED_PROXY_HOPS=1`) y concreta §11 («leer la IP real de X-Forwarded-For solo desde el proxy de confianza»). La especificación está protegida: **el equipo debe aprobar este cambio**. La intención de §11 se cumple; lo que cambia es el mecanismo, porque el de §17.1 no la cumplía.
 - Al desplegar: comprobar en los registros de Render que dos personas distintas reciben IP distintas. Si todas salen iguales, delante hay otro proxy y se debe subir `TRUSTED_PROXY_HOPS` a 2.
+
+## D-036 · Transiciones de la interfaz · 05/11/2026
+- Contexto: el usuario pidió transiciones en la interfaz. Hasta ahora solo se movían Tomi (framer-motion) y el corazón al perder una vida.
+- Opciones consideradas:
+  1. **CSS (keyframes de Tailwind 4 en `index.css`)**, solo donde la persona hace algo. Sin dependencias nuevas y cubierto por la regla global de «movimiento reducido». En contra: no anima la salida de lo que se desmonta.
+  2. **framer-motion en todos los componentes**, con `AnimatePresence` para las salidas. En contra: más código y más JavaScript en cada pantalla para un efecto pequeño.
+  3. **Entradas con fundido en cada sección y efecto al pasar el mouse por cada tarjeta.** En contra: es el efecto genérico de siempre, distrae y no explica nada.
+- Decisión: opción 1. El movimiento responde a una acción y muestra qué cambió:
+  - **Botones presionables:** los botones con borde inferior grueso (`border-b-4`) se hunden 2 px al pulsarlos. Es una sola regla en `index.css`.
+  - **Lección:**
+    - cada ejercicio entra desde la derecha (`animate-exercise-in`);
+    - la barra de avance crece suave;
+    - las opciones cambian de color con transición; la correcta hace un pulso y la incorrecta un temblor leve, nunca un regaño;
+    - el mensaje de Tomi aparece subiendo.
+  - **Abrir:** el detalle de una lección crece desde su origen, las lecciones de un nodo se despliegan, y la celebración y «Sin vidas» entran con fundido y escala.
+  - **Cambio de sección:** fundido de 160 ms del contenido (`<main>` con `key` por ruta).
+  - **«Aleteo» (el único movimiento sin clic):** la próxima lección por hacer flota como un colibrí suspendido, dos veces, y se detiene. Señala el siguiente paso y va con la mascota.
+- Consecuencias:
+  - Con «movimiento reducido» todo queda casi instantáneo por la regla global que ya existía (R10.5).
+  - Prueba Vitest: solo la próxima lección tiene `animate-aleteo` y `data-next`.
+  - `alas e2e` sigue en verde con las animaciones.
+- Secciones afectadas de la especificación: ninguna contradicha. Amplía §9.5 (diseño); §9.3 ya pedía *scroll* suave y el corazón que late.
