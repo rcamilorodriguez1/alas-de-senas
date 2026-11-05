@@ -1,0 +1,18 @@
+{
+  // Al abrir la carpeta del proyecto (sin el área de trabajo), oculta lo que generan las herramientas.
+  // Nada de esto es código del proyecto ni se sube a Git (D-032).
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.mypy_cache": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/.coverage": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/*.tsbuildinfo": true,
+    "openapi.json": true,
+    ".venv": true,
+    "venv": true,
+    "ml/.venv": true
+  }
+}

@@ -1,0 +1,38 @@
+{
+  // Vista para la sustentación (D-032): las 4 partes del proyecto como carpetas del explorador.
+  // Son vistas de las carpetas reales: no se mueve nada y todo sigue funcionando igual.
+  // Abrir con: Archivo → Abrir área de trabajo desde archivo… → alas-de-senas.code-workspace
+  "folders": [
+    { "name": "1 · Frontend (React)", "path": "apps/web" },
+    { "name": "2 · API — rutas HTTP", "path": "apps/api/app/api" },
+    { "name": "2 · API — formatos JSON", "path": "apps/api/app/schemas" },
+    { "name": "3 · Backend — reglas de negocio", "path": "apps/api/app/domain" },
+    { "name": "3 · Backend — servicios", "path": "apps/api/app/services" },
+    { "name": "4 · Base de datos — modelos y repositorios", "path": "apps/api/app/infra" },
+    { "name": "4 · Base de datos — migraciones", "path": "apps/api/alembic" },
+    { "name": "Contenido (señas y lecciones)", "path": "content" },
+    { "name": "Entrenamiento del modelo", "path": "ml" },
+    { "name": "Documentación", "path": "docs" },
+    // La raíz va al final: desde aquí se abren las terminales y se ejecutan los comandos (uv run alas …).
+    { "name": "Proyecto completo (comandos)", "path": "." }
+  ],
+  "settings": {
+    // Archivos que generan las herramientas (no son código del proyecto ni se suben a Git).
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/.mypy_cache": true,
+      "**/.pytest_cache": true,
+      "**/.ruff_cache": true,
+      "**/.coverage": true,
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/*.tsbuildinfo": true,
+      "openapi.json": true,
+      ".venv": true,
+      "venv": true,
+      "ml/.venv": true
+    },
+    "terminal.integrated.cwd": "${workspaceFolder:Proyecto completo (comandos)}",
+    "python.defaultInterpreterPath": "${workspaceFolder:Proyecto completo (comandos)}/.venv/Scripts/python.exe"
+  }
+}
