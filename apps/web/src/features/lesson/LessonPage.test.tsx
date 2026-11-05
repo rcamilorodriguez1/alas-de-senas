@@ -176,7 +176,7 @@ describe("LessonPage — actividades en secuencia (R4.1, R4.2)", () => {
     }
   });
 
-  it("al empezar, la 1 está activa y la 2, 3 y 4 pendientes con 🔒 y «Pendiente»", async () => {
+  it("al empezar, la 1 está activa y la 2 y 3 pendientes con 🔒 y «Pendiente»", async () => {
     mockFetch(lessonServer(m1n1l1()).handler);
     renderLesson();
     await lessonLoaded();
@@ -184,12 +184,30 @@ describe("LessonPage — actividades en secuencia (R4.1, R4.2)", () => {
     const first = activityCard(1);
     expect(first).not.toHaveTextContent("Pendiente");
     expect(first).not.toHaveTextContent("Completada");
-    for (const n of [2, 3, 4] as const) {
+    for (const n of [2, 3] as const) {
       const card = activityCard(n);
       expect(card).toHaveTextContent("Pendiente");
       expect(card).toHaveTextContent("🔒");
       expect(within(card).queryByRole("radio")).not.toBeInTheDocument();
     }
+  });
+
+  it("la actividad que L1 no trae (4) dice «No incluida en esta lección», sin 🔒, de principio a fin", async () => {
+    const user = userEvent.setup();
+    mockFetch(lessonServer(m1n1l1()).handler);
+    renderLesson();
+    await lessonLoaded();
+
+    const fourth = activityCard(4);
+    expect(fourth).toHaveTextContent("No incluida en esta lección");
+    expect(fourth).not.toHaveTextContent("Pendiente");
+    expect(fourth).not.toHaveTextContent("🔒");
+
+    await answerObserve(user);
+    await answerSelect(user);
+    await answerProduce(user);
+    expect(activityCard(4)).toHaveTextContent("No incluida en esta lección");
+    expect(activityCard(4)).not.toHaveTextContent("Completada");
   });
 
   it("al observar, la 1 queda «Completada» con ✔ y se activa la 2", async () => {
@@ -207,7 +225,7 @@ describe("LessonPage — actividades en secuencia (R4.1, R4.2)", () => {
     expect(second).not.toHaveTextContent("🔒");
     expect(await within(second).findAllByRole("radio")).toHaveLength(4);
     expect(activityCard(3)).toHaveTextContent("Pendiente");
-    expect(activityCard(4)).toHaveTextContent("Pendiente");
+    expect(activityCard(4)).toHaveTextContent("No incluida en esta lección");
   });
 
   it("la actividad activa contiene el ejercicio actual (Selecciona) y la 3 se activa con PRODUCE", async () => {
@@ -222,7 +240,7 @@ describe("LessonPage — actividades en secuencia (R4.1, R4.2)", () => {
     const third = activityCard(3);
     expect(await within(third).findByRole("button", { name: "Sí, me salió" })).toBeInTheDocument();
     expect(activityCard(2)).toHaveTextContent("Completada");
-    expect(activityCard(4)).toHaveTextContent("Pendiente");
+    expect(activityCard(4)).toHaveTextContent("No incluida en esta lección");
   });
 });
 

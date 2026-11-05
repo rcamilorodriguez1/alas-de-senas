@@ -64,10 +64,6 @@ def _content_errors() -> Iterator[None]:
         raise typer.Exit(code=1) from exc
 
 
-def _pending(group: int) -> None:
-    typer.echo(f"Pendiente de la fase {group} (docs/specs/tasks.md, Grupo {group}).")
-
-
 def _executable(name: str) -> str:
     """Ruta completa del ejecutable (resuelve `npm.cmd` en Windows)."""
     found = shutil.which(name)
@@ -299,7 +295,23 @@ def db_seed_demo(
     ] = False,
 ) -> None:
     """Crea el usuario de demostración (§17.4)."""
-    _pending(11)
+    from app.content.demo import DemoError, seed_demo
+    from app.core.clock import get_clock
+
+    try:
+        result = seed_demo(
+            get_settings(), get_clock(), reset=reset, allow_production=allow_production
+        )
+    except DemoError as exc:
+        typer.secho(str(exc), fg="red")
+        raise typer.Exit(code=1) from exc
+    if not result.created:
+        typer.echo(
+            f"El usuario de demostración {result.email} ya existe. "
+            "Usa --reset para borrarlo y crearlo de nuevo."
+        )
+        return
+    typer.secho(f"Usuario de demostración listo: {result.email}", fg="green")
 
 
 @db_app.command("reset")
@@ -426,16 +438,122 @@ def camera_assets(
     typer.echo(f"Modelo {report.model.name}: {state}.")
 
 
+def _build_web() -> None:
+    typer.secho("→ npm run build", fg="cyan", bold=True)
+    if _run([_executable("npm"), "run", "build"], WEB_DIR) != 0:
+        typer.secho("✗ Falló la compilación de la SPA.", fg="red")
+        raise typer.Exit(code=1)
+
+
+def _uvicorn(port: int, host: str = "127.0.0.1") -> list[str]:
+    return _python(
+        "uvicorn", "app.main:app", "--app-dir", str(API_DIR), "--host", host, "--port", str(port)
+    )
+
+
+def _free_port() -> int:
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        port: int = sock.getsockname()[1]
+        return port
+
+
+def _wait_healthy(url: str, process: subprocess.Popen[bytes], timeout_s: float = 60) -> None:
+    import time
+    import urllib.error
+    import urllib.request
+
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            typer.secho("✗ El servidor se detuvo al arrancar.", fg="red")
+            raise typer.Exit(code=1)
+        try:
+            # URL local fija (127.0.0.1): no hay entrada del usuario.
+            with urllib.request.urlopen(url, timeout=2) as response:  # noqa: S310
+                if response.status == 200:
+                    return
+        except (urllib.error.URLError, OSError):
+            pass
+        time.sleep(0.5)
+    typer.secho(f"✗ El servidor no respondió en {url}.", fg="red")
+    raise typer.Exit(code=1)
+
+
 @app.command()
-def e2e() -> None:
-    """Pruebas de extremo a extremo con Playwright para Python."""
-    _pending(11)
+def e2e(
+    headed: Annotated[bool, typer.Option(help="Muestra el navegador.")] = False,
+) -> None:
+    """Compila, arranca en modo producción contra la BD de prueba y ejecuta Playwright (§15)."""
+    import secrets
+
+    settings = get_settings()
+    test_db = make_url(settings.database_url_test).database or ""
+    if not test_db.endswith("_test"):
+        # Migra, siembra y crea usuarios: solo en una base de PRUEBA (igual que tests/api/conftest).
+        typer.secho(
+            f"DATABASE_URL_TEST debe apuntar a una base que termine en «_test» (es «{test_db}»).",
+            fg="red",
+        )
+        raise typer.Exit(code=1)
+    _build_web()
+    # Modo producción de verdad (sin /api/docs, cookie Secure) contra la base de PRUEBA, con un
+    # secreto nuevo en cada ejecución. localhost cuenta como contexto seguro para la cookie.
+    env = {
+        **os.environ,
+        "APP_ENV": "production",
+        "DATABASE_URL": settings.database_url_test,
+        "JWT_SECRET": secrets.token_urlsafe(48),
+    }
+    for step in (["db", "migrate"], ["db", "seed"]):
+        if subprocess.run(
+            _python("app.cli", *step), cwd=REPO_ROOT, env=env, check=False
+        ).returncode:
+            typer.secho(f"✗ Falló: alas {' '.join(step)} (base de prueba).", fg="red")
+            raise typer.Exit(code=1)
+    typer.secho("→ navegadores de Playwright", fg="cyan", bold=True)
+    if _run(_python("playwright", "install", "chromium", "firefox")) != 0:
+        typer.secho("✗ No se pudieron instalar Chromium y Firefox.", fg="red")
+        raise typer.Exit(code=1)
+
+    port = _free_port()
+    base_url = f"http://localhost:{port}"
+    new_session = sys.platform != "win32"
+    server = subprocess.Popen(_uvicorn(port), cwd=REPO_ROOT, env=env, start_new_session=new_session)
+    try:
+        _wait_healthy(f"http://127.0.0.1:{port}/api/health", server)
+        typer.secho(f"→ Playwright contra {base_url}", fg="cyan", bold=True)
+        args = ["pytest", "-m", "e2e", "apps/api/tests/e2e", "-p", "no:cacheprovider"]
+        args += ["--browser", "chromium", "--browser", "firefox", "--base-url", base_url]
+        if headed:
+            args.append("--headed")
+        code = _run(_python(*args))
+    finally:
+        _stop_tree(server)
+    if code != 0:
+        typer.secho("✗ Fallaron las pruebas E2E.", fg="red", bold=True)
+        raise typer.Exit(code=code)
+    typer.secho("✓ alas e2e en verde", fg="green", bold=True)
 
 
 @app.command("start-prod")
-def start_prod() -> None:
-    """Compila la SPA y la sirve con uvicorn sin recarga."""
-    _pending(11)
+def start_prod(
+    port: Annotated[int, typer.Option(help="Puerto del servidor.")] = 8000,
+) -> None:
+    """Compila la SPA y la sirve con uvicorn sin recarga (demo local, §17.3)."""
+    _build_web()
+    typer.echo(f"Alas de Señas en http://localhost:{port} (Ctrl+C para salir)")
+    server = subprocess.Popen(
+        _uvicorn(port), cwd=REPO_ROOT, start_new_session=sys.platform != "win32"
+    )
+    try:
+        server.wait()
+    except KeyboardInterrupt:
+        typer.echo("Deteniendo…")
+    finally:
+        _stop_tree(server)
 
 
 if __name__ == "__main__":

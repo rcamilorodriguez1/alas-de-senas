@@ -196,3 +196,53 @@ Para retomar (en este orden):
 - Verificación independiente (`verificador-fase`): APROBADO CON OBSERVACIONES; las observaciones quedan en D-029 y en la verificación manual. Prueba nueva `published-model.test.ts` sobre el modelo publicado.
 - **Verificar a mano:** con cámara real en 1366×768, ≥ 12 FPS (se ve en `/admin/gestos`); «hola» reconocida con una persona que no esté en LSC-54, con la mano derecha y con la izquierda; al salir de la lección la cámara se apaga. Las señas con movimiento sin modelo (p. ej. «buenos días») siguen con autoevaluación.
 - Riesgos: modelo entrenado sin expresión facial (LSC-54 pixelado); solo 18 personas; «hola» a veces se confunde con «adiós». Grabar al equipo con `/admin/gestos` y reentrenar lo mejora. El intérprete debe confirmar B = 4.
+
+## Grupo 11 — Cierre
+- Plan:
+  - 11.1 `app/core/spa.py` (`SpaFiles`): sirve `WEB_DIST_DIR` en `/`; rutas sin archivo → `index.html`, salvo bajo `/api`, `/media`, `/mediapipe`, `/models`, `/assets` (404 de verdad, para que el modelo o un script no reciban HTML); `Cache-Control` `immutable` en `/assets` y `no-cache` en `index.html`; la CSP la sigue poniendo el middleware (excepto `/api/docs`). Se monta al final en `main.py` y solo si existe `dist/`. Pruebas en `tests/api/test_spa.py` con una carpeta `dist` temporal.
+  - 11.2 Revisión en 1280×720, 1366×768 y 1920×1080 con Playwright (capturas, sin desplazamiento horizontal) y revisión de accesibilidad. Lighthouse ≥ 90 lo mide el usuario en Chrome (no hay Lighthouse en el entorno).
+  - 11.3 `apps/api/tests/e2e/test_main_flow.py` (Playwright para Python, Chromium y Firefox, 1366×768) con el flujo obligatorio de §15; responde traduciendo video → seña con `media/manifest.json` y `content/signs.csv` (sin «modo prueba», B89). `data-testid` de §15 en el frontend (`lesson-option-<n>`, `check-answer`, `continue`, `node-<id>`, `hearts`). `alas e2e`: compila la SPA, migra y siembra `alas_test`, arranca uvicorn en modo producción en un puerto libre, instala los navegadores si faltan, ejecuta `pytest -m e2e` y detiene el servidor. `alas start-prod`: `npm run build` + uvicorn sin recarga.
+  - 11.4 `Dockerfile` multi-etapa de §17.1 (uv con versión fija), `.dockerignore` (sin `ml/`, `.github/`, `raw/`, `node_modules`, `.venv`, `.env`), `docker build` y arranque local; `README.md` con instalación, comandos, despliegue Render + Neon y el checklist de §17.3. El despliegue en Render + Neon y el `git push` los hace el equipo (D-006: aún no hay repositorio remoto).
+  - 11.5 `app/content/demo.py` + `alas db seed-demo [--reset] [--allow-production]`: servicios reales (`LessonSessionService`, `ReviewService`) con un reloj simulado, fechas relativas a hoy (10:00 de Bogotá), respuestas tomadas del servidor; se niega en producción sin `--allow-production` y `DEMO_PASSWORD` (B84). Prueba de API con `FakeClock`: racha 5 en riesgo, 16 lecciones de M1, M2-N1-L1 disponible, 3 letras falladas en la cola, 5 vidas, 6 logros; dos ejecuciones con `--reset` dan lo mismo.
+- Hecho:
+  - **11.1** `app/core/spa.py` (`SpaFiles`, `SpaMount`): SPA con *fallback*; 404 JSON bajo `api`, `media`, `mediapipe`, `models` y `assets`; caché `immutable` en `assets/` y `no-cache` en el resto; CSP del middleware. 62 pruebas en `tests/unit/test_spa.py` (con *path traversal* y el manifiesto dentro de `dist`).
+  - **11.3** `tests/e2e/test_main_flow.py` con el flujo obligatorio de §15. Responde con `manifest.json` y `signs.csv`, sin «modo prueba». `alas e2e` **en verde en Chromium y Firefox**. `data-testid` de §15 en el frontend. `alas start-prod` implementado.
+  - **11.4 (parte del equipo pendiente)** `Dockerfile` en 5 etapas (MediaPipe con `alas camera-assets`), `.dockerignore`, `README.md` con instalación, comandos, demo, despliegue y checklist de §17.3. `docker build` en verde. La imagen arranca contra PostgreSQL:
+    - aplica las migraciones y carga el contenido;
+    - `/api/health` responde 200 y `/aprender` sirve la SPA;
+    - `/api/docs` y `/media/manifest.json` dan 404;
+    - `assets/` lleva `immutable`;
+    - corre con uid 10001.
+  - **11.5** `app/content/demo.py` + `alas db seed-demo`, con servicios reales y reloj simulado (§17.4). 31 pruebas de API y 10 de guardas (B84).
+  - **11.2 (parte automatizable)** 9 pantallas × 3 resoluciones con Playwright: sin desplazamiento horizontal, controles con nombre accesible, imágenes con `alt`, `lang="es-CO"`. El aviso aparece a 900 px.
+  - Fuera de plan, pedido por el usuario: las actividades que la lección no trae dicen «No incluida en esta lección» (D-034.6).
+  - Decisiones: D-034.
+- Revisión:
+  - **`verificador-fase`:** APROBADO CON OBSERVACIONES. El contraste de «No incluida» quedaba en 2,7:1; se corrigió con gris AA sin opacidad.
+  - **`revisor-codigo`:** 1 bloqueante, el manifiesto publicado por la SPA con rutas normalizadas (B54). Corregido con pruebas.
+  - Importantes corregidos:
+    - la demo no borra cuentas reales;
+    - `alas e2e` solo trabaja en bases `_test`;
+    - `.dockerignore` excluye los `.env` de todas las carpetas;
+    - contraste de «No incluida».
+  - Menores corregidos:
+    - validación de `DEMO_PASSWORD` antes de tocar la base;
+    - la demo no queda a medias;
+    - `next()` sin valor por defecto;
+    - docstring de la prueba de guardas;
+    - código de la imagen de root.
+  - La prueba obsoleta «comandos pendientes» se reemplazó por una prueba de la guarda `_test`: llamaba de verdad a `e2e` y `start-prod` dentro de `alas check`.
+- Verificación manual pendiente (usuario):
+  - **Lighthouse:** en Chrome, desde `/aprender`, Accesibilidad ≥ 90.
+  - **Demo:**
+    1. `uv run alas db seed-demo --reset`, luego `uv run alas start-prod`.
+    2. Entra a http://localhost:8000 con `demo@alasdesenas.co` / `demo-alas-2026`.
+    3. Comprueba: racha 5 en riesgo, 5 vidas, Módulo 1 completo con M1-N1 dorado, M2-N1-L1 disponible, un repaso pendiente con 3 letras y 6 logros.
+    4. Haz M2-N1-L1: la racha debe subir a 6.
+  - **Lección L1:** la tarjeta 4 dice «No incluida en esta lección».
+- Pendiente / riesgos:
+  - **11.2:** falta medir Lighthouse.
+  - **11.4, despliegue en Render + Neon:** lo hace el equipo y necesita el repositorio en GitHub (0.8 / D-006).
+  - **`--forwarded-allow-ips='*'` (CMD literal de §17.1):** uvicorn tomaría la IP que el cliente pone en `X-Forwarded-For`, y con eso se podría saltar el límite de 5 intentos de login por minuto por IP. Hay que revisarlo con `/decision` al desplegar: restringirlo a la red del proxy de Render.
+  - **`alas e2e` y `alas check`:** no deben correr a la vez, porque comparten `alas_test`.
+  - **Docker:** la red dentro del contenedor cortó `npm ci` una vez; se agregaron reintentos.

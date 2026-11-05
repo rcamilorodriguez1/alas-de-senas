@@ -225,6 +225,22 @@ describe("ConversationActivity", () => {
     });
   });
 
+  it("en una lección con actividad 4, las que no trae dicen «No incluida» y las que faltan, «Pendiente»", async () => {
+    const { fixture } = conversationLesson();
+    mockFetch(lessonServer(fixture).handler);
+    renderLesson("M1-N1-L2");
+    await lessonLoaded();
+    await screen.findByText(containingText("Turno 1 de 2"));
+
+    expect(activityCard(4)).not.toHaveTextContent("No incluida");
+    expect(activityCard(1)).toHaveTextContent("Pendiente"); // observa viene después
+    expect(activityCard(1)).toHaveTextContent("🔒");
+    for (const n of [2, 3] as const) {
+      expect(activityCard(n)).toHaveTextContent("No incluida en esta lección");
+      expect(activityCard(n)).not.toHaveTextContent("🔒");
+    }
+  });
+
   it("aparece bajo «Actividad 4. Usa lo aprendido»", async () => {
     const { fixture } = conversationLesson();
     mockFetch(lessonServer(fixture).handler);

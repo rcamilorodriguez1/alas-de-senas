@@ -20,6 +20,7 @@ from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.core.media_files import MediaFiles
 from app.core.security_headers import SecurityHeadersMiddleware
+from app.core.spa import SpaFiles, SpaMount
 from app.schemas.errors import ERROR_RESPONSES
 
 
@@ -49,6 +50,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(intro.router, prefix="/api")
     app.include_router(recognition.router, prefix="/api")
     app.mount("/media", MediaFiles(directory=settings.media_dir, check_dir=False), name="media")
+    # Al final: solo recibe lo que no atendieron la API ni /media (tarea 11.1).
+    app.router.routes.append(
+        SpaMount("/", app=SpaFiles(directory=settings.web_dist_dir, check_dir=False), name="spa")
+    )
     return app
 
 

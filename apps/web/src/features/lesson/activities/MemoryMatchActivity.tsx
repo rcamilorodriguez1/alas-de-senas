@@ -95,7 +95,7 @@ export function MemoryMatchActivity({ exercise, onSubmit, onContinue }: Activity
           <ContinueButton onContinue={onContinue} />
         </>
       ) : (
-        <button type="button" disabled={!complete} onClick={() => void check()} className={primaryButton}>
+        <button type="button" data-testid="check-answer" disabled={!complete} onClick={() => void check()} className={primaryButton}>
           Comprobar respuesta
         </button>
       )}

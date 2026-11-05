@@ -8,6 +8,7 @@ import pytest
 from typer.testing import CliRunner
 
 from app.cli import app
+from app.core.config import Settings
 
 runner = CliRunner()
 WIDE = {"COLUMNS": "200", "NO_COLOR": "1", "TERM": "dumb"}
@@ -38,19 +39,32 @@ def test_content_help_lista_sus_subcomandos(command: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "args",
+    "url",
     [
-        ["db", "seed-demo"],
-        ["e2e"],
-        ["start-prod"],
+        "postgresql+psycopg://alas:alas@localhost:5433/alas_de_senas",
+        "postgresql+psycopg://alas:alas@localhost:5433/alas_test_respaldo",
     ],
-    ids=lambda args: " ".join(args),
 )
-def test_comandos_sin_contenido_avisan_que_estan_pendientes(args: list[str]) -> None:
-    result = runner.invoke(app, args, env=WIDE)
+def test_e2e_se_niega_si_la_base_de_prueba_no_termina_en_test(
+    monkeypatch: pytest.MonkeyPatch, url: str
+) -> None:
+    """`alas e2e` migra, siembra y crea usuarios: nunca en la base de desarrollo (D-034.4).
+    Se niega antes de compilar o de tocar cualquier base."""
+    import app.cli as cli
 
-    assert result.exit_code == 0, result.output
-    assert "Pendiente de la fase" in result.output
+    def no_build() -> None:
+        raise AssertionError("no debía compilar la SPA")
+
+    monkeypatch.setattr(cli, "_build_web", no_build)
+    monkeypatch.setattr(
+        cli,
+        "get_settings",
+        lambda: Settings(_env_file=None, app_env="development", database_url_test=url),
+    )
+    result = runner.invoke(app, ["e2e"], env=WIDE)
+
+    assert result.exit_code == 1
+    assert "_test" in result.output
 
 
 def test_comando_desconocido_falla() -> None:

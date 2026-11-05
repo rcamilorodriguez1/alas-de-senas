@@ -43,6 +43,7 @@ export function ConversationActivity({ exercise, onSubmit, onContinue }: Activit
             type="button"
             role="radio"
             aria-label={`Opción ${index + 1}`}
+            data-testid={`lesson-option-${index + 1}`}
             aria-checked={choices[turnIndex] === option.token}
             disabled={finished || result !== null}
             onClick={() => setChoices([...choices.slice(0, turnIndex), option.token])}
@@ -64,7 +65,7 @@ export function ConversationActivity({ exercise, onSubmit, onContinue }: Activit
           <ContinueButton onContinue={onContinue} />
         </>
       ) : (
-        <button type="button" disabled={!finished} onClick={() => void check()} className={primaryButton}>
+        <button type="button" data-testid="check-answer" disabled={!finished} onClick={() => void check()} className={primaryButton}>
           Comprobar respuesta
         </button>
       )}

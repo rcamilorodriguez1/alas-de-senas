@@ -242,6 +242,7 @@ export function LessonPage() {
   const current = exercises[Math.min(index, exercises.length - 1)];
   const groupCount = new Set(exercises.map((e) => e.group).filter((g) => g !== null)).size;
   const phaseExercises = exercises.filter((e) => e.group === current.group);
+  const includedActivities = new Set(exercises.map((e) => e.activity));
   const percent = Math.floor((answered.size * 100) / exercises.length);
   const isLearn = data.lesson.type === "LEARN";
   const nextVideo = mainVideo(exercises[index + 1]);
@@ -317,6 +318,7 @@ export function LessonPage() {
             hearts?.enabled && (
               <span
                 aria-label={`Vidas: ${hearts.current}`}
+                data-testid="hearts"
                 data-heartbeat={heartbeat ? "true" : undefined}
                 className={`inline-block font-semibold ${heartbeat ? "animate-heartbeat" : ""}`}
               >
@@ -337,6 +339,16 @@ export function LessonPage() {
           const done =
             !isActive &&
             phaseExercises.some((e) => e.activity === activity.kind && answered.has(e.id));
+          // Cada lección trae solo algunas actividades (p. ej. L1 no tiene «Usa lo aprendido»):
+          // las demás no se muestran como bloqueadas, porque no hay nada que desbloquear.
+          const included = includedActivities.has(activity.kind);
+          const status = !included
+            ? "No incluida en esta lección"
+            : isActive
+              ? "En curso"
+              : done
+                ? "✔ Completada"
+                : "🔒 Pendiente";
           return (
             <li
               key={activity.kind}
@@ -344,13 +356,16 @@ export function LessonPage() {
               className={isActive ? "scroll-mt-2 py-3" : "py-2"}
             >
               <div className="flex items-center justify-between">
-                <h2 className="font-display text-lg font-extrabold">{activity.title}</h2>
-                <span className="text-sm font-semibold text-[#45606A]">
-                  {isActive ? "En curso" : done ? "✔ Completada" : "🔒 Pendiente"}
-                </span>
+                {/* Gris #45606A en vez de opacidad: sigue cumpliendo contraste AA (R10.5). */}
+                <h2
+                  className={`font-display text-lg font-extrabold ${included ? "" : "text-[#45606A]"}`}
+                >
+                  {activity.title}
+                </h2>
+                <span className="text-sm font-semibold text-[#45606A]">{status}</span>
               </div>
               {isActive && (
-                <div className="mt-3">
+                <div className="mt-3" data-testid="active-exercise">
                   <ActivityView
                     key={current.id}
                     exercise={current}

@@ -92,7 +92,7 @@ export function AppLayout({ children, aside }: { children: ReactNode; aside?: Re
               </span>
               <span aria-label={`Néctar: ${stats.nectar}`}>🌸 {stats.nectar}</span>
               {stats.hearts.enabled && (
-                <span aria-label={`Vidas: ${stats.hearts.current}`}>❤️ {stats.hearts.current}</span>
+                <span data-testid="hearts" aria-label={`Vidas: ${stats.hearts.current}`}>❤️ {stats.hearts.current}</span>
               )}
             </div>
           )}

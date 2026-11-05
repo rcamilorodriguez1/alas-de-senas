@@ -1,0 +1,38 @@
+# Lo que NO entra en la imagen (§17.1): solo el código, el contenido y los archivos versionados.
+# Así una imagen construida aquí es igual a la que construye Render desde git.
+.git
+.github
+.claude
+.vscode
+.venv
+venv
+ml
+docs
+**/__pycache__
+**/.mypy_cache
+**/.pytest_cache
+**/.ruff_cache
+.coverage
+openapi.json
+requirements.txt
+*.code-workspace
+
+# Secretos: las variables se pasan al contenedor, nunca dentro de la imagen.
+**/.env
+**/.env.*
+!**/.env.example
+
+# Videos originales del equipo (pesados; la imagen usa los ya procesados de public/media).
+content/videos/raw
+
+# Frontend: dependencias, compilación y archivos generados se rehacen dentro de la imagen.
+apps/web/node_modules
+apps/web/dist
+apps/web/public/mediapipe
+apps/web/.vscode
+**/*.tsbuildinfo
+
+# Pruebas y datos locales
+apps/api/tests
+test-results
+playwright-report

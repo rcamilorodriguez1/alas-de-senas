@@ -101,6 +101,7 @@ export function SelectMeaningActivity({ exercise, onSubmit, onContinue }: Activi
               key={option.token}
               type="button"
               role="radio"
+              data-testid={`lesson-option-${index + 1}`}
               aria-checked={selected === index}
               aria-label={option.video ? `Opción ${index + 1}` : undefined}
               disabled={result !== null}
@@ -139,6 +140,7 @@ export function SelectMeaningActivity({ exercise, onSubmit, onContinue }: Activi
           type="button"
           onClick={() => void check()}
           disabled={selected === null || sending}
+          data-testid="check-answer"
           className={primaryButton}
         >
           Comprobar respuesta

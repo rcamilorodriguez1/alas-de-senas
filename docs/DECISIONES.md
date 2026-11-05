@@ -343,3 +343,30 @@
   - **Pruebas:** dominio, API (compra simultánea doble → un solo descuento, sin néctar, bloqueado, exportación) y Vitest.
   - Tareas en `docs/specs/tasks.md`, Grupo 12.
 - Secciones afectadas de la especificación: **contradice la tabla de alcance de §1** («Accesorios de Tomi en la tienda» está fuera de alcance) y amplía §5 (modelos), §8 (API) y §9 (interfaz). La especificación está protegida: **el equipo debe aprobar este cambio** antes de empezar el Grupo 12. Si no se aprueba, se puede hacer solo el punto 4 (recarga de vidas visible siempre), que no contradice la especificación.
+
+## D-034 · Detalles del cierre (Grupo 11) · 04/11/2026
+- Contexto: el Grupo 11 deja ambigüedades: qué caché llevan los archivos de `dist/` que no son `assets/`, cómo entran a la imagen los archivos de MediaPipe (no están en git) y cómo cumplir el plan de §17.4 con las reglas reales del repaso.
+- Opciones consideradas:
+  - Caché de `dist/`: (a) solo `assets/` inmutable y el resto `no-cache` — los modelos y el WASM se republican con el mismo nombre; (b) caché larga para todo — un modelo nuevo no llegaría a los navegadores.
+  - MediaPipe en Docker: (a) una etapa que ejecuta el mismo `alas camera-assets` — una sola fuente de URLs; (b) versionar `public/mediapipe/` (~70 MB) — repositorio pesado; (c) descargar con un script aparte — URLs duplicadas.
+  - Repaso de hace 2 días en la demo: (a) un «Necesito repasar» (sin puntaje) hace 3 días en una letra que ese día sale en una sola lección; (b) un error con puntaje — contradice «3 errores ayer»; (c) saltarse el repaso — contradice §17.4.
+- Decisión:
+  1. **`SpaFiles` + `SpaMount`** (`app/core/spa.py`): `assets/` con `immutable`; `index.html`, modelos, WASM y demás con `no-cache` (revalidan con ETag). Las rutas sin archivo bajo `api`, `media`, `mediapipe`, `models` y `assets` dan 404 con el formato de error (un script o el modelo nunca reciben HTML). La exclusión es por segmento (`/apiario` sí es de la SPA). El montaje nunca atrapa `/api`: una ruta de la API agregada después de `create_app` sigue funcionando y un método equivocado da 405 con `Allow`. Sin `dist/` la app arranca y la SPA da 404.
+  2. **Dockerfile en 5 etapas** (dependencias npm → API → `alas camera-assets` → compilar la SPA → imagen final). `uv` fijo en 0.13.6 (el que generó `uv.lock`). La imagen corre con un usuario sin privilegios. `.dockerignore` deja fuera `public/mediapipe/` local para que la imagen sea igual a la que construye Render desde git.
+  3. **Demo (§17.4):** con todo acertado ninguna seña vence hace 2 días (cada lección del día refuerza la seña, §7.7), así que hace 3 días la demo pulsa «Necesito repasar» en la primera letra que ese día solo aparece en una lección y tiene «Produce la seña»; esa letra vence hace 2 días y entra al repaso. No es un error: no tiene puntaje ni quita vidas. Los **3 errores de ayer** van en el reto M1-N4-L4 (la última lección del día; en L3 la letra se reprogramaría al acertarla en L4 y saldría de la cola). El reto queda 9/12 = 75 % ≥ 70 %, aprobado. La prueba cuenta como «error» solo las respuestas con puntaje.
+  4. **`alas e2e`**: compila, migra y siembra `alas_test` y arranca uvicorn con `APP_ENV=production` (sin `/api/docs`, cookie `Secure`) en un puerto libre de `localhost`, con un `JWT_SECRET` nuevo en cada ejecución. Instala Chromium y Firefox si faltan.
+  5. **`data-testid`** de §15 en el frontend: `lesson-option-<n>`, `check-answer`, `continue`, `hearts`, `node-<id>`, más `lesson-<id>` y `active-exercise` (el ejercicio en curso, para no confundirlo con el video que se precarga oculto).
+  6. **Actividades que la lección no trae** (p. ej. L1 sin «Usa lo aprendido»): la tarjeta dice «No incluida en esta lección», en gris y sin 🔒. Antes decía «🔒 Pendiente» hasta el final y parecía bloqueada (lo reportó el usuario).
+  7. **Correcciones de la revisión (`revisor-codigo`):**
+     - La SPA respondía `media/manifest.json` con rutas como `/x/..%2Fmedia%2Fmanifest.json` o `/MEDIA/manifest.json`, porque StaticFiles normaliza la ruta y en Docker el manifiesto está dentro de `dist/` (B54). Ahora:
+       - una ruta con segmentos `.` o `..` da 404;
+       - `api` y `media` dan 404 siempre dentro de la SPA;
+       - las carpetas reservadas se comparan sin distinguir mayúsculas (en Windows el disco no las distingue).
+     - La demo nunca borra una cuenta real (`is_demo = false`) que use `DEMO_EMAIL`, ni con `--reset`.
+     - La demo valida `DEMO_PASSWORD` y que el contenido esté cargado antes de tocar la base. Si falla a mitad de camino, borra lo que alcanzó a crear.
+     - `alas e2e` exige que `DATABASE_URL_TEST` termine en `_test`.
+     - `.dockerignore` excluye los `.env` de todas las carpetas.
+     - El código de la imagen queda de root: solo lectura para el proceso.
+  8. `alas e2e` y las pruebas de API comparten `alas_test`: **no se ejecutan a la vez** (lo dice el `README.md`).
+- Consecuencias: pruebas nuevas en `tests/unit/test_spa.py`, `tests/api/test_demo.py`, `tests/unit/test_demo_guard.py`, `tests/e2e/test_main_flow.py` y Vitest de las tarjetas de actividades.
+- Secciones afectadas de la especificación: ninguna contradicha; §17.1 se amplía con la etapa de MediaPipe y §17.4 se cumple con el «Necesito repasar» del punto 3.

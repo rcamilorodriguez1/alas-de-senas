@@ -52,7 +52,7 @@ function NodeItem({
   const side = index % 2 === 0 ? "self-start ml-8" : "self-end mr-8"; // zigzag
   const selected = node.lessons.find((lesson) => lesson.id === openLesson);
   return (
-    <li className={`flex flex-col items-center ${side}`}>
+    <li data-testid={`node-${node.id}`} className={`flex flex-col items-center ${side}`}>
       <button
         type="button"
         onClick={onToggle}
@@ -71,6 +71,7 @@ function NodeItem({
             {node.lessons.map((lesson) => (
               <li key={lesson.id}>
                 <button
+                  data-testid={`lesson-${lesson.id}`}
                   type="button"
                   ref={(element) => {
                     if (element) triggers.current.set(lesson.id, element);

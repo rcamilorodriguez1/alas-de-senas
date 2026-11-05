@@ -32,7 +32,13 @@ export function ObserveActivity({ exercise, onSubmit, onContinue }: ActivityProp
         <span className="font-semibold">Ejemplo: </span>
         {content.usageExample}
       </p>
-      <button type="button" onClick={() => void next()} disabled={sending} className={primaryButton}>
+      <button
+        type="button"
+        data-testid="continue"
+        onClick={() => void next()}
+        disabled={sending}
+        className={primaryButton}
+      >
         Continuar
       </button>
     </div>
