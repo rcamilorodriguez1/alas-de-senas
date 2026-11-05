@@ -1138,6 +1138,8 @@ export interface components {
             word: string;
             /** Cameralabel */
             cameraLabel: string | null;
+            /** Gesturelabel */
+            gestureLabel?: string | null;
         };
         /** PublicSpelling */
         PublicSpelling: {

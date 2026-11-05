@@ -1,0 +1,15 @@
+fuente,etiqueta_fuente,slug
+# Señas de datasets externos → slugs de content/signs.csv (anexo A.7, regla 3). Las que no estén aquí
+# se ignoran. «NINGUNA» = ejemplos negativos: señas fuera del modelo que la cámara no debe confundir.
+LSC-54,Hola,hola
+LSC-54,Chao,adios
+LSC-54,Por favor,por-favor
+LSC-54,Denada,de-nada
+LSC-54,Perdon,perdon
+LSC-54,Gracias,gracias
+LSC-54,Buenos dias,buenos-dias
+LSC-54,Buenas tardes,buenas-tardes
+LSC-54,Buenas Noches,buenas-noches
+LSC-54,Bien,NINGUNA
+LSC-54,Mal,NINGUNA
+LSC-54,Ayudar,NINGUNA

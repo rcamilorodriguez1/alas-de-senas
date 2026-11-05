@@ -1,4 +1,6 @@
-import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
+import { withEquivalents } from "../../camera/equivalences";
+import { HAND_CONNECTIONS } from "../../camera/hand-connections";
+import type { Point2 } from "../../camera/recognizer";
 import { Camera, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppLayout } from "../../components/layout/AppLayout";
@@ -25,20 +27,15 @@ function reportRecognition(signId: string, confidence: number) {
   void apiRequest("POST", "/recognition/results", { body }).catch(() => undefined);
 }
 
-// Conexiones de la mano de MediaPipe (21 puntos) para dibujar el esqueleto.
-const CONNECTIONS: [number, number][] = [
-  [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [5, 9], [9, 10], [10, 11],
-  [11, 12], [9, 13], [13, 14], [14, 15], [15, 16], [13, 17], [17, 18], [18, 19], [19, 20], [0, 17],
-];
 
-function drawHand(canvas: HTMLCanvasElement, points: NormalizedLandmark[] | null) {
+function drawHand(canvas: HTMLCanvasElement, points: readonly Point2[] | null) {
   const context = canvas.getContext("2d");
   if (!context) return;
   context.clearRect(0, 0, canvas.width, canvas.height);
   if (!points) return;
   context.strokeStyle = "#10B981";
   context.lineWidth = 3;
-  for (const [a, b] of CONNECTIONS) {
+  for (const [a, b] of HAND_CONNECTIONS) {
     context.beginPath();
     context.moveTo(points[a].x * canvas.width, points[a].y * canvas.height);
     context.lineTo(points[b].x * canvas.width, points[b].y * canvas.height);
@@ -152,8 +149,10 @@ export function CameraPage() {
     }
   };
 
-  const tomi = detected
-    ? `¡Eso es una «${displayLabel(detected.label)}»!`
+  // Señas con la misma forma (D-027): sin contexto se muestran las dos, p. ej. «B / 4».
+  const shown = detected ? withEquivalents(detected.label).map(displayLabel).join(" / ") : null;
+  const tomi = shown
+    ? `¡Eso es una «${shown}»!`
     : handVisible
       ? "Mantén la mano quieta frente a la cámara."
       : "Acerca la mano a la cámara para empezar.";
@@ -212,7 +211,7 @@ export function CameraPage() {
             <p className="text-sm font-semibold text-[#45606A]">Seña detectada</p>
             {/* Solo la letra se anuncia; la confianza cambia muy seguido. */}
             <p aria-live="polite" className="font-display text-4xl font-extrabold">
-              {detected ? displayLabel(detected.label) : "—"}
+              {shown ?? "—"}
             </p>
             {detected && (
               <p className="font-semibold">Confianza: {Math.floor(detected.confidence * 100)} %</p>

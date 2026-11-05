@@ -259,3 +259,51 @@
   4. **Resultado publicado** (30 clases): validación cruzada por persona 82,7 % por cuadro (letras 75–96 %, salvo H 60 % y S 58 %; números de LSC-54 57–84 %). Con la cámara falsa: A, L, Y, O reconocidas de forma estable; B se confunde con 4 (formas casi iguales) y los números de LSC-54 no alcanzan el umbral. En uso real mejora con el suavizado (6 de 10, ≥ 0,70).
   5. **Créditos** de LSC70 y LSC-54 en `/creditos` (CC BY 4.0 exige atribución). No se publican las fotos ni los videos, solo el modelo.
 - Pendiente: grabar al equipo con su cámara para mejorar H, S, B/4 y los números; el intérprete confirma las letras y números estáticos.
+
+## D-025 · Cámara holística (Grupo 10B): recorte, importador y delegados · 02/11/2026
+- Contexto: anexo A (cámara holística). Los videos de LSC-54 duran 1–5 s y la cámara graba 2 s; las caras de LSC-54 vienen pixeladas.
+- Decisiones:
+  1. **Recorte al tramo con mano** (`FrameSequencer.toFrames({ trim: true })`): antes de remuestrear a 30 cuadros se toma del primer al último cuadro con mano dominante. Se aplica igual en la cámara y en el importador, para que la misma seña tenga la misma forma temporal (complementa H3).
+  2. **Importador por búsqueda de cuadros**: los videos se recorren cada 1/15 s con `currentTime`/`seeked` en vez de `requestVideoFrameCallback` (A.7.1). Es determinista y funciona en navegadores automatizados; el instante del video es el timestamp. Siempre con CPU (D-019).
+  3. **Delegado**: en vivo, GPU → CPU al crear (A.2.1) y, además, `SilentGpuGuard`: 60 cuadros seguidos sin detectar nada con GPU cambian el detector a CPU (la GPU falla sin error en algunos equipos, D-019).
+  4. **Sin rostro** (`faceFeatures: false` en el dataset y en `meta.json`): todo lo que depende de la cara — mano–cara (6), blendshapes (18) y presencia de cara — va en 0 al entrenar y al reconocer (`maskFace`/`mask_face`, en los fixtures de paridad). En LSC-54 la cara pixelada casi nunca se detecta: si solo se anularan los blendshapes, el modelo vería mano–cara en 0 al entrenar y con valores en vivo. El control de calidad no exige cara al importar datasets pixelados.
+  5. **La calidad se mide en el tramo recortado** (`quality({ trim: true })`): en los clips de LSC-54 las manos suben y bajan, y medida sobre el clip entero la mano dominante aparecía en 31–62 % de los cuadros (se habría descartado casi todo). Se mide sobre los mismos cuadros que se guardan.
+  6. **«NINGUNA» no exige mano** en el control de calidad (las manos pueden estar abajo). En `content/dataset-mapping.csv` el slug `NINGUNA` marca señas externas usadas como ejemplos negativos (Bien, Mal, Ayudar de LSC-54).
+  7. **`content/dataset-mapping.csv`** lo valida `alas content check` (cabecera, slugs de `signs.csv`, sin etiquetas repetidas) y el importador lo lee con `?raw` (Vite permite leer `content/`).
+
+## D-026 · `gestureLabel` en PRODUCE para señas con movimiento · 02/11/2026
+- Contexto: `cameraLabel` solo existe para señas estáticas (D-019) y A.10 pide que el cliente elija modo gestos, estático o autoevaluación según los `labels.json` publicados.
+- Decisión: `ProducePayload`/`PublicProduce` ganan `gesture_label` (= slug si la seña tiene movimiento; si no, null). `camera_label` no cambia. Igual que D-007.8, no filtra la respuesta: PRODUCE ya muestra la palabra y no tiene opciones. El cliente usa la cámara de gestos solo si `/models/lsc-gestos/meta.json` es válido y lista la seña. Requiere volver a sembrar (`alas db seed`) para que las lecciones existentes lo tengan.
+
+## D-027 · Letras y números con la misma forma de mano · 02/11/2026
+- Contexto: en LSC algunas letras y números se hacen con la misma forma de mano; el modelo del alfabeto confunde B con 4 (D-024). El usuario preguntó cómo manejarlo.
+- Decisión: **el modelo mantiene las clases separadas** (así se pueden distinguir si más adelante hay datos con diferencias sutiles) y **el contexto decide**, con `content/camera-equivalences.csv` (`slug,equivalente,nota`, simétrico):
+  1. En una lección (PRODUCE, estático y gestos) se acepta la seña pedida o una equivalente: si piden «B» y la cámara ve «4», cuenta como correcta.
+  2. En `/camara` (sin contexto) se muestran las dos: «B / 4».
+  3. `alas content check` valida el archivo (slugs de `signs.csv`, sin pares consigo mismos ni repetidos). Agregar un par no exige reentrenar.
+- Por ahora solo **B = 4** (evidencia de los datos). **Pendiente con el intérprete:** confirmar ese par y completar la lista.
+
+## D-028 · Mano que firma: la del perfil o, si no sirve, la otra · 02/11/2026
+- Contexto: en LSC-54 algunas personas firman con la mano izquierda (p. ej. p21 en «hola»). Con la mano dominante fija («derecha»), esas muestras quedaban con el espacio dominante vacío: el importador descartó 61 de 430 videos («Tu mano salió del cuadro», 20 de los 53 de «hola») y en vivo la cámara no reconocía a quien firma con la otra mano sin haber cambiado su perfil.
+- Decisión: el extractor calcula cada cuadro con las dos asignaciones de mano (`alternate`). `chooseSigningHand`: se usa la mano del perfil (A.3.2) si la muestra pasa el control de calidad; si no pasa y con la otra mano sí, se usa la otra (reflejada con `buildHolisticFrame`, igual que para zurdos). Igual en el importador (en los datasets no se sabe quién es zurdo; el `dominantHand` de cada muestra queda registrado) y en vivo. «NINGUNA» siempre usa la mano del perfil.
+- También: la GPU de algunos equipos crea `HolisticLandmarker` sin error pero cada detección falla con «UNIMPLEMENTED»; 5 errores seguidos pasan el detector a CPU (amplía `SilentGpuGuard`, D-025). Y con un modelo sin rostro (`faceFeatures: false`) no se exige ver la cara para grabar ni en el control de calidad en vivo.
+
+## D-029 · Alcance aceptado del modelo de gestos y del arranque holístico · 04/11/2026
+- Contexto: observaciones de la verificación independiente del Grupo 10B.
+- Decisiones:
+  1. **Muestras por seña:** A.8 pide ≥ 60 por seña; LSC-54 tiene 18 personas × 3 tomas y, tras el control de calidad, quedaron 45–55 por seña (hola 45, por favor 46, perdón 51, adiós 53, de nada 55; NINGUNA 159). Se acepta para esta versión: los aumentos (velocidad, rotación, escala, ruido, reflejo; 4 copias) multiplican los ejemplos de entrenamiento y la validación cruzada por persona da 89,7 %. Subir a ≥ 60 = grabar al equipo con `/admin/gestos`.
+  2. **«hola» por debajo del 80 % (76 %)**: la meta de A.8 es la precisión global (89,7 %). «hola» se confunde con «adiós» (las dos se hacen con la mano abierta a la altura de la cara). Se publica igual: si no se reconoce, el ejercicio sigue ofreciendo la autoevaluación. La validación real con personas fuera de LSC-54 (A.7 regla 2) es la verificación manual del grupo.
+  3. **Blendshapes faltantes solo avisan** (no hacen fallar el arranque, A.3.4): el modelo publicado no usa la expresión facial (`faceFeatures: false`, la cara se anula), así que fallar dejaría sin cámara a todos sin ganar nada. El aviso queda en la consola y la prueba de búsqueda por nombre (H4) sigue. Si un modelo futuro usa la cara, el arranque debe fallar: revisar esta decisión.
+  4. **Exportación:** el modelo se exportó con el exportador propio (D-020); `published-model.test.ts` comprueba en cada `alas check` que el `meta.json`, `labels.json` y `model.json` publicados son válidos (holistic-v2, GRU `reset_after=false`, una salida por etiqueta). La paridad numérica Keras ↔ TensorFlow.js (diferencia máx. 1,2e-7) se midió al publicar.
+  5. **Matriz de confusión** (validación cruzada por persona, 6 pliegues; filas = real, columnas = predicción):
+
+| real \ predicción | NINGUNA | adiós | de nada | hola | perdón | por favor |
+|---|---|---|---|---|---|---|
+| NINGUNA | 148 | 1 | 1 | 1 | 5 | 3 |
+| adiós | 3 | 43 | 1 | 6 | 0 | 0 |
+| de nada | 0 | 0 | 53 | 0 | 2 | 0 |
+| hola | 1 | 7 | 0 | 34 | 1 | 2 |
+| perdón | 2 | 0 | 4 | 0 | 45 | 0 |
+| por favor | 2 | 0 | 0 | 0 | 0 | 44 |
+
+  6. **Retroalimentación de Tomi:** con un modelo sin rostro, Tomi solo da indicaciones de altura de la mano («Sube/Baja un poco la mano»); las de cara y cejas vuelven solas cuando se entrene con caras visibles.

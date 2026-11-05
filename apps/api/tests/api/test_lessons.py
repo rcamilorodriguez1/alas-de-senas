@@ -524,9 +524,10 @@ def test_respuestas_ocultas_y_opciones_sin_slugs(
 
     for key, value in walk(body):
         assert key not in FORBIDDEN_KEYS, f"Clave prohibida «{key}» en la respuesta"
-        # Ningún valor (opciones, tarjetas, palabras, rutas) es un slug. Única excepción:
-        # `cameraLabel` de PRODUCE, que el modelo de cámara necesita (§7.6).
-        if isinstance(value, str) and key != "cameraLabel":
+        # Ningún valor (opciones, tarjetas, palabras, rutas) es un slug. Únicas excepciones:
+        # `cameraLabel` y `gestureLabel` de PRODUCE, que los modelos de cámara necesitan
+        # (§7.6, D-026): PRODUCE ya muestra la palabra y no tiene opciones que adivinar.
+        if isinstance(value, str) and key not in {"cameraLabel", "gestureLabel"}:
             assert value not in slugs, f"Slug «{value}» expuesto en «{key}»"
 
     for _, value in walk(body):

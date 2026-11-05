@@ -99,6 +99,18 @@ export function CreditsPage() {
           fotos o videos: solo el modelo entrenado.
         </p>
       </section>
+      <section aria-labelledby="modelo-gestos" className="mt-6 rounded-2xl bg-white p-5 shadow">
+        <h2 id="modelo-gestos" className="font-display text-xl font-extrabold">
+          Modelo de señas con movimiento: LSC-54
+        </h2>
+        <p className="mt-2">
+          La cámara que reconoce señas con movimiento (cámara holística: dos manos, hombros y rostro) se entrenó con
+          los puntos extraídos en el navegador de los videos de cortesía de <strong>LSC-54</strong> (licencia CC BY-NC
+          4.0, uso no comercial con atribución), con las mismas citas de arriba. Como los rostros vienen pixelados, el
+          modelo no usa la expresión facial. La correspondencia entre sus señas y las de la aplicación está en{" "}
+          <code>content/dataset-mapping.csv</code>.
+        </p>
+      </section>
       <section aria-labelledby="proyecto" className="mt-6 rounded-2xl bg-white p-5 shadow">
         <h2 id="proyecto" className="font-display text-xl font-extrabold">
           Alas de Señas

@@ -94,4 +94,23 @@ describe("ProduceActivity con cámara", () => {
     await waitFor(() => expect(onContinue).toHaveBeenCalled());
     expect(stop).toHaveBeenCalled(); // la cámara se apaga al terminar
   });
+
+  it("acepta una seña con la misma forma de mano: piden «B» y la cámara ve «4» (D-027)", async () => {
+    stubLabels(["NINGUNA", "letra-b", "numero-4"]);
+    const user = userEvent.setup();
+    const camera: { frame: ((result: FrameResult) => void) | null } = { frame: null };
+    startCameraSession.mockImplementation(async (_video: HTMLVideoElement, onFrame: (r: FrameResult) => void) => {
+      camera.frame = onFrame;
+      return { classifier: { simulated: false }, stop: vi.fn() };
+    });
+    const onSubmit = vi.fn(async () => ({
+      correct: true, correctToken: null, correctTokens: [], correctWord: null, alreadyAnswered: false,
+    }));
+    render(<ProduceActivity exercise={exercise("letra-b")} onSubmit={onSubmit} onContinue={vi.fn()} />);
+
+    await user.click(await screen.findByRole("button", { name: "Usar la cámara" }));
+    await waitFor(() => expect(camera.frame).not.toBeNull());
+    camera.frame?.({ points: null, features: null, detected: { label: "numero-4", confidence: 0.8 } });
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ method: "camera", ok: true, confidence: 0.8 }));
+  });
 });

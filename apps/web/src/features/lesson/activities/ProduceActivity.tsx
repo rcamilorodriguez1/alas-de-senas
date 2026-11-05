@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { SignVideoPlayer } from "../../../components/video/SignVideoPlayer";
+import { matchesTarget } from "../../../camera/equivalences";
+import { fetchGestureLabels } from "../../../camera/holistic/sequence-classifier";
 import { fetchModelLabels } from "../../../camera/labels";
 import { CAMERA_ERRORS, cameraErrorKind, startCameraSession, type CameraErrorKind } from "../../../camera/session";
 import { apiRequest } from "../../../lib/api";
 import type { components } from "../../../lib/api-types";
 import type { AnswerBody } from "../lesson-api";
 import type { ActivityProps } from "./activity-utils";
+import { GestureCheck } from "./GestureCheck";
 
 /** Cámara con la seña pedida: avisa cuando la reconoce (confianza ≥ 0,70, ya suavizada). */
 function CameraCheck({ target, onRecognized }: { target: string; onRecognized: (confidence: number) => void }) {
@@ -24,7 +27,8 @@ function CameraCheck({ target, onRecognized }: { target: string; onRecognized: (
     const element = video.current;
     if (!element) return;
     startCameraSession(element, ({ detected }) => {
-      if (done.current || detected?.label !== target) return;
+      // La seña pedida o una con la misma forma de mano (D-027): el contexto decide.
+      if (done.current || !detected || !matchesTarget(detected.label, target)) return;
       done.current = true;
       onRecognizedRef.current(detected.confidence);
     })
@@ -60,18 +64,26 @@ function CameraCheck({ target, onRecognized }: { target: string; onRecognized: (
   );
 }
 
-/** Produce la seña (R4.8): con cámara si el modelo conoce la seña; si no, autoevaluación. */
+/**
+ * Produce la seña (R4.8, anexo A.10): si el modelo de gestos conoce la seña → cuenta regresiva y 2 s;
+ * si la conoce el del alfabeto → modo estático; si ninguno → autoevaluación.
+ */
 export function ProduceActivity({ exercise, onSubmit, onContinue }: ActivityProps) {
   const [sending, setSending] = useState(false);
   const [labels, setLabels] = useState<string[]>([]);
+  const [gestures, setGestures] = useState<string[]>([]);
   const [useCamera, setUseCamera] = useState(false);
   const content = exercise.content;
   const cameraLabel = content.type === "PRODUCE" ? content.cameraLabel : null;
+  const gestureLabel = content.type === "PRODUCE" ? (content.gestureLabel ?? null) : null;
 
   useEffect(() => {
     let active = true;
     void fetchModelLabels().then((list) => {
       if (active) setLabels(list);
+    });
+    void fetchGestureLabels().then((list) => {
+      if (active) setGestures(list);
     });
     return () => {
       active = false;
@@ -79,7 +91,10 @@ export function ProduceActivity({ exercise, onSubmit, onContinue }: ActivityProp
   }, []);
 
   if (content.type !== "PRODUCE") return null;
-  const canUseCamera = cameraLabel !== null && labels.includes(cameraLabel);
+  const gestureTarget = gestureLabel !== null && gestures.includes(gestureLabel) ? gestureLabel : null;
+  const staticTarget = cameraLabel !== null && labels.includes(cameraLabel) ? cameraLabel : null;
+  const target = gestureTarget ?? staticTarget;
+  const canUseCamera = target !== null;
 
   const answer = async (body: AnswerBody) => {
     setSending(true);
@@ -90,8 +105,8 @@ export function ProduceActivity({ exercise, onSubmit, onContinue }: ActivityProp
 
   const recognized = (confidence: number) => {
     setUseCamera(false);
-    if (cameraLabel) {
-      const report: components["schemas"]["RecognitionIn"] = { signId: cameraLabel, correct: true, confidence };
+    if (target) {
+      const report: components["schemas"]["RecognitionIn"] = { signId: target, correct: true, confidence };
       void apiRequest("POST", "/recognition/results", { body: report }).catch(() => undefined);
     }
     void answer({ method: "camera", ok: true, confidence });
@@ -110,8 +125,10 @@ export function ProduceActivity({ exercise, onSubmit, onContinue }: ActivityProp
       />
       <p className="font-display text-xl font-extrabold">{content.word}</p>
       {canUseCamera &&
-        (useCamera && cameraLabel ? (
-          <CameraCheck target={cameraLabel} onRecognized={recognized} />
+        (useCamera && gestureTarget ? (
+          <GestureCheck target={gestureTarget} onRecognized={recognized} />
+        ) : useCamera && staticTarget ? (
+          <CameraCheck target={staticTarget} onRecognized={recognized} />
         ) : (
           <button
             type="button"

@@ -167,3 +167,32 @@ Para retomar (en este orden):
 - Avance 10.8 (D-019): con LSC-54 se preparó el modelo de **números 1–5** (estáticos, pendiente de confirmar por el intérprete). Colector «Desde videos» con el mismo pipeline del navegador; dataset de 3.908 muestras de 18 personas en `ml/data/` (fuera de git). Falta: entrenar en Colab (usuario) y copiar `lsc-alfabeto/` a `apps/web/public/models/`.
 - 10.8 hecha (D-019): modelo de números 1–5 entrenado en Colab y publicado; reconoce el número correcto en 4 de 5 videos de prueba en `/camara`. MediaPipe en CPU (la GPU fallaba sin aviso). **Grupo 10 terminado.**
 - Verificación manual pendiente (usuario): en `/camara`, hacer los números 1 al 5 frente a la cámara (mano a la altura del pecho, fondo claro); en el nodo «Números» (M2-N3), «Produce la seña» ofrece «Usar la cámara» en 1–5. Intérprete: confirmar que 1–5 son estáticos.
+
+## Grupo 10B — Cámara holística: dos manos + rostro
+- Plan:
+  - 10B.1 `alas camera-assets` descarga también `holistic_landmarker.task`; `src/camera/holistic/` crea el detector con GPU y, si falla, CPU; verifica los 18 nombres de *blendshapes*.
+  - 10B.2 `buildHolisticFrame` (159 valores: forma/posición/presencia de las dos manos respecto a los hombros, mano→cara, 18 *blendshapes*, presencia de cara; reflejo para zurdos) + pruebas A.12. `dominantHand` ya está en `PATCH /me` y en el perfil.
+  - 10B.3 `FrameSequencer` (remuestreo a 30 cuadros por timestamps, interpolación de huecos ≤ 3, control de calidad 80/70/90 %) + pruebas.
+  - 10B.4 Interfaces `FeatureExtractor`, `SignClassifier`, `RecognizerFactory`; el alfabeto sigue igual.
+  - 10B.5 Guía visual (silueta, mensajes en vivo) y FPS en modo ADMIN.
+  - 10B.6 Colector `holistic-v2` (cuenta regresiva de 2 s).
+  - 10B.7 `ml/train_sequence.py` (GRU `reset_after=False`, aumentos, normalización media/desviación, separación por persona, exportación con `meta.json`) + fixtures de paridad probados con pytest y Vitest.
+  - 10B.8 Importador `/admin/importar` (videos e imágenes) + `content/dataset-mapping.csv` + créditos.
+  - 10B.9 `ProduceActivity` en modo gestos.
+  - 10B.10 Entrenar 3–5 señas con movimiento con los videos de cortesía de LSC-54 (18 personas) y validar con personas no vistas (meta ≥ 80 %). Los rostros de LSC-54 vienen pixelados: el bloque de expresión facial puede quedar en 0.
+
+### Estado del Grupo 10B (03/11/2026): terminado
+- [x] 10B.1 `holistic_landmarker.task` en `alas camera-assets`; GPU → CPU al crear, y además si la GPU no detecta la pose o lanza errores al detectar (`SilentGpuGuard`, D-025/D-028); aviso si faltan blendshapes (H4).
+- [x] 10B.2 `buildHolisticFrame` (159 valores, mano dominante, reflejo) + pruebas A.12; `dominantHand` ya estaba en `PATCH /me` y en el perfil.
+- [x] 10B.3 `FrameSequencer` (remuestreo, huecos ≤ 3, recorte al tramo con mano, calidad medida en ese tramo) + pruebas A.12.
+- [x] 10B.4 `FeatureExtractor`/`SignClassifier`/`RecognizerFactory`; el alfabeto usa `HandOnlyExtractorV1` con el mismo comportamiento.
+- [x] 10B.5 `GestureCamera`: aviso de privacidad, silueta, dibujo de manos/hombros/cara, mensajes cada 0,5 s, FPS y ms (ADMIN). El detector carga antes de encender la cámara.
+- [x] 10B.6 `/admin/gestos`: cuenta regresiva 3-2-1, 2 s, alias, autorización y exportación A.6.
+- [x] 10B.7 `ml/train_sequence.py` (GRU `reset_after=False`, aumentos, CV por persona, prototipos para Tomi, `meta.json`) + `ml/fixtures/holistic_v2_cases.json` probados con pytest y Vitest (H11).
+- [x] 10B.8 `/admin/importar` (lotes con pausa, tiempo límite por video, mano que firma automática) + `content/dataset-mapping.csv` (validado por `alas content check`) + créditos.
+- [x] 10B.9 `ProduceActivity` en modo gestos (`gestureLabel`, D-026), retroalimentación de Tomi y equivalencias B = 4 (D-027).
+- [x] 10B.10 Modelo `lsc-gestos` publicado: 409 muestras de LSC-54 (18 personas): hola, adiós, por favor, de nada, perdón + NINGUNA. Validación cruzada por persona **89,7 %** (NINGUNA 93 %, adiós 81 %, de nada 96 %, hola 76 %, perdón 88 %, por favor 96 %). Keras ↔ TensorFlow.js: diferencia máx. 1,2e-7. Prueba E2E con cámara falsa: la lección reconoce «hola» y apaga la cámara (con 4,5 FPS en Chrome sin pantalla, la calidad a veces descarta la muestra).
+- Verificación: `alas check` en verde (1664 pytest, 431 Vitest); `ml/tests` 39 en verde; revisión de `revisor-codigo` sin bloqueantes (corregidos los 6 importantes y 6 menores).
+- Verificación independiente (`verificador-fase`): APROBADO CON OBSERVACIONES; las observaciones quedan en D-029 y en la verificación manual. Prueba nueva `published-model.test.ts` sobre el modelo publicado.
+- **Verificar a mano:** con cámara real en 1366×768, ≥ 12 FPS (se ve en `/admin/gestos`); «hola» reconocida con una persona que no esté en LSC-54, con la mano derecha y con la izquierda; al salir de la lección la cámara se apaga. Las señas con movimiento sin modelo (p. ej. «buenos días») siguen con autoevaluación.
+- Riesgos: modelo entrenado sin expresión facial (LSC-54 pixelado); solo 18 personas; «hola» a veces se confunde con «adiós». Grabar al equipo con `/admin/gestos` y reentrenar lo mejora. El intérprete debe confirmar B = 4.

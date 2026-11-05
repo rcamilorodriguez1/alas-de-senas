@@ -690,7 +690,8 @@ def test_public_json_of_all_generated_exercises_never_reveals_answers() -> None:
         data = public.model_dump(mode="json", by_alias=True)
         for path, key, value in _walk(data):
             assert key not in FORBIDDEN_KEYS, f"{exercise.id}: clave {key} en {path}"
-            if key != "cameraLabel" and isinstance(value, str):
+            # Etiquetas de los modelos de cámara: solo en PRODUCE, que muestra la palabra (D-026).
+            if key not in {"cameraLabel", "gestureLabel"} and isinstance(value, str):
                 assert value not in SLUGS, f"{exercise.id}: slug {value!r} en {path}.{key}"
         for value in _option_values(data):
             assert value not in SLUGS, f"{exercise.id}: opción con slug {value!r}"
@@ -722,3 +723,12 @@ def test_feedback_tokens_of_generated_exercises_are_public_options_and_correct()
             assert feedback.tokens[0] in {o.token for o in public.options}
             answer = OptionAnswer(option_token=feedback.tokens[0])
         assert evaluator.evaluate(exercise.payload, answer, tokenize) is True, exercise.id
+
+
+def test_public_produce_passes_gesture_label() -> None:
+    """Señas con movimiento: el cliente recibe la etiqueta del modelo de gestos (D-026)."""
+    payload = ProducePayload(sign_id="letra-a", gesture_label="letra-a")
+    public = ev(T.PRODUCE).to_public(payload, CATALOG, TOK)
+    assert isinstance(public, PublicProduce)
+    assert public.gesture_label == "letra-a"
+    assert public.camera_label is None

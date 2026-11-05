@@ -121,16 +121,16 @@
 
 > Detalle en `docs/anexo-camara-holistica.md`. Solo si el equipo lo decide; no debe retrasar el Grupo 11.
 
-- [ ] **10B.1** Descargar `holistic_landmarker.task`; prueba de arranque (GPU → CPU) y nombres de *blendshapes*. _R8_
-- [ ] **10B.2** `buildHolisticFrame` (TypeScript, 159 valores, mano dominante, reflejo para zurdos) + pruebas; `dominantHand` en `PATCH /me`. _R8_
-- [ ] **10B.3** `FrameSequencer` (remuestreo a 30 cuadros, huecos, calidad) + pruebas. _R8_
-- [ ] **10B.4** Interfaces `FeatureExtractor`, `SignClassifier`, `RecognizerFactory`; el alfabeto sigue igual. _R8_
-- [ ] **10B.5** Guía visual de captura y medición de FPS. _R8.1_
-- [ ] **10B.6** Colector `holistic-v2` con cuenta regresiva de 2 s. _R8.7_
-- [ ] **10B.7** `ml/train_sequence.py` (GRU con `reset_after=False`, aumentos, separación por persona, exportación con `meta.json`) y fixtures de paridad `ml/fixtures/holistic_v2_cases.json` probados con pytest y Vitest. _R8.7_
-- [ ] **10B.8** Importador `/admin/importar` (navegador) + `content/dataset-mapping.csv` + página `/creditos`. _R8.7_
-- [ ] **10B.9** `ProduceActivity` en modo gestos y retroalimentación de Tomi. _R4.8_
-- [ ] **10B.10** Entrenar 3–5 señas con ≥ 5 personas; validar con personas no vistas (≥ 80 %).
+- [x] **10B.1** Descargar `holistic_landmarker.task`; prueba de arranque (GPU → CPU) y nombres de *blendshapes*. _R8_
+- [x] **10B.2** `buildHolisticFrame` (TypeScript, 159 valores, mano dominante, reflejo para zurdos) + pruebas; `dominantHand` en `PATCH /me`. _R8_
+- [x] **10B.3** `FrameSequencer` (remuestreo a 30 cuadros, huecos, calidad) + pruebas. _R8_
+- [x] **10B.4** Interfaces `FeatureExtractor`, `SignClassifier`, `RecognizerFactory`; el alfabeto sigue igual. _R8_
+- [x] **10B.5** Guía visual de captura y medición de FPS. _R8.1_
+- [x] **10B.6** Colector `holistic-v2` con cuenta regresiva de 2 s. _R8.7_
+- [x] **10B.7** `ml/train_sequence.py` (GRU con `reset_after=False`, aumentos, separación por persona, exportación con `meta.json`) y fixtures de paridad `ml/fixtures/holistic_v2_cases.json` probados con pytest y Vitest. _R8.7_
+- [x] **10B.8** Importador `/admin/importar` (navegador) + `content/dataset-mapping.csv` + página `/creditos`. _R8.7_
+- [x] **10B.9** `ProduceActivity` en modo gestos y retroalimentación de Tomi. _R4.8_
+- [x] **10B.10** Entrenar 3–5 señas con ≥ 5 personas; validar con personas no vistas (≥ 80 %).
 
 ## Grupo 11 — Cierre
 

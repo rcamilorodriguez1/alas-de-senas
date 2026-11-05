@@ -158,11 +158,12 @@ def test_vista_publica_no_filtra_respuestas_ni_slugs() -> None:
             ex.payload, catalog, fake_tokenize("sesion-de-prueba", ex.id)
         )
         dumped = public.model_dump(mode="json", by_alias=True)
-        if "cameraLabel" in dumped:
-            # D-007.8: la etiqueta del modelo de cámara es el slug de la letra estática; solo
-            # existe en PRODUCE, que ya muestra la palabra y no tiene opciones que adivinar.
-            assert ex.type is ExerciseType.PRODUCE, ex.id
-            dumped.pop("cameraLabel")
+        for field in ("cameraLabel", "gestureLabel"):
+            if field in dumped:
+                # D-007.8 / D-026: la etiqueta de los modelos de cámara es el slug de la seña; solo
+                # existe en PRODUCE, que ya muestra la palabra y no tiene opciones que adivinar.
+                assert ex.type is ExerciseType.PRODUCE, ex.id
+                dumped.pop(field)
         keys, strings = _walk(dumped)
         assert not FORBIDDEN_KEYS & set(keys), (ex.id, FORBIDDEN_KEYS & set(keys))
         leaked = [s for s in strings if s in slugs]

@@ -8,6 +8,7 @@ import pytest
 
 from app.content.camera_assets import (
     HAND_LANDMARKER_URL,
+    HOLISTIC_LANDMARKER_URL,
     CameraAssetsError,
     prepare_camera_assets,
 )
@@ -44,7 +45,8 @@ def test_copia_el_wasm_y_descarga_el_modelo(tmp_path: Path) -> None:
     assert report.model.read_bytes() == b"modelo"
     assert report.downloaded is True
     assert report.error is None
-    assert calls == [HAND_LANDMARKER_URL]
+    assert calls == [HAND_LANDMARKER_URL, HOLISTIC_LANDMARKER_URL]  # manos y holístico (10B)
+    assert (web / "public" / "mediapipe" / "holistic_landmarker.task").read_bytes() == b"modelo"
 
 
 def test_no_vuelve_a_descargar_si_el_modelo_ya_esta(tmp_path: Path) -> None:
@@ -52,7 +54,7 @@ def test_no_vuelve_a_descargar_si_el_modelo_ya_esta(tmp_path: Path) -> None:
     calls: list[str] = []
     prepare_camera_assets(web, download=fake_download(calls))
     report = prepare_camera_assets(web, download=fake_download(calls))
-    assert calls == [HAND_LANDMARKER_URL]
+    assert calls == [HAND_LANDMARKER_URL, HOLISTIC_LANDMARKER_URL]
     assert report.downloaded is False
 
 
@@ -61,7 +63,7 @@ def test_force_descarga_de_nuevo(tmp_path: Path) -> None:
     calls: list[str] = []
     prepare_camera_assets(web, download=fake_download(calls))
     prepare_camera_assets(web, download=fake_download(calls), force=True)
-    assert len(calls) == 2
+    assert len(calls) == 4
 
 
 def test_si_la_descarga_falla_da_la_url_oficial_y_conserva_el_wasm(tmp_path: Path) -> None:
@@ -86,3 +88,9 @@ def test_sin_node_modules_pide_npm_ci(tmp_path: Path) -> None:
 def test_la_url_es_la_oficial_por_https() -> None:
     assert HAND_LANDMARKER_URL.startswith("https://storage.googleapis.com/mediapipe-models/")
     assert HAND_LANDMARKER_URL.endswith("/hand_landmarker.task")
+
+
+def test_la_url_holistica_es_la_oficial_float16() -> None:
+    assert HOLISTIC_LANDMARKER_URL.startswith("https://storage.googleapis.com/mediapipe-models/")
+    assert "/float16/" in HOLISTIC_LANDMARKER_URL
+    assert HOLISTIC_LANDMARKER_URL.endswith("/holistic_landmarker.task")

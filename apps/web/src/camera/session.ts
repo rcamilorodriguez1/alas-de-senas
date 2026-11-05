@@ -1,45 +1,11 @@
-// Sesión de cámara (§10.2, §10.4): getUserMedia → HandLandmarker → normalizeLandmarks → clasificador.
+// Sesión de cámara (§10.2, §10.4): getUserMedia → extractor `hand-v1` → clasificador.
 // Nada de la imagen sale del navegador (R8.3): solo se usan los 21 puntos de la mano.
-import type { HandLandmarker, NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { loadClassifier, MonotonicTimestamps, Smoother, type Classifier, type Prediction } from "./classifier";
-import { normalizeLandmarks, pickSigningHand } from "./normalize";
+import { HandOnlyExtractorV1 } from "./hand-extractor";
+import type { Point2 } from "./recognizer";
 
-const WASM_DIR = "/mediapipe/wasm";
-const HAND_MODEL = "/mediapipe/hand_landmarker.task";
-
-// ---------- Singleton de HandLandmarker (StrictMode monta dos veces: nunca dos instancias) ----------
-
-let landmarker: Promise<HandLandmarker> | null = null;
-let users = 0;
-
-async function createLandmarker(): Promise<HandLandmarker> {
-  const { FilesetResolver, HandLandmarker } = await import("@mediapipe/tasks-vision");
-  const fileset = await FilesetResolver.forVisionTasks(WASM_DIR);
-  return HandLandmarker.createFromOptions(fileset, {
-    // CPU: la GPU falla sin aviso en equipos sin aceleración (laboratorios, navegadores sin
-    // drivers) y una mano a 30 fps cabe de sobra en CPU (D-019).
-    baseOptions: { modelAssetPath: HAND_MODEL, delegate: "CPU" },
-    runningMode: "VIDEO",
-    numHands: 2, // se elige la mano que hace la seña (pickSigningHand, D-020)
-  });
-}
-
-export function acquireHandLandmarker(): Promise<HandLandmarker> {
-  users += 1;
-  landmarker ??= createLandmarker().catch((error: unknown) => {
-    landmarker = null;
-    throw error;
-  });
-  return landmarker;
-}
-
-export function releaseHandLandmarker(): void {
-  users = Math.max(0, users - 1);
-  if (users > 0 || landmarker === null) return;
-  const closing = landmarker;
-  landmarker = null;
-  void closing.then((instance) => instance.close()).catch(() => undefined);
-}
+// El singleton de HandLandmarker vive en hand-extractor.ts (se reexporta por compatibilidad).
+export { acquireHandLandmarker, releaseHandLandmarker } from "./hand-extractor";
 
 // ---------- Errores de la cámara (§10.4), cada uno con su mensaje en español ----------
 
@@ -66,7 +32,7 @@ export const CAMERA_ERRORS: Record<CameraErrorKind, string> = {
 // ---------- Bucle de reconocimiento ----------
 
 export interface FrameResult {
-  points: NormalizedLandmark[] | null;
+  points: readonly Point2[] | null;
   /** Los 63 valores de `normalizeLandmarks` (lo único que guarda el colector). */
   features: number[] | null;
   detected: Prediction | null;
@@ -96,18 +62,15 @@ export async function startCameraSession(
   // Si algo falla, se suelta todo lo adquirido: el contador del singleton no se descuadra y el
   // modelo de tfjs no queda en memoria.
   let model: Classifier | null = null;
-  let acquired = false;
-  let landmarks: HandLandmarker;
+  let extractor: HandOnlyExtractorV1;
   try {
     video.srcObject = stream;
     await video.play();
     model = await loadClassifier();
-    acquired = true;
-    landmarks = await acquireHandLandmarker();
+    extractor = await HandOnlyExtractorV1.create();
   } catch (error) {
     stopTracks();
     video.srcObject = null;
-    if (acquired) releaseHandLandmarker();
     model?.dispose();
     throw error;
   }
@@ -118,23 +81,16 @@ export async function startCameraSession(
     if (stopped || document.hidden) return;
     const timestamp = timestamps.next(performance.now());
     if (timestamp !== null && video.readyState >= 2) {
-      let result: ReturnType<HandLandmarker["detectForVideo"]>;
-      try {
-        result = landmarks.detectForVideo(video, timestamp);
-      } catch {
+      const extracted = extractor.extract(video, timestamp);
+      if (!extracted) {
         frame = requestAnimationFrame(tick); // un cuadro fallido no detiene el bucle
         return;
       }
-      const hand = pickSigningHand(result.landmarks, result.handedness);
-      const points = hand ? [...hand.points] : null;
+      const points = extracted.overlay.dominant;
+      const features = extracted.features ? Array.from(extracted.features) : null;
       let detected: Prediction | null = null;
-      let features: number[] | null = null;
-      if (points) {
-        features = normalizeLandmarks(points, hand?.side ?? "Right");
-        if (features) detected = smoother.push(model.classify(features));
-      } else {
-        smoother.reset();
-      }
+      if (features) detected = smoother.push(model.classify(features));
+      else if (!points) smoother.reset();
       onFrame({ points, features, detected });
     }
     frame = requestAnimationFrame(tick);
@@ -157,7 +113,7 @@ export async function startCameraSession(
       stopTracks(); // R8.5: la cámara se apaga al salir
       video.srcObject = null;
       model.dispose();
-      releaseHandLandmarker();
+      extractor.close();
     },
   };
 }

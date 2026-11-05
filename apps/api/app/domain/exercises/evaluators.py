@@ -226,7 +226,12 @@ class ProduceEvaluator(ExerciseEvaluator):
     ) -> PublicExercise:
         p = _expect(payload, ProducePayload)
         sign = catalog[p.sign_id]
-        return PublicProduce(video=sign.video, word=sign.word, camera_label=p.camera_label)
+        return PublicProduce(
+            video=sign.video,
+            word=sign.word,
+            camera_label=p.camera_label,
+            gesture_label=p.gesture_label,
+        )
 
 
 class ConversationEvaluator(ExerciseEvaluator):

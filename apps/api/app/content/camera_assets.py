@@ -13,6 +13,13 @@ HAND_LANDMARKER_URL = (
     "hand_landmarker/float16/1/hand_landmarker.task"
 )
 HAND_LANDMARKER = "hand_landmarker.task"
+# Cámara holística (Grupo 10B, anexo A.2.1): manos + pose + cara, variante float16.
+HOLISTIC_LANDMARKER_URL = (
+    "https://storage.googleapis.com/mediapipe-models/holistic_landmarker/"
+    "holistic_landmarker/float16/latest/holistic_landmarker.task"
+)
+HOLISTIC_LANDMARKER = "holistic_landmarker.task"
+MODELS = ((HAND_LANDMARKER, HAND_LANDMARKER_URL), (HOLISTIC_LANDMARKER, HOLISTIC_LANDMARKER_URL))
 DOWNLOAD_TIMEOUT_S = 60
 
 Download = Callable[[str, Path], None]
@@ -42,7 +49,7 @@ def _download(url: str, target: Path) -> None:
 def prepare_camera_assets(
     web_dir: Path, *, download: Download = _download, force: bool = False
 ) -> CameraAssetsReport:
-    """Copia `@mediapipe/tasks-vision/wasm/*` y descarga `hand_landmarker.task` si falta."""
+    """Copia `@mediapipe/tasks-vision/wasm/*` y descarga los modelos `.task` que falten."""
     source = web_dir / "node_modules" / "@mediapipe" / "tasks-vision" / "wasm"
     if not source.is_dir():
         raise CameraAssetsError(
@@ -57,15 +64,20 @@ def prepare_camera_assets(
             shutil.copy2(item, wasm_dir / item.name)
             copied.append(item.name)
 
+    downloaded = False
+    errors: list[str] = []
+    for name, url in MODELS:
+        target = target_dir / name
+        if target.is_file() and not force:
+            continue
+        try:
+            download(url, target)
+            downloaded = True
+        except OSError as exc:
+            errors.append(
+                f"No se pudo descargar {name} ({exc}). Descárgalo a mano desde {url} y "
+                f"guárdalo en {target.as_posix()}."
+            )
     model = target_dir / HAND_LANDMARKER
-    if model.is_file() and not force:
-        return CameraAssetsReport(tuple(copied), model, downloaded=False)
-    try:
-        download(HAND_LANDMARKER_URL, model)
-    except OSError as exc:
-        message = (
-            f"No se pudo descargar {HAND_LANDMARKER} ({exc}). Descárgalo a mano desde "
-            f"{HAND_LANDMARKER_URL} y guárdalo en {model.as_posix()}."
-        )
-        return CameraAssetsReport(tuple(copied), model, downloaded=False, error=message)
-    return CameraAssetsReport(tuple(copied), model, downloaded=True)
+    error = " ".join(errors) or None
+    return CameraAssetsReport(tuple(copied), model, downloaded=downloaded, error=error)

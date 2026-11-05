@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -40,6 +41,10 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 CATEGORY_SUGGESTION_DISTANCE = 2
 REQUIRED_TEXT = ("word", "meaning", "usage_example")
 DEFAULT_LABELS = Path("models") / "lsc-alfabeto" / "labels.json"  # relativo a public/
+DATASET_MAPPING = "dataset-mapping.csv"  # señas de datasets externos → slugs (anexo A.7)
+MAPPING_HEADER = ["fuente", "etiqueta_fuente", "slug"]
+CAMERA_EQUIVALENCES = "camera-equivalences.csv"  # señas con la misma forma de mano (D-027)
+EQUIVALENCES_HEADER = ["slug", "equivalente", "nota"]
 
 
 @dataclass(slots=True)
@@ -109,6 +114,8 @@ def check_content(
     _check_node_sizes(bundle.signs, nodes, published_nodes, report)
     _check_motion(bundle.signs, report)
     _check_labels(bundle.signs, labels_path or media_dir.parent / DEFAULT_LABELS, report)
+    _check_dataset_mapping(bundle.signs, content_dir / DATASET_MAPPING, report)
+    _check_equivalences(bundle.signs, content_dir / CAMERA_EQUIVALENCES, report)
     _check_conversations(bundle, published_nodes, report)
     _check_spelling(bundle, published_nodes, report)
     _check_intro(bundle, report)
@@ -228,6 +235,83 @@ def _check_labels(rows: Sequence[SignRow], labels_path: Path, report: Report) ->
                 f"El modelo del alfabeto incluye {label}, que tiene movimiento: el modelo "
                 "estático no puede reconocerla."
             )
+
+
+def _source_key(text: str) -> str:
+    """«Buenos Días» y «buenos-dias» son la misma etiqueta (así compara el importador)."""
+    plain = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
+    return "-".join("".join(c if c.isalnum() else " " for c in plain).split())
+
+
+def _check_dataset_mapping(rows: Sequence[SignRow], path: Path, report: Report) -> None:
+    if not path.is_file():
+        return
+    lines = [
+        (n, line)
+        for n, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), start=1)
+        if line.strip() and not line.startswith("#")
+    ]
+    if not lines or [c.strip() for c in lines[0][1].split(",")] != MAPPING_HEADER:
+        report.errors.append(
+            f"{DATASET_MAPPING}: la cabecera debe ser «{','.join(MAPPING_HEADER)}»."
+        )
+        return
+    slugs = {row.slug for row in rows} | {NONE_LABEL}
+    seen: set[tuple[str, str]] = set()
+    for n, line in lines[1:]:
+        cells = [c.strip() for c in line.split(",")]
+        if len(cells) != len(MAPPING_HEADER) or not all(cells):
+            report.errors.append(
+                f"{DATASET_MAPPING}, línea {n}: se esperaban tres columnas no vacías."
+            )
+            continue
+        source, label, slug = cells
+        if slug not in slugs:
+            report.errors.append(
+                f"{DATASET_MAPPING}, línea {n}: «{slug}» no es una seña de signs.csv."
+            )
+        key = (source, _source_key(label))
+        if key in seen:
+            report.errors.append(
+                f"{DATASET_MAPPING}, línea {n}: etiqueta «{label}» repetida en {source}."
+            )
+        seen.add(key)
+
+
+def _data_lines(path: Path) -> list[tuple[int, list[str]]]:
+    """Líneas no vacías y sin comentario, con su número; celdas sin espacios alrededor."""
+    return [
+        (n, [cell.strip() for cell in line.split(",")])
+        for n, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), start=1)
+        if line.strip() and not line.startswith("#")
+    ]
+
+
+def _check_equivalences(rows: Sequence[SignRow], path: Path, report: Report) -> None:
+    if not path.is_file():
+        return
+    lines = _data_lines(path)
+    name = CAMERA_EQUIVALENCES
+    if not lines or lines[0][1] != EQUIVALENCES_HEADER:
+        report.errors.append(f"{name}: la cabecera debe ser «{','.join(EQUIVALENCES_HEADER)}».")
+        return
+    slugs = {row.slug for row in rows}
+    seen: set[frozenset[str]] = set()
+    for n, cells in lines[1:]:
+        # La nota puede tener comas: solo las dos primeras columnas son slugs.
+        if len(cells) < len(EQUIVALENCES_HEADER) - 1 or not cells[0] or not cells[1]:
+            report.errors.append(f"{name}, línea {n}: faltan los dos slugs.")
+            continue
+        first, second = cells[0], cells[1]
+        for slug in (first, second):
+            if slug not in slugs:
+                report.errors.append(f"{name}, línea {n}: «{slug}» no es una seña de signs.csv.")
+        if first == second:
+            report.errors.append(f"{name}, línea {n}: «{first}» es la misma seña.")
+        pair = frozenset((first, second))
+        if pair in seen:
+            report.errors.append(f"{name}, línea {n}: par {first} y {second} repetido.")
+        seen.add(pair)
 
 
 # ---------- Conversaciones y deletreo -----------------------------------------------------------

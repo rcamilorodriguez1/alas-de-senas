@@ -269,9 +269,14 @@ class _LessonBuilder:
         self.items.append((ExerciseType.OBSERVE, sign.id, ObservePayload(sign_id=sign.id)))
 
     def _produce(self, sign: SignSpec) -> None:
-        # Letras y números estáticos pueden reconocerse con la cámara (§10, D-019).
+        # Letras y números estáticos: modelo del alfabeto (§10, D-019). Con movimiento: modelo de
+        # gestos (anexo A.10); el cliente usa la cámara solo si el modelo publicado conoce la seña.
         static_sign = sign.motion is Motion.STATIC
-        payload = ProducePayload(sign_id=sign.id, camera_label=sign.id if static_sign else None)
+        payload = ProducePayload(
+            sign_id=sign.id,
+            camera_label=sign.id if static_sign else None,
+            gesture_label=None if static_sign else sign.id,
+        )
         self.items.append((ExerciseType.PRODUCE, sign.id, payload))
 
     def _choice(self, kind: ExerciseType, sign: SignSpec) -> None:

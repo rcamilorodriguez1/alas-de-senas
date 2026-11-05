@@ -762,3 +762,67 @@ def test_labels_acepta_ninguna(content_dir: Path, media_dir: Path, tmp_path: Pat
     labels = _labels(tmp_path, ["NINGUNA", "letra-a", "letra-b"])
     report = _check(content_dir, media_dir, labels_path=labels)
     assert report.errors == []
+
+
+# ---------- content/dataset-mapping.csv (anexo A.7, regla 3) ------------------------------------
+
+
+def _mapping(content_dir: Path, text: str) -> None:
+    (content_dir / "dataset-mapping.csv").write_text(text, encoding="utf-8", newline="\n")
+
+
+def test_mapeo_de_datasets_valido(content_dir: Path, media_dir: Path) -> None:
+    _mapping(
+        content_dir, "fuente,etiqueta_fuente,slug\n# nota\nLSC-54,Hola,hola\nLSC-54,Bien,NINGUNA\n"
+    )
+    assert _check(content_dir, media_dir).errors == []
+
+
+def test_mapeo_con_slug_que_no_es_sena(content_dir: Path, media_dir: Path) -> None:
+    _mapping(content_dir, "fuente,etiqueta_fuente,slug\nLSC-54,Hola,holaa\n")
+    _assert_error(_check(content_dir, media_dir), "dataset-mapping.csv", "holaa")
+
+
+def test_mapeo_con_cabecera_o_fila_invalida(content_dir: Path, media_dir: Path) -> None:
+    _mapping(content_dir, "fuente,slug\nLSC-54,hola\n")
+    _assert_error(_check(content_dir, media_dir), "dataset-mapping.csv", "cabecera")
+    _mapping(content_dir, "fuente,etiqueta_fuente,slug\nLSC-54,,hola\n")
+    _assert_error(_check(content_dir, media_dir), "dataset-mapping.csv", "línea 2")
+
+
+def test_mapeo_con_etiqueta_repetida(content_dir: Path, media_dir: Path) -> None:
+    _mapping(content_dir, "fuente,etiqueta_fuente,slug\nLSC-54,Hola,hola\nLSC-54,hola,adios\n")
+    _assert_error(_check(content_dir, media_dir), "dataset-mapping.csv", "repetida")
+
+
+# ---------- content/camera-equivalences.csv (D-027) ---------------------------------------------
+
+
+def _equivalences(content_dir: Path, rows: str) -> None:
+    (content_dir / "camera-equivalences.csv").write_text(
+        "slug,equivalente,nota\n" + rows, encoding="utf-8", newline="\n"
+    )
+
+
+def test_equivalencias_validas(content_dir: Path, media_dir: Path) -> None:
+    _equivalences(content_dir, "# nota\nletra-b,numero-4,misma forma\n")
+    assert _check(content_dir, media_dir).errors == []
+
+
+def test_equivalencia_con_slug_inexistente(content_dir: Path, media_dir: Path) -> None:
+    _equivalences(content_dir, "letra-b,numero-44,x\n")
+    _assert_error(_check(content_dir, media_dir), "camera-equivalences.csv", "numero-44")
+
+
+def test_equivalencia_consigo_misma_o_repetida(content_dir: Path, media_dir: Path) -> None:
+    _equivalences(content_dir, "letra-b,letra-b,x\n")
+    _assert_error(_check(content_dir, media_dir), "camera-equivalences.csv", "misma seña")
+    _equivalences(content_dir, "letra-b,numero-4,x\nnumero-4,letra-b,y\n")
+    _assert_error(_check(content_dir, media_dir), "camera-equivalences.csv", "repetido")
+
+
+def test_equivalencia_con_cabecera_invalida(content_dir: Path, media_dir: Path) -> None:
+    (content_dir / "camera-equivalences.csv").write_text(
+        "a,b\nletra-b,numero-4\n", encoding="utf-8"
+    )
+    _assert_error(_check(content_dir, media_dir), "camera-equivalences.csv", "cabecera")

@@ -96,7 +96,12 @@ def test_dump_conversation_and_spelling_camel_case() -> None:
     spelling = dump_payload(ALL_PAYLOADS[7])
     assert set(spelling) == {"type", "word", "letterIds", "optionWords"}
     produce = dump_payload(ALL_PAYLOADS[4])
-    assert produce == {"type": "PRODUCE", "signId": "letra-a", "cameraLabel": "letra-a"}
+    assert produce == {
+        "type": "PRODUCE",
+        "signId": "letra-a",
+        "cameraLabel": "letra-a",
+        "gestureLabel": None,
+    }
 
 
 def test_parse_payload_reads_camel_case_from_db() -> None:

@@ -68,7 +68,8 @@ class MemoryMatchPayload(_Model):
 class ProducePayload(_Model):
     type: Literal[ExerciseType.PRODUCE] = ExerciseType.PRODUCE
     sign_id: str
-    camera_label: str | None = None
+    camera_label: str | None = None  # señas estáticas: modelo del alfabeto (D-019)
+    gesture_label: str | None = None  # señas con movimiento: modelo de gestos holistic-v2 (D-026)
 
 
 class ConversationTurn(_Model):
@@ -216,6 +217,7 @@ class PublicProduce(_Model):
     video: VideoRef
     word: str
     camera_label: str | None
+    gesture_label: str | None = None
 
 
 class PublicConversationTurn(_Model):

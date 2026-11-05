@@ -426,7 +426,10 @@ def test_m1_n1_l1_exact_shape() -> None:
     assert len(exercises) == 12
     assert [e.activity for e in exercises] == [1, 1, 1, 2, 2, 2, 3, 3, 3, 2, 2, 2]
     assert exercises[0].payload == ObservePayload(sign_id="hola")
-    assert exercises[6].payload == ProducePayload(sign_id="hola", camera_label=None)
+    # «hola» tiene movimiento: sin modelo del alfabeto, pero sí con el de gestos (D-026).
+    assert exercises[6].payload == ProducePayload(
+        sign_id="hola", camera_label=None, gesture_label="hola"
+    )
 
 
 def test_first_sign_of_content_has_three_distractors() -> None:
