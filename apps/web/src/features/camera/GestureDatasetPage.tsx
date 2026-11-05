@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { useMemo, useRef, useState } from "react";
 import { AppLayout } from "../../components/layout/AppLayout";
 import { NONE } from "../../camera/classifier";
@@ -63,6 +64,9 @@ export function GestureDatasetPage() {
 
   return (
     <AppLayout>
+      <Link to="/admin" className="text-sm font-semibold text-[#047857] underline">
+        ← Administración
+      </Link>
       <h1 className="font-display text-3xl font-extrabold">Colector de gestos</h1>
       <p className="mt-2 text-[#45606A]">
         Cada muestra son 2 s después de «3, 2, 1». Solo se guardan números: la forma y la posición de las manos y 18

@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppLayout } from "../../components/layout/AppLayout";
 import { buildDataset, countByLabel, downloadDataset, NONE_LABEL, type Sample } from "../../camera/dataset";
@@ -149,6 +150,9 @@ export function DatasetPage() {
 
   return (
     <AppLayout>
+      <Link to="/admin" className="text-sm font-semibold text-[#047857] underline">
+        ← Administración
+      </Link>
       <h1 className="font-display text-3xl font-extrabold">Colector de muestras</h1>
       <p className="mt-2 text-[#45606A]">
         Solo se guardan los 63 números de la mano (nunca imágenes). Graba solo letras estáticas confirmadas por el

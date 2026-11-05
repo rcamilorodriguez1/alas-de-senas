@@ -83,6 +83,17 @@ describe("AppLayout (§9.7, mockup 3.1)", () => {
     );
   });
 
+  it("un usuario que no es ADMIN no ve el enlace «Administración»", () => {
+    renderLayout("/aprender");
+    expect(within(nav()).queryByRole("link", { name: /Administración/ })).not.toBeInTheDocument();
+  });
+
+  it("el ADMIN ve «Administración», que lleva a /admin", () => {
+    useSessionStore.setState({ user: makeUser({ name: "Camilo", role: "ADMIN" }) });
+    renderLayout("/aprender");
+    expect(navLink("Administración")).toHaveAttribute("href", "/admin");
+  });
+
   it("marca con aria-current=page solo el enlace de la ruta actual", () => {
     renderLayout("/aprender");
     expect(navLink("Aprender")).toHaveAttribute("aria-current", "page");

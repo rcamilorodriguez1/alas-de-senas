@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { useEffect, useRef, useState } from "react";
 import mappingCsv from "../../../../../content/dataset-mapping.csv?raw";
 import { AppLayout } from "../../components/layout/AppLayout";
@@ -76,6 +77,9 @@ export function ImportPage() {
 
   return (
     <AppLayout>
+      <Link to="/admin" className="text-sm font-semibold text-[#047857] underline">
+        ← Administración
+      </Link>
       <h1 className="font-display text-3xl font-extrabold">Importar dataset (gestos)</h1>
       <p className="mt-2 text-[#45606A]">
         Videos nombrados <code>etiqueta__persona__toma.mp4</code> o fotos <code>etiqueta__persona__toma-0001.jpg</code>.

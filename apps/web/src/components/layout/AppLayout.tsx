@@ -4,6 +4,7 @@ import {
   Camera,
   Home,
   RotateCcw,
+  Settings,
   Trophy,
   User,
   type LucideIcon,
@@ -64,6 +65,20 @@ export function AppLayout({ children, aside }: { children: ReactNode; aside?: Re
             {label}
           </NavLink>
         ))}
+        {user?.role === "ADMIN" && (
+          // Solo el ADMIN ve la sección (D-030); las páginas también lo comprueban.
+          <NavLink
+            to="/admin"
+            className={({ isActive }) =>
+              `mt-4 flex items-center gap-3 rounded-xl border-t border-slate-200 px-3 py-2 pt-4 font-semibold ${
+                isActive ? "bg-emerald-100 text-[#047857]" : "text-[#45606A] hover:bg-slate-100"
+              }`
+            }
+          >
+            <Settings aria-hidden="true" size={20} />
+            Administración
+          </NavLink>
+        )}
         <NavLink to="/creditos" className="mt-auto px-3 py-2 text-sm font-semibold text-[#45606A] underline">
           Créditos
         </NavLink>

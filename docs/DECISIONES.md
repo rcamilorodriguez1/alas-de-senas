@@ -307,3 +307,8 @@
 | por favor | 2 | 0 | 0 | 0 | 0 | 44 |
 
   6. **Retroalimentación de Tomi:** con un modelo sin rostro, Tomi solo da indicaciones de altura de la mano («Sube/Baja un poco la mano»); las de cara y cejas vuelven solas cuando se entrene con caras visibles.
+
+## D-030 · Sección «Administración» solo para ADMIN · 04/11/2026
+- Contexto: las herramientas de datos de la cámara (`/admin/gestos`, `/admin/importar`, `/admin/dataset`) solo se abrían escribiendo la dirección. El usuario pidió reunirlas en un apartado que solo vea el administrador.
+- Decisión: enlace «Administración» al final de la barra lateral, visible solo con rol ADMIN, y página `/admin` con las tres herramientas y su explicación. Cada herramienta tiene «← Administración» para volver. Las páginas siguen comprobando el rol por su cuenta: ocultar el enlace no es la protección.
+- La cuenta ADMIN se crea con `ADMIN_EMAIL` y `ADMIN_PASSWORD` del archivo `.env` (en la raíz) al ejecutar `uv run alas db seed`.
