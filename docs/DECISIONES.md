@@ -407,3 +407,18 @@
   - Prueba Vitest: solo la próxima lección tiene `animate-aleteo` y `data-next`.
   - `alas e2e` sigue en verde con las animaciones.
 - Secciones afectadas de la especificación: ninguna contradicha. Amplía §9.5 (diseño); §9.3 ya pedía *scroll* suave y el corazón que late.
+
+## D-037 · Registro de la autorización de tratamiento de datos · 06/11/2026
+- Contexto / problema: la casilla «Acepto la política de tratamiento de datos (Ley 1581 de 2012)» era obligatoria, pero el servidor solo comprobaba que viniera marcada: no guardaba ni el sí ni la fecha. La Ley 1581 pide poder demostrar que cada persona autorizó el tratamiento de sus datos.
+- Opciones consideradas:
+  1. **Guardar la fecha y la versión de la política en `users`.** Simple y suficiente para demostrar la autorización. En contra: si la política cambia, solo queda la última aceptación.
+  2. **Tabla de historial de autorizaciones.** Guarda todas las aceptaciones. En contra: más tablas y pantallas para un caso que hoy no existe (no hay re-aceptación).
+  3. **Usar `created_at` como fecha de autorización.** Cero cambios. En contra: no dice qué versión se aceptó y mezcla dos conceptos.
+- Decisión: opción 1.
+  - Columnas `users.data_policy_accepted_at` (la fija el servidor con `clock.now()`, D22) y `users.data_policy_version`. Migración `8483232b2587`.
+  - La versión es la fecha del texto de `/privacidad`, en `app/core/privacy.py` (`DATA_POLICY_VERSION = "2026-11-06"`). La página la muestra («Versión del 6 de noviembre de 2026»). Una prueba exige que las dos coincidan.
+  - El cliente no puede enviar esos valores: `extra="forbid"` da 422.
+  - La exportación de datos del perfil incluye la fecha y la versión.
+  - Las cuentas anteriores quedan en NULL: aceptaron la casilla, pero no se registró cuándo, y no se inventa una fecha.
+- Consecuencias: tipos de la API regenerados; pruebas en `test_auth.py`, `test_account.py` y `tests/unit/test_privacy.py`. Si cambia el texto de la política, hay que cambiar la versión en los dos lugares. Si algún día se pide volver a aceptar una política nueva, se pasa a la opción 2.
+- Secciones afectadas de la especificación: amplía §5 (modelo `User`) y §11 (privacidad, Ley 1581). No contradice nada.

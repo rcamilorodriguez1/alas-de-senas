@@ -1037,6 +1037,10 @@ export interface components {
             recognitionsCorrect: number;
             /** Hasavatar */
             hasAvatar: boolean;
+            /** Datapolicyacceptedat */
+            dataPolicyAcceptedAt: string | null;
+            /** Datapolicyversion */
+            dataPolicyVersion: string | null;
         };
         /**
          * ProgressStatus

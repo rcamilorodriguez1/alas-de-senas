@@ -10,10 +10,13 @@ export function PrivacyPage() {
           Alas de Señas es un proyecto académico de Ingeniería de Sistemas. Esta política sigue la Ley 1581 de 2012
           (protección de datos personales en Colombia).
         </p>
+        {/* Debe coincidir con DATA_POLICY_VERSION (apps/api/app/core/privacy.py, D-037). */}
+        <p className="mt-1 text-sm text-[#45606A]">Versión del 6 de noviembre de 2026.</p>
         <h2 className="mt-6 font-display text-xl font-extrabold">Qué datos guardamos</h2>
         <ul className="mt-2 list-disc space-y-1 pl-6">
           <li>Tu nombre, tu correo y una versión cifrada de tu contraseña (nunca la contraseña).</li>
           <li>Tu meta diaria y tu mano dominante.</li>
+          <li>La fecha en que aceptaste esta política y la versión que aceptaste.</li>
           <li>Tu progreso: lecciones, puntajes, XP, racha, néctar, vidas, logros, repasos y favoritos.</li>
         </ul>
         <h2 className="mt-6 font-display text-xl font-extrabold">Qué no guardamos</h2>

@@ -114,3 +114,15 @@ def test_eliminar_borra_la_cuenta_y_todos_sus_datos(client: TestClient) -> None:
 def test_eliminar_requiere_sesion(client: TestClient) -> None:
     response = client.request("DELETE", "/api/me", json={"password": PASSWORD})
     assert response.status_code == 401
+
+
+def test_exportar_incluye_la_autorizacion_de_datos(client: TestClient) -> None:
+    """Ley 1581: la persona puede ver cuándo autorizó el tratamiento y qué versión aceptó."""
+    from app.core.privacy import DATA_POLICY_VERSION
+
+    token, _ = register_user(client)
+    profile = client.get("/api/me/export", headers=auth(token)).json()["profile"]
+
+    assert profile["dataPolicyVersion"] == DATA_POLICY_VERSION
+    assert isinstance(profile["dataPolicyAcceptedAt"], str)
+    assert profile["dataPolicyAcceptedAt"].startswith("20")

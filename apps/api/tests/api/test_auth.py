@@ -945,3 +945,30 @@ def test_cookie_secure_en_produccion(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "Secure" in response.headers["set-cookie"]
     logout = client.post("/api/auth/logout")
     assert "Secure" in logout.headers["set-cookie"]
+
+
+# ---------- Autorización de tratamiento de datos (Ley 1581 de 2012, D-037) ----------
+
+
+def test_registro_guarda_cuando_y_que_version_de_la_politica_se_acepto(
+    client: TestClient, clock: FakeClock
+) -> None:
+    from app.core.privacy import DATA_POLICY_VERSION
+
+    assert register(client).status_code == 201
+
+    user = db_user("ana@ejemplo.com")
+    assert user is not None
+    assert user.data_policy_accepted_at == clock.now()  # la fija el servidor (D22)
+    assert user.data_policy_version == DATA_POLICY_VERSION
+
+
+def test_el_cliente_no_puede_fijar_la_fecha_ni_la_version_de_la_autorizacion(
+    client: TestClient,
+) -> None:
+    response = register(
+        client, dataPolicyAcceptedAt="2020-01-01T00:00:00Z", dataPolicyVersion="falsa"
+    )
+
+    assert response.status_code == 422  # extra="forbid"
+    assert db_user("ana@ejemplo.com") is None

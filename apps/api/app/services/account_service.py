@@ -44,6 +44,8 @@ class AccountService:
                 hearts=user.hearts,
                 recognitions_correct=user.recognitions_correct,
                 has_avatar=user.avatar_updated_at is not None,
+                data_policy_accepted_at=user.data_policy_accepted_at,
+                data_policy_version=user.data_policy_version,
             ),
             streak=StreakExportOut(
                 current=streak.current,

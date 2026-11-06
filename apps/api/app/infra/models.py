@@ -155,6 +155,9 @@ class User(Base):
     # leerla en cada consulta del usuario.
     avatar: Mapped[bytes | None] = mapped_column(LargeBinary, deferred=True)
     avatar_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Autorización de tratamiento de datos (Ley 1581, D-037). Nula en cuentas anteriores a D-037.
+    data_policy_accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    data_policy_version: Mapped[str | None] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )  # auditoría (D22 lo permite)

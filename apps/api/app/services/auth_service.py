@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings
 from app.core.errors import AppError, unauthorized
+from app.core.privacy import DATA_POLICY_VERSION
 from app.core.security import (
     create_access_token,
     hash_password,
@@ -49,6 +50,9 @@ class AuthService:
             password_hash=hash_password(data.password),
             role=Role.LEARNER,
             daily_goal_minutes=data.daily_goal_minutes,
+            # Prueba de la autorización (Ley 1581): la hora la fija el servidor (D22).
+            data_policy_accepted_at=self.clock.now(),
+            data_policy_version=DATA_POLICY_VERSION,
         )
         self.session.add(user)
         try:

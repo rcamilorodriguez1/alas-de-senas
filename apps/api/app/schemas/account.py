@@ -21,6 +21,8 @@ class ProfileExportOut(ApiModel):
     hearts: int
     recognitions_correct: int
     has_avatar: bool  # la foto misma no se exporta en el JSON (D-023)
+    data_policy_accepted_at: datetime | None  # Ley 1581 (D-037); nula en cuentas anteriores
+    data_policy_version: str | None
 
 
 class StreakExportOut(ApiModel):
