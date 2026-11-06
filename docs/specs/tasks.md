@@ -135,7 +135,7 @@
 ## Grupo 11 — Cierre
 
 - [x] **11.1** FastAPI sirve la SPA (con *fallback* a `index.html` fuera de `/api`, `/media`, `/mediapipe`, `/models`, `/assets`), aplica la CSP (excepto `/api/docs`) y las cabeceras de caché (`immutable` para `/media/v`, `/media/p`, `/assets`; `no-cache` para `index.html`). _R10.4_
-- [ ] **11.2** Revisión en 1280×720, 1366×768 y 1920×1080; accesibilidad (Lighthouse ≥ 90). _R10.1, R10.5_
+- [x] **11.2** Revisión en 1280×720, 1366×768 y 1920×1080; accesibilidad (Lighthouse ≥ 90). _R10.1, R10.5_
 - [x] **11.3** Prueba E2E del flujo principal con **Playwright para Python** (`alas e2e`, 1366×768); responde bien traduciendo video ↔ palabra con `manifest.json` y `signs.csv`, sin «modo prueba» en la API (B89). _R10.6_
 - [ ] **11.4** `Dockerfile` multi-etapa (§17: `UV_NO_SYNC`, binarios de `.venv`, `CONTENT_DIR`/`MEDIA_DIR`/`WEB_DIST_DIR`), probar `docker build` y arranque local con `alas db seed` sin `raw/`; despliegue (Render + Neon), `README.md` y checklist de la demostración.
 - [x] **11.5** `alas db seed-demo` (`app/content/demo.py`, §17.4): servicios reales con reloj simulado, fechas relativas a hoy, `--reset`, bloqueo en producción; prueba de API con `FakeClock` que verifica el estado final. Actualizar el checklist de §17.3 en `README.md`. _R10.9_
