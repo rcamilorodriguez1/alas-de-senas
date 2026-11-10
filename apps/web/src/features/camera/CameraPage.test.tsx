@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { appRoutes } from "../../app/routes";
-import { cameraErrorKind, displayLabel } from "../../camera/session";
+import { cameraErrorKind, cameraModeFromUrl, displayLabel, type FrameResult } from "../../camera/session";
 import { useSessionStore } from "../../lib/session-store";
 import { jsonResponse, makeUser, mockFetch } from "../../test/http";
 
@@ -97,6 +97,33 @@ describe("/camara: pestañas (D-031)", () => {
   });
 });
 
+describe("/camara: medición de rendimiento (prueba D-038)", () => {
+  it("muestra los FPS, los milisegundos por cuadro y el modo", async () => {
+    const user = userEvent.setup();
+    startCameraSession.mockImplementation(
+      async (_video: HTMLVideoElement, onFrame: (result: FrameResult) => void) => {
+        setTimeout(() => onFrame({ points: null, features: null, detected: null, stats: { fps: 29.6, workMs: 12.4 } }));
+        return { classifier: { simulated: true }, mode: "optimized", stop };
+      },
+    );
+    renderCamera();
+    await user.click(await screen.findByRole("button", { name: "Activar cámara" }));
+    expect(await screen.findByText("29 FPS · 12 ms por cuadro · optimizado")).toBeInTheDocument();
+  });
+
+  it("pasa el modo clásico a la sesión con ?camara=clasica", async () => {
+    const user = userEvent.setup();
+    startCameraSession.mockResolvedValue({ classifier: { simulated: true }, mode: "classic", stop });
+    window.history.replaceState(null, "", "/camara?camara=clasica");
+    renderCamera();
+    await user.click(await screen.findByRole("button", { name: "Activar cámara" }));
+    await waitFor(() =>
+      expect(startCameraSession).toHaveBeenCalledWith(expect.anything(), expect.any(Function), { mode: "classic" }),
+    );
+    window.history.replaceState(null, "", "/");
+  });
+});
+
 describe("/camara: salir mientras se enciende (B40, R8.5)", () => {
   it("si sale antes de que termine de encender, la cámara se apaga al terminar", async () => {
     const user = userEvent.setup();
@@ -122,6 +149,12 @@ describe("apoyo de la cámara", () => {
     expect(cameraErrorKind(new DOMException("x", "NotReadableError"))).toBe("busy");
     expect(cameraErrorKind(new DOMException("x", "InsecureContextError"))).toBe("insecure");
     expect(cameraErrorKind(new Error("raro"))).toBe("unknown");
+  });
+
+  it("lee el modo de la cámara de la dirección (prueba D-038)", () => {
+    expect(cameraModeFromUrl("")).toBe("optimized");
+    expect(cameraModeFromUrl("?camara=clasica")).toBe("classic");
+    expect(cameraModeFromUrl("?camara=otra")).toBe("optimized");
   });
 
   it("muestra las letras como letras", () => {
