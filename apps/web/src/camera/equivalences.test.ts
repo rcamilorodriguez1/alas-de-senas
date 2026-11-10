@@ -32,4 +32,15 @@ describe("equivalencias de la cámara (D-027)", () => {
   it("content/camera-equivalences.csv trae B = 4", () => {
     expect(matchesTarget("numero-4", "letra-b", CAMERA_EQUIVALENCES)).toBe(true);
   });
+
+  it("content/camera-equivalences.csv trae 2 = V y 3 = W (el modelo los confunde)", () => {
+    expect(matchesTarget("letra-v", "numero-2", CAMERA_EQUIVALENCES)).toBe(true);
+    expect(matchesTarget("numero-2", "letra-v", CAMERA_EQUIVALENCES)).toBe(true);
+    expect(matchesTarget("letra-w", "numero-3", CAMERA_EQUIVALENCES)).toBe(true);
+    expect(matchesTarget("numero-3", "letra-w", CAMERA_EQUIVALENCES)).toBe(true);
+    expect(withEquivalents("numero-3", CAMERA_EQUIVALENCES)).toEqual(["numero-3", "letra-w"]);
+    // Solo esos pares: el 2 no acepta la W ni el 3 la V.
+    expect(matchesTarget("letra-w", "numero-2", CAMERA_EQUIVALENCES)).toBe(false);
+    expect(matchesTarget("letra-v", "numero-3", CAMERA_EQUIVALENCES)).toBe(false);
+  });
 });
