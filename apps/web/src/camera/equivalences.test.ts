@@ -1,6 +1,12 @@
 // Señas equivalentes para la cámara (D-027).
 import { describe, expect, it } from "vitest";
-import { CAMERA_EQUIVALENCES, matchesTarget, parseEquivalences, withEquivalents } from "./equivalences";
+import {
+  bestWithEquivalents,
+  CAMERA_EQUIVALENCES,
+  matchesTarget,
+  parseEquivalences,
+  withEquivalents,
+} from "./equivalences";
 
 describe("equivalencias de la cámara (D-027)", () => {
   const eq = parseEquivalences("slug,equivalente,nota\n# comentario\nletra-b,numero-4,misma forma, sin movimiento\nletra-o,numero-0,x\n");
@@ -31,6 +37,41 @@ describe("equivalencias de la cámara (D-027)", () => {
 
   it("content/camera-equivalences.csv trae B = 4", () => {
     expect(matchesTarget("numero-4", "letra-b", CAMERA_EQUIVALENCES)).toBe(true);
+  });
+
+  describe("bestWithEquivalents: suma las probabilidades de cada par (D-041)", () => {
+    const labels = ["NINGUNA", "letra-a", "letra-w", "numero-3"];
+
+    it("3 (0,45) y W (0,40) juntas pasan el umbral aunque ninguna lo pase sola", () => {
+      const best = bestWithEquivalents(Float32Array.from([0.05, 0.1, 0.4, 0.45]), labels, CAMERA_EQUIVALENCES);
+      expect(best.confidence).toBeCloseTo(0.85, 5);
+    });
+
+    it("el par siempre sale con la misma etiqueta (la primera en orden), para que los votos no se repartan", () => {
+      const a = bestWithEquivalents(Float32Array.from([0, 0.1, 0.5, 0.4]), labels, CAMERA_EQUIVALENCES);
+      const b = bestWithEquivalents(Float32Array.from([0, 0.1, 0.4, 0.5]), labels, CAMERA_EQUIVALENCES);
+      expect(a.label).toBe("letra-w");
+      expect(b.label).toBe("letra-w");
+      // Y la lección que pide un 3 la acepta.
+      expect(matchesTarget(a.label, "numero-3", CAMERA_EQUIVALENCES)).toBe(true);
+    });
+
+    it("una seña sin par queda igual", () => {
+      const best = bestWithEquivalents(Float32Array.from([0.05, 0.6, 0.2, 0.15]), labels, CAMERA_EQUIVALENCES);
+      expect(best.label).toBe("letra-a");
+      expect(best.confidence).toBeCloseTo(0.6, 5);
+    });
+
+    it("«NINGUNA» no se suma con nada", () => {
+      const best = bestWithEquivalents(Float32Array.from([0.5, 0.1, 0.2, 0.2]), labels, CAMERA_EQUIVALENCES);
+      expect(best.label).toBe("NINGUNA");
+      expect(best.confidence).toBeCloseTo(0.5, 5);
+    });
+
+    it("sin equivalencias es el máximo de siempre", () => {
+      const best = bestWithEquivalents(Float32Array.from([0.05, 0.1, 0.4, 0.45]), labels, new Map());
+      expect(best).toEqual({ label: "numero-3", confidence: expect.closeTo(0.45, 5) });
+    });
   });
 
   it("content/camera-equivalences.csv trae 2 = V y 3 = W (el modelo los confunde)", () => {

@@ -143,6 +143,16 @@ describe("DenseClassifier", () => {
     expect(classifier.simulated).toBe(false);
     expect(classifier.classify([0, 0])).toEqual({ label: "letra-b", confidence: expect.closeTo(0.7, 5) });
   });
+
+  it("con equivalencias suma el par (D-041): B 0,4 + 4 0,35 = 0,75", () => {
+    const network = { inputSize: 2, outputSize: 3, predict: () => Float32Array.from([0.25, 0.4, 0.35]) };
+    const equivalences = new Map([
+      ["letra-b", ["numero-4"]],
+      ["numero-4", ["letra-b"]],
+    ]);
+    const classifier = new DenseClassifier(network, ["NINGUNA", "letra-b", "numero-4"], equivalences);
+    expect(classifier.classify([0, 0])).toEqual({ label: "letra-b", confidence: expect.closeTo(0.75, 5) });
+  });
 });
 
 describe("MonotonicTimestamps", () => {

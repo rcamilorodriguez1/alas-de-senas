@@ -2,6 +2,7 @@
 // no exista, `MockClassifier` (R8.6). Toda predicción va dentro de `tf.tidy()` (B: fugas de tfjs).
 import type * as tfType from "@tensorflow/tfjs";
 import { DenseNetwork, type DenseNetworkLike } from "./dense";
+import { bestWithEquivalents, CAMERA_EQUIVALENCES, type Equivalences } from "./equivalences";
 
 export const NONE = "NINGUNA";
 export const THRESHOLD = 0.7;
@@ -71,13 +72,13 @@ export class DenseClassifier implements Classifier {
   constructor(
     private readonly network: DenseNetworkLike,
     readonly labels: readonly string[],
+    /** D-041: pares que se suman (B/4, 2/V, 3/W). Vacío = el máximo de siempre. */
+    private readonly equivalences: Equivalences = new Map(),
   ) {}
 
   classify(features: readonly number[]): Prediction {
-    const scores = this.network.predict(features);
-    let best = 0;
-    for (let i = 1; i < scores.length; i += 1) if (scores[i] > scores[best]) best = i;
-    return { label: this.labels[best] ?? NONE, confidence: scores[best] ?? 0 };
+    const best = bestWithEquivalents(this.network.predict(features), this.labels, this.equivalences);
+    return { label: best.label || NONE, confidence: best.confidence };
   }
 
   dispose(): void {}
@@ -108,7 +109,7 @@ export async function loadClassifier(
       const network = DenseNetwork.fromModel(model);
       if (network && network.inputSize === 63) {
         model.dispose(); // los pesos ya están copiados: tfjs no queda ocupando memoria
-        return new DenseClassifier(network, labels as string[]);
+        return new DenseClassifier(network, labels as string[], CAMERA_EQUIVALENCES);
       }
     }
     return new TfjsClassifier(tf, model, labels as string[]);
