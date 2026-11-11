@@ -17,6 +17,7 @@ import {
   type CameraErrorKind,
   type CameraSession,
 } from "../../camera/session";
+import type { FrameStats } from "../../camera/frame-loop";
 import { StatsPanel } from "../gamification/StatsPanel";
 import { GesturePractice } from "./GesturePractice";
 
@@ -33,20 +34,29 @@ function drawHand(canvas: HTMLCanvasElement, points: readonly Point2[] | null) {
   if (!context) return;
   context.clearRect(0, 0, canvas.width, canvas.height);
   if (!points) return;
+  // D-038: un solo trazo para las líneas y otro para los puntos (antes, 21 + 21 por cuadro).
   context.strokeStyle = "#10B981";
   context.lineWidth = 3;
+  context.beginPath();
   for (const [a, b] of HAND_CONNECTIONS) {
-    context.beginPath();
     context.moveTo(points[a].x * canvas.width, points[a].y * canvas.height);
     context.lineTo(points[b].x * canvas.width, points[b].y * canvas.height);
-    context.stroke();
   }
+  context.stroke();
   context.fillStyle = "#F59E0B";
+  context.beginPath();
   for (const point of points) {
-    context.beginPath();
-    context.arc(point.x * canvas.width, point.y * canvas.height, 4, 0, Math.PI * 2);
-    context.fill();
+    const x = point.x * canvas.width;
+    const y = point.y * canvas.height;
+    context.moveTo(x + 4, y);
+    context.arc(x, y, 4, 0, Math.PI * 2);
   }
+  context.fill();
+}
+
+/** «29 FPS · 12 ms por cuadro» (D-038, solo para quien administra). */
+function statsLabel(stats: FrameStats): string {
+  return `${Math.floor(stats.fps)} FPS · ${Math.floor(stats.workMs)} ms por cuadro`;
 }
 
 /** Autoevaluación cuando no hay cámara (R8.4): sin puntaje, solo para practicar. */
@@ -138,6 +148,7 @@ function AlphabetCamera() {
   const reported = useRef(new Map<string, number>());
   const mounted = useRef(true);
   const lastShown = useRef("");
+  const [statsText, setStatsText] = useState<string | null>(null);
 
   // Cada seña detectada suma para «Ojo de colibrí» (máximo una vez cada 10 s).
   useEffect(() => {
@@ -155,6 +166,7 @@ function AlphabetCamera() {
     setState("off");
     setDetected(null);
     setHandVisible(false);
+    setStatsText(null);
   }, []);
 
   // R8.5: al salir de la pantalla la cámara se apaga (también si aún se estaba encendiendo).
@@ -171,9 +183,11 @@ function AlphabetCamera() {
     setError(null);
     setState("starting");
     try {
-      const started = await startCameraSession(video.current, ({ points, detected: found }) => {
+      const started = await startCameraSession(video.current, ({ points, detected: found, stats }) => {
         if (canvas.current) drawHand(canvas.current, points);
         setHandVisible(points !== null);
+        // React descarta el cambio si el texto es igual: solo re-renderiza cuando cambia el número.
+        if (stats) setStatsText(statsLabel(stats));
         // Solo re-renderiza si cambia la etiqueta o el porcentaje mostrado (no 60 veces por segundo).
         const key = found ? `${found.label}:${Math.floor(found.confidence * 100)}` : "";
         if (key !== lastShown.current) {
@@ -226,6 +240,11 @@ function AlphabetCamera() {
           aria-hidden="true"
           className="absolute inset-0 h-full w-full -scale-x-100"
         />
+        {state === "on" && statsText && isAdmin && (
+          <p className="absolute left-2 top-2 rounded-lg bg-black/60 px-2 py-1 font-mono text-xs text-white">
+            {statsText}
+          </p>
+        )}
         {state !== "on" && (
           <div className="absolute inset-0 flex items-center justify-center">
             <button

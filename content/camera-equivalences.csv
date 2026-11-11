@@ -3,3 +3,5 @@ slug,equivalente,nota
 # (el contexto decide) y en /camara muestra las dos. El modelo las mantiene como clases separadas.
 # Cada par debe confirmarlo el intérprete (D-027).
 letra-b,numero-4,misma forma de mano (el modelo las confunde; D-024)
+numero-2,letra-v,misma forma de mano: índice y medio extendidos (el modelo las confunde)
+numero-3,letra-w,el modelo las confunde: el 12 % de los 3 sale como W (pendiente el intérprete)

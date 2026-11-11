@@ -1,6 +1,7 @@
 // Sesión de cámara (§10.2, §10.4): getUserMedia → extractor `hand-v1` → clasificador.
 // Nada de la imagen sale del navegador (R8.3): solo se usan los 21 puntos de la mano.
 import { loadClassifier, MonotonicTimestamps, Smoother, type Classifier, type Prediction } from "./classifier";
+import { createFrameScheduler, FpsMeter, type FrameStats } from "./frame-loop";
 import { HandOnlyExtractorV1 } from "./hand-extractor";
 import type { Point2 } from "./recognizer";
 
@@ -36,13 +37,14 @@ export interface FrameResult {
   /** Los 63 valores de `normalizeLandmarks` (lo único que guarda el colector). */
   features: number[] | null;
   detected: Prediction | null;
+  /** FPS y milisegundos por cuadro del último segundo (null al empezar, D-038). */
+  stats?: FrameStats | null;
 }
 
 export interface CameraSession {
   readonly classifier: Classifier;
   stop(): void;
 }
-
 
 /** Enciende la cámara y procesa cuadros hasta `stop()`; se pausa con la pestaña oculta. */
 export async function startCameraSession(
@@ -57,7 +59,6 @@ export async function startCameraSession(
     audio: false,
   });
   let stopped = false;
-  let frame = 0;
   const stopTracks = () => stream.getTracks().forEach((track) => track.stop());
   // Si algo falla, se suelta todo lo adquirido: el contador del singleton no se descuadra y el
   // modelo de tfjs no queda en memoria.
@@ -76,39 +77,45 @@ export async function startCameraSession(
   }
   const timestamps = new MonotonicTimestamps();
   const smoother = new Smoother();
+  const meter = new FpsMeter();
+  // Un cuadro de la cámara = un análisis (D-038): antes se analizaba al ritmo de la pantalla.
+  const scheduler = createFrameScheduler(video);
 
   const tick = () => {
     if (stopped || document.hidden) return;
-    const timestamp = timestamps.next(performance.now());
+    const startedAt = performance.now();
+    const timestamp = timestamps.next(startedAt);
     if (timestamp !== null && video.readyState >= 2) {
       const extracted = extractor.extract(video, timestamp);
       if (!extracted) {
-        frame = requestAnimationFrame(tick); // un cuadro fallido no detiene el bucle
+        scheduler.request(tick); // un cuadro fallido no detiene el bucle
         return;
       }
       const points = extracted.overlay.dominant;
       const features = extracted.features ? Array.from(extracted.features) : null;
       let detected: Prediction | null = null;
-      if (features) detected = smoother.push(model.classify(features));
+      if (features) detected = smoother.push(model.classify(features), timestamp);
       else if (!points) smoother.reset();
-      onFrame({ points, features, detected });
+      const stats = meter.tick(startedAt, performance.now() - startedAt);
+      onFrame({ points, features, detected, stats });
     }
-    frame = requestAnimationFrame(tick);
+    scheduler.request(tick);
   };
 
   const onVisibility = () => {
-    cancelAnimationFrame(frame);
-    if (!document.hidden && !stopped) frame = requestAnimationFrame(tick);
+    scheduler.cancel();
+    meter.reset();
+    if (!document.hidden && !stopped) scheduler.request(tick);
   };
   document.addEventListener("visibilitychange", onVisibility);
-  frame = requestAnimationFrame(tick);
+  scheduler.request(tick);
 
   return {
     classifier: model,
     stop() {
       if (stopped) return;
       stopped = true;
-      cancelAnimationFrame(frame);
+      scheduler.cancel();
       document.removeEventListener("visibilitychange", onVisibility);
       stopTracks(); // R8.5: la cámara se apaga al salir
       video.srcObject = null;

@@ -1,6 +1,18 @@
 // Reconocedor (tarea 10.3, §10.2–10.4): suavizado, umbral, timestamps y modo simulado.
 import { describe, expect, it, vi } from "vitest";
-import { loadClassifier, MIN_VOTES, MockClassifier, MonotonicTimestamps, NONE, Smoother, THRESHOLD } from "./classifier";
+import {
+  DenseClassifier,
+  loadClassifier,
+  MIN_STABLE_VOTES,
+  MIN_VOTES,
+  MockClassifier,
+  MonotonicTimestamps,
+  NONE,
+  Smoother,
+  STABLE_MS,
+  THRESHOLD,
+  WINDOW_MS,
+} from "./classifier";
 
 describe("Smoother", () => {
   it("devuelve la mayoría de los últimos 10 resultados con su confianza media", () => {
@@ -56,6 +68,90 @@ describe("Smoother", () => {
     let last = null;
     for (let i = 0; i < MIN_VOTES; i += 1) last = smoother.push({ label: "letra-b", confidence: 0.9 });
     expect(last?.label).toBe("letra-b");
+  });
+});
+
+describe("Smoother con tiempo (D-038: reconocer igual de rápido en equipos lentos)", () => {
+  const a = { label: "letra-a", confidence: 0.9 };
+
+  it("a 30 FPS se comporta igual que antes: 6 votos", () => {
+    const smoother = new Smoother();
+    for (let i = 0; i < MIN_VOTES - 1; i += 1) expect(smoother.push(a, i * 33)).toBeNull();
+    expect(smoother.push(a, (MIN_VOTES - 1) * 33)?.label).toBe("letra-a");
+  });
+
+  it(`a 10 FPS basta con la seña estable ${STABLE_MS} ms (${MIN_STABLE_VOTES} votos o más), sin esperar 6 cuadros`, () => {
+    const smoother = new Smoother();
+    expect(smoother.push(a, 0)).toBeNull();
+    expect(smoother.push(a, 100)).toBeNull();
+    expect(smoother.push(a, 200)).toBeNull(); // 3 votos, pero solo 200 ms
+    expect(smoother.push(a, 300)?.label).toBe("letra-a"); // 4 votos en 300 ms
+  });
+
+  it("un cuadro aislado sigue sin bastar aunque pase mucho tiempo (B37)", () => {
+    const smoother = new Smoother();
+    expect(smoother.push(a, 0)).toBeNull();
+    expect(smoother.push(a, 2000)).toBeNull();
+  });
+
+  it(`hacen falta al menos ${MIN_STABLE_VOTES} votos aunque estén separados`, () => {
+    const smoother = new Smoother();
+    expect(smoother.push(a, 0)).toBeNull();
+    expect(smoother.push(a, 300)).toBeNull(); // 2 votos en 300 ms
+  });
+
+  it("la seña estable tiene que ser mayoría en la ventana", () => {
+    const smoother = new Smoother();
+    const b = { label: "letra-b", confidence: 0.9 };
+    smoother.push(a, 0);
+    smoother.push(b, 50);
+    smoother.push(a, 100);
+    smoother.push(b, 150);
+    smoother.push(b, 200);
+    expect(smoother.push(a, 300)).toBeNull(); // «a» tiene 3 de 6: no es mayoría
+  });
+
+  it(`los resultados de hace más de ${WINDOW_MS} ms salen de la ventana`, () => {
+    const smoother = new Smoother();
+    smoother.push(a, 0);
+    smoother.push(a, 100);
+    smoother.push(a, 200);
+    // Después de una pausa larga, los votos viejos ya no cuentan.
+    expect(smoother.push(a, 200 + WINDOW_MS + 1)).toBeNull();
+  });
+
+  it("sigue respetando el umbral de 0,70 (R8.2)", () => {
+    const smoother = new Smoother();
+    const low = { label: "letra-a", confidence: THRESHOLD - 0.01 };
+    let last = null;
+    for (let i = 0; i < 5; i += 1) last = smoother.push(low, i * 100);
+    expect(last).toBeNull();
+  });
+
+  it("«NINGUNA» nunca se muestra (R8.2)", () => {
+    const smoother = new Smoother();
+    let last = null;
+    for (let i = 0; i < 5; i += 1) last = smoother.push({ label: NONE, confidence: 0.99 }, i * 100);
+    expect(last).toBeNull();
+  });
+});
+
+describe("DenseClassifier", () => {
+  it("elige la etiqueta con mayor puntaje usando la red en JavaScript", () => {
+    const network = { inputSize: 2, outputSize: 3, predict: () => Float32Array.from([0.1, 0.7, 0.2]) };
+    const classifier = new DenseClassifier(network, ["letra-a", "letra-b", "letra-c"]);
+    expect(classifier.simulated).toBe(false);
+    expect(classifier.classify([0, 0])).toEqual({ label: "letra-b", confidence: expect.closeTo(0.7, 5) });
+  });
+
+  it("con equivalencias suma el par (D-041): B 0,4 + 4 0,35 = 0,75", () => {
+    const network = { inputSize: 2, outputSize: 3, predict: () => Float32Array.from([0.25, 0.4, 0.35]) };
+    const equivalences = new Map([
+      ["letra-b", ["numero-4"]],
+      ["numero-4", ["letra-b"]],
+    ]);
+    const classifier = new DenseClassifier(network, ["NINGUNA", "letra-b", "numero-4"], equivalences);
+    expect(classifier.classify([0, 0])).toEqual({ label: "letra-b", confidence: expect.closeTo(0.75, 5) });
   });
 });
 

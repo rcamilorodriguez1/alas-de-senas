@@ -6,6 +6,7 @@ import { defineConfig } from "vitest/config";
 // Las pruebas de compatibilidad de TensorFlow.js (0.9) y de paridad (H11) leen ml/fixtures con node:fs.
 const NODE_TESTS = [
   "src/camera/tfjs-compat.test.ts",
+  "src/camera/dense.test.ts",
   "src/camera/holistic/parity.test.ts",
   "src/camera/holistic/published-model.test.ts",
 ];

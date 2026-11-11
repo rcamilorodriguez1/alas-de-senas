@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { appRoutes } from "../../app/routes";
-import { cameraErrorKind, displayLabel } from "../../camera/session";
+import { cameraErrorKind, displayLabel, type FrameResult } from "../../camera/session";
 import { useSessionStore } from "../../lib/session-store";
 import { jsonResponse, makeUser, mockFetch } from "../../test/http";
 
@@ -94,6 +94,34 @@ describe("/camara: pestañas (D-031)", () => {
     await waitFor(() => expect(stop).toHaveBeenCalled());
     // Sin modelo de gestos publicado en la prueba: lo dice en vez de fallar.
     expect(await screen.findByText(/aún no está disponible/)).toBeInTheDocument();
+  });
+});
+
+describe("/camara: medición de rendimiento (D-038)", () => {
+  function sessionWithStats() {
+    startCameraSession.mockImplementation(async (_video: HTMLVideoElement, onFrame: (result: FrameResult) => void) => {
+      setTimeout(() => onFrame({ points: null, features: null, detected: null, stats: { fps: 29.6, workMs: 12.4 } }));
+      return { classifier: { simulated: true }, stop };
+    });
+  }
+
+  it("a quien administra le muestra los FPS y los milisegundos por cuadro", async () => {
+    const user = userEvent.setup();
+    sessionWithStats();
+    renderCamera();
+    await user.click(await screen.findByRole("button", { name: "Activar cámara" }));
+    expect(await screen.findByText("29 FPS · 12 ms por cuadro")).toBeInTheDocument();
+  });
+
+  it("a un estudiante no le muestra la medición", async () => {
+    const user = userEvent.setup();
+    useSessionStore.setState({ accessToken: "t", user: makeUser({ role: "LEARNER" }), status: "authenticated" });
+    sessionWithStats();
+    renderCamera();
+    await user.click(await screen.findByRole("button", { name: "Activar cámara" }));
+    await screen.findByRole("button", { name: "Apagar cámara" });
+    await new Promise((done) => setTimeout(done, 20));
+    expect(screen.queryByText(/FPS/)).not.toBeInTheDocument();
   });
 });
 
