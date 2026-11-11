@@ -10,11 +10,11 @@ export const SMOOTHING_WINDOW = 10;
 /** Votos mínimos de la misma etiqueta en la ventana: un cuadro aislado nunca basta (B37). */
 export const MIN_VOTES = 6;
 export const MODEL_DIR = "/models/lsc-alfabeto";
-/** Prueba D-038: tiempo que la seña debe mantenerse estable cuando hay pocos FPS. */
+/** tiempo que la seña debe mantenerse estable cuando hay pocos FPS. */
 export const STABLE_MS = 250;
-/** Prueba D-038: votos mínimos para aceptar por tiempo (nunca un cuadro aislado, B37). */
+/** votos mínimos para aceptar por tiempo (nunca un cuadro aislado, B37). */
 export const MIN_STABLE_VOTES = 3;
-/** Prueba D-038: los resultados más viejos que esto salen de la ventana. */
+/** los resultados más viejos que esto salen de la ventana. */
 export const WINDOW_MS = 600;
 
 export interface Prediction {
@@ -66,7 +66,7 @@ export class TfjsClassifier implements Classifier {
   }
 }
 
-/** Prueba D-038: el mismo modelo calculado en JavaScript, sin tfjs en cada cuadro. */
+/** el mismo modelo calculado en JavaScript, sin tfjs en cada cuadro. */
 export class DenseClassifier implements Classifier {
   readonly simulated = false;
   constructor(
@@ -86,13 +86,9 @@ export class DenseClassifier implements Classifier {
 
 /**
  * Carga el modelo de `/models/lsc-alfabeto`; si no existe o no coincide con `labels.json`, simula.
- * Prueba D-038: si el modelo es solo de capas densas, se calcula en JavaScript (`fast`, por defecto);
- * con `fast: false` se usa tfjs como antes, para comparar.
+ * Si el modelo es solo de capas densas, se calcula en JavaScript (D-038); si no, con tfjs.
  */
-export async function loadClassifier(
-  fetchFn: typeof fetch = fetch,
-  options: { fast?: boolean } = {},
-): Promise<Classifier> {
+export async function loadClassifier(fetchFn: typeof fetch = fetch): Promise<Classifier> {
   try {
     const response = await fetchFn(`${MODEL_DIR}/labels.json`);
     if (!response.ok) return new MockClassifier();
@@ -105,12 +101,10 @@ export async function loadClassifier(
       model.dispose();
       return new MockClassifier();
     }
-    if (options.fast ?? true) {
-      const network = DenseNetwork.fromModel(model);
-      if (network && network.inputSize === 63) {
-        model.dispose(); // los pesos ya están copiados: tfjs no queda ocupando memoria
-        return new DenseClassifier(network, labels as string[], CAMERA_EQUIVALENCES);
-      }
+    const network = DenseNetwork.fromModel(model);
+    if (network && network.inputSize === 63) {
+      model.dispose(); // los pesos ya están copiados: tfjs no queda ocupando memoria
+      return new DenseClassifier(network, labels as string[], CAMERA_EQUIVALENCES);
     }
     return new TfjsClassifier(tf, model, labels as string[]);
   } catch {
@@ -121,7 +115,7 @@ export async function loadClassifier(
 /**
  * Mayoría de los últimos 10 resultados; solo cuenta si confianza ≥ 0,70 y no es «NINGUNA».
  *
- * Con el instante del cuadro (prueba D-038) también acepta la seña si se mantiene estable
+ * Con el instante del cuadro (D-038) también acepta la seña si se mantiene estable
  * `STABLE_MS` con al menos `MIN_STABLE_VOTES` votos y es mayoría: en un portátil a 10 FPS
  * reconoce en ~0,3 s en vez de ~0,6 s. A 30 FPS se comporta igual que antes (6 votos).
  */
@@ -137,7 +131,10 @@ export class Smoother {
     const counts = new Map<string, { count: number; confidence: number }>();
     for (const item of this.window) {
       const entry = counts.get(item.label) ?? { count: 0, confidence: 0 };
-      counts.set(item.label, { count: entry.count + 1, confidence: Math.max(entry.confidence, item.confidence) });
+      counts.set(item.label, {
+        count: entry.count + 1,
+        confidence: Math.max(entry.confidence, item.confidence),
+      });
     }
     let winner: string | null = null;
     let top = 0;

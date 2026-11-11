@@ -12,11 +12,9 @@ import type { Prediction } from "../../camera/classifier";
 import {
   CAMERA_ERRORS,
   cameraErrorKind,
-  cameraModeFromUrl,
   displayLabel,
   startCameraSession,
   type CameraErrorKind,
-  type CameraMode,
   type CameraSession,
 } from "../../camera/session";
 import type { FrameStats } from "../../camera/frame-loop";
@@ -36,7 +34,7 @@ function drawHand(canvas: HTMLCanvasElement, points: readonly Point2[] | null) {
   if (!context) return;
   context.clearRect(0, 0, canvas.width, canvas.height);
   if (!points) return;
-  // Prueba D-038: un solo trazo para las líneas y otro para los puntos (antes, 21 + 21 por cuadro).
+  // D-038: un solo trazo para las líneas y otro para los puntos (antes, 21 + 21 por cuadro).
   context.strokeStyle = "#10B981";
   context.lineWidth = 3;
   context.beginPath();
@@ -56,10 +54,9 @@ function drawHand(canvas: HTMLCanvasElement, points: readonly Point2[] | null) {
   context.fill();
 }
 
-/** Prueba D-038: «29 FPS · 12 ms por cuadro · optimizado». */
-function statsLabel(stats: FrameStats, mode: CameraMode): string {
-  const name = mode === "classic" ? "clásico" : "optimizado";
-  return `${Math.floor(stats.fps)} FPS · ${Math.floor(stats.workMs)} ms por cuadro · ${name}`;
+/** «29 FPS · 12 ms por cuadro» (D-038, solo para quien administra). */
+function statsLabel(stats: FrameStats): string {
+  return `${Math.floor(stats.fps)} FPS · ${Math.floor(stats.workMs)} ms por cuadro`;
 }
 
 /** Autoevaluación cuando no hay cámara (R8.4): sin puntaje, solo para practicar. */
@@ -185,24 +182,19 @@ function AlphabetCamera() {
     if (!video.current) return;
     setError(null);
     setState("starting");
-    const mode = cameraModeFromUrl();
     try {
-      const started = await startCameraSession(
-        video.current,
-        ({ points, detected: found, stats }) => {
+      const started = await startCameraSession(video.current, ({ points, detected: found, stats }) => {
         if (canvas.current) drawHand(canvas.current, points);
         setHandVisible(points !== null);
         // React descarta el cambio si el texto es igual: solo re-renderiza cuando cambia el número.
-        if (stats) setStatsText(statsLabel(stats, mode));
+        if (stats) setStatsText(statsLabel(stats));
         // Solo re-renderiza si cambia la etiqueta o el porcentaje mostrado (no 60 veces por segundo).
         const key = found ? `${found.label}:${Math.floor(found.confidence * 100)}` : "";
         if (key !== lastShown.current) {
           lastShown.current = key;
           setDetected(found);
         }
-        },
-        { mode },
-      );
+      });
       if (!mounted.current) {
         started.stop(); // salió mientras se encendía: B40, R8.5
         return;
@@ -248,7 +240,7 @@ function AlphabetCamera() {
           aria-hidden="true"
           className="absolute inset-0 h-full w-full -scale-x-100"
         />
-        {state === "on" && statsText && (
+        {state === "on" && statsText && isAdmin && (
           <p className="absolute left-2 top-2 rounded-lg bg-black/60 px-2 py-1 font-mono text-xs text-white">
             {statsText}
           </p>

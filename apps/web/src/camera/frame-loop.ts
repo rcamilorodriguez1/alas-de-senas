@@ -1,4 +1,4 @@
-// Bucle por cuadro y medidor de FPS (prueba de optimización D-038).
+// Bucle por cuadro y medidor de FPS (D-038).
 // `requestVideoFrameCallback` avisa solo cuando la cámara entrega un cuadro nuevo (30 por segundo);
 // `requestAnimationFrame` corre al ritmo de la pantalla (60 Hz o más) y hacía que MediaPipe
 // analizara la misma imagen dos veces.
@@ -17,14 +17,11 @@ export interface VideoFrameSource {
   cancelVideoFrameCallback?(handle: number): void;
 }
 
-export function createFrameScheduler(
-  video: VideoFrameSource,
-  options: { forceAnimationFrame?: boolean } = {},
-): FrameScheduler {
+export function createFrameScheduler(video: VideoFrameSource): FrameScheduler {
   let handle: number | null = null;
   const requestFrame = video.requestVideoFrameCallback?.bind(video);
   const cancelFrame = video.cancelVideoFrameCallback?.bind(video);
-  if (!options.forceAnimationFrame && requestFrame && cancelFrame) {
+  if (requestFrame && cancelFrame) {
     return {
       source: "video",
       request(callback) {

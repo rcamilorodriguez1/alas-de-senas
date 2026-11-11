@@ -1,4 +1,4 @@
-// Red densa en JavaScript (prueba de optimización D-038): debe dar la misma salida que TensorFlow.js
+// Red densa en JavaScript (D-038): debe dar la misma salida que TensorFlow.js
 // con el modelo real del alfabeto, sin tocar el backend global de tfjs (lo usa también el 10B).
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";

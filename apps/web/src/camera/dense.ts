@@ -1,4 +1,4 @@
-// Red densa calculada en JavaScript (prueba de optimización D-038).
+// Red densa calculada en JavaScript (D-038).
 // El modelo del alfabeto es pequeño (63 → 128 → 64 → 30): calcularlo a mano tarda microsegundos y
 // evita el viaje a la GPU de `dataSync()` en cada cuadro. No cambia el backend global de tfjs,
 // que sigue usando el modelo de gestos del Grupo 10B en la misma página.

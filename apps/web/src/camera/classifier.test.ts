@@ -71,7 +71,7 @@ describe("Smoother", () => {
   });
 });
 
-describe("Smoother con tiempo (prueba D-038: reconocer igual de rápido en equipos lentos)", () => {
+describe("Smoother con tiempo (D-038: reconocer igual de rápido en equipos lentos)", () => {
   const a = { label: "letra-a", confidence: 0.9 };
 
   it("a 30 FPS se comporta igual que antes: 6 votos", () => {

@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { appRoutes } from "../../app/routes";
-import { cameraErrorKind, cameraModeFromUrl, displayLabel, type FrameResult } from "../../camera/session";
+import { cameraErrorKind, displayLabel, type FrameResult } from "../../camera/session";
 import { useSessionStore } from "../../lib/session-store";
 import { jsonResponse, makeUser, mockFetch } from "../../test/http";
 
@@ -97,30 +97,31 @@ describe("/camara: pestañas (D-031)", () => {
   });
 });
 
-describe("/camara: medición de rendimiento (prueba D-038)", () => {
-  it("muestra los FPS, los milisegundos por cuadro y el modo", async () => {
+describe("/camara: medición de rendimiento (D-038)", () => {
+  function sessionWithStats() {
+    startCameraSession.mockImplementation(async (_video: HTMLVideoElement, onFrame: (result: FrameResult) => void) => {
+      setTimeout(() => onFrame({ points: null, features: null, detected: null, stats: { fps: 29.6, workMs: 12.4 } }));
+      return { classifier: { simulated: true }, stop };
+    });
+  }
+
+  it("a quien administra le muestra los FPS y los milisegundos por cuadro", async () => {
     const user = userEvent.setup();
-    startCameraSession.mockImplementation(
-      async (_video: HTMLVideoElement, onFrame: (result: FrameResult) => void) => {
-        setTimeout(() => onFrame({ points: null, features: null, detected: null, stats: { fps: 29.6, workMs: 12.4 } }));
-        return { classifier: { simulated: true }, mode: "optimized", stop };
-      },
-    );
+    sessionWithStats();
     renderCamera();
     await user.click(await screen.findByRole("button", { name: "Activar cámara" }));
-    expect(await screen.findByText("29 FPS · 12 ms por cuadro · optimizado")).toBeInTheDocument();
+    expect(await screen.findByText("29 FPS · 12 ms por cuadro")).toBeInTheDocument();
   });
 
-  it("pasa el modo clásico a la sesión con ?camara=clasica", async () => {
+  it("a un estudiante no le muestra la medición", async () => {
     const user = userEvent.setup();
-    startCameraSession.mockResolvedValue({ classifier: { simulated: true }, mode: "classic", stop });
-    window.history.replaceState(null, "", "/camara?camara=clasica");
+    useSessionStore.setState({ accessToken: "t", user: makeUser({ role: "LEARNER" }), status: "authenticated" });
+    sessionWithStats();
     renderCamera();
     await user.click(await screen.findByRole("button", { name: "Activar cámara" }));
-    await waitFor(() =>
-      expect(startCameraSession).toHaveBeenCalledWith(expect.anything(), expect.any(Function), { mode: "classic" }),
-    );
-    window.history.replaceState(null, "", "/");
+    await screen.findByRole("button", { name: "Apagar cámara" });
+    await new Promise((done) => setTimeout(done, 20));
+    expect(screen.queryByText(/FPS/)).not.toBeInTheDocument();
   });
 });
 
@@ -149,12 +150,6 @@ describe("apoyo de la cámara", () => {
     expect(cameraErrorKind(new DOMException("x", "NotReadableError"))).toBe("busy");
     expect(cameraErrorKind(new DOMException("x", "InsecureContextError"))).toBe("insecure");
     expect(cameraErrorKind(new Error("raro"))).toBe("unknown");
-  });
-
-  it("lee el modo de la cámara de la dirección (prueba D-038)", () => {
-    expect(cameraModeFromUrl("")).toBe("optimized");
-    expect(cameraModeFromUrl("?camara=clasica")).toBe("classic");
-    expect(cameraModeFromUrl("?camara=otra")).toBe("optimized");
   });
 
   it("muestra las letras como letras", () => {

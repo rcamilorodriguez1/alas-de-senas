@@ -37,32 +37,20 @@ export interface FrameResult {
   /** Los 63 valores de `normalizeLandmarks` (lo único que guarda el colector). */
   features: number[] | null;
   detected: Prediction | null;
-  /** Prueba D-038: FPS y milisegundos por cuadro del último segundo (null al empezar). */
+  /** FPS y milisegundos por cuadro del último segundo (null al empezar, D-038). */
   stats?: FrameStats | null;
 }
 
 export interface CameraSession {
   readonly classifier: Classifier;
-  /** Prueba D-038: «optimizado» o «clásico» (el comportamiento de antes, para comparar). */
-  readonly mode: CameraMode;
   stop(): void;
-}
-
-export type CameraMode = "optimized" | "classic";
-
-/** Prueba D-038: `?camara=clasica` en la dirección usa el bucle de antes, para comparar. */
-export function cameraModeFromUrl(search: string = window.location.search): CameraMode {
-  return new URLSearchParams(search).get("camara") === "clasica" ? "classic" : "optimized";
 }
 
 /** Enciende la cámara y procesa cuadros hasta `stop()`; se pausa con la pestaña oculta. */
 export async function startCameraSession(
   video: HTMLVideoElement,
   onFrame: (result: FrameResult) => void,
-  options: { mode?: CameraMode } = {},
 ): Promise<CameraSession> {
-  const mode = options.mode ?? "optimized";
-  const classic = mode === "classic";
   if (!window.isSecureContext) {
     throw new DOMException(CAMERA_ERRORS.insecure, "InsecureContextError");
   }
@@ -79,7 +67,7 @@ export async function startCameraSession(
   try {
     video.srcObject = stream;
     await video.play();
-    model = await loadClassifier(fetch, { fast: !classic });
+    model = await loadClassifier();
     extractor = await HandOnlyExtractorV1.create();
   } catch (error) {
     stopTracks();
@@ -90,8 +78,8 @@ export async function startCameraSession(
   const timestamps = new MonotonicTimestamps();
   const smoother = new Smoother();
   const meter = new FpsMeter();
-  // Optimizado: un cuadro de la cámara = un análisis. Clásico: al ritmo de la pantalla, como antes.
-  const scheduler = createFrameScheduler(video, { forceAnimationFrame: classic });
+  // Un cuadro de la cámara = un análisis (D-038): antes se analizaba al ritmo de la pantalla.
+  const scheduler = createFrameScheduler(video);
 
   const tick = () => {
     if (stopped || document.hidden) return;
@@ -106,7 +94,7 @@ export async function startCameraSession(
       const points = extracted.overlay.dominant;
       const features = extracted.features ? Array.from(extracted.features) : null;
       let detected: Prediction | null = null;
-      if (features) detected = smoother.push(model.classify(features), classic ? undefined : timestamp);
+      if (features) detected = smoother.push(model.classify(features), timestamp);
       else if (!points) smoother.reset();
       const stats = meter.tick(startedAt, performance.now() - startedAt);
       onFrame({ points, features, detected, stats });
@@ -124,7 +112,6 @@ export async function startCameraSession(
 
   return {
     classifier: model,
-    mode,
     stop() {
       if (stopped) return;
       stopped = true;

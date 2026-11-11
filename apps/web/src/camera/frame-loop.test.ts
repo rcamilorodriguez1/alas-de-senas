@@ -1,4 +1,4 @@
-// Bucle por cuadro (prueba de optimización D-038): solo se procesa cuando la cámara entrega un cuadro nuevo.
+// Bucle por cuadro (D-038): solo se procesa cuando la cámara entrega un cuadro nuevo.
 import { describe, expect, it, vi } from "vitest";
 import { createFrameScheduler, FpsMeter, type VideoFrameSource } from "./frame-loop";
 
@@ -6,7 +6,10 @@ describe("createFrameScheduler", () => {
   it("usa requestVideoFrameCallback si el navegador lo tiene", () => {
     const requestVideoFrameCallback = vi.fn(() => 7);
     const cancelVideoFrameCallback = vi.fn();
-    const video: VideoFrameSource = { requestVideoFrameCallback, cancelVideoFrameCallback };
+    const video: VideoFrameSource = {
+      requestVideoFrameCallback,
+      cancelVideoFrameCallback,
+    };
     const scheduler = createFrameScheduler(video);
     expect(scheduler.source).toBe("video");
     const callback = vi.fn();
@@ -39,14 +42,6 @@ describe("createFrameScheduler", () => {
     expect(caf).toHaveBeenCalledWith(3);
     raf.mockRestore();
     caf.mockRestore();
-  });
-
-  it("modo clásico: fuerza requestAnimationFrame aunque exista requestVideoFrameCallback", () => {
-    const video = {
-      requestVideoFrameCallback: vi.fn(),
-      cancelVideoFrameCallback: vi.fn(),
-    };
-    expect(createFrameScheduler(video, { forceAnimationFrame: true }).source).toBe("animation");
   });
 
   it("cancelar sin nada pendiente no falla", () => {
