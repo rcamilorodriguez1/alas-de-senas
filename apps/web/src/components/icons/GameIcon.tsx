@@ -1,7 +1,8 @@
-// Iconos de la racha (llama) y el néctar (flor): reemplazan a los emojis 🔥 y 🌸, que cambiaban de
-// aspecto según el sistema operativo. Son decorativos: el texto de al lado ya dice qué son.
+// Iconos de la racha (llama), el néctar (flor) y las vidas (corazón): reemplazan a los emojis
+// 🔥, 🌸 y ❤️, que cambiaban de aspecto según el sistema operativo. Son decorativos: el texto de al lado ya dice qué son.
 import nectarUrl from "../../assets/icons/nectar.png";
 import streakUrl from "../../assets/icons/racha.png";
+import heartUrl from "../../assets/icons/vida.png";
 
 interface IconProps {
   /** Tamaño en píxeles (ancho = alto). */
@@ -30,4 +31,8 @@ export function StreakIcon(props: IconProps) {
 
 export function NectarIcon(props: IconProps) {
   return <GameIcon src={nectarUrl} name="nectar" {...props} />;
+}
+
+export function HeartIcon(props: IconProps) {
+  return <GameIcon src={heartUrl} name="vida" {...props} />;
 }

@@ -6,7 +6,7 @@ import { ApiError } from "../../lib/api";
 import { useSessionStore } from "../../lib/session-store";
 import { useReviewQueue } from "../review/review-api";
 import { buyStreakFreeze, statsKey, streakLabel, useCountdown, useStats } from "./gamification-api";
-import { NectarIcon, StreakIcon } from "../../components/icons/GameIcon";
+import { HeartIcon, NectarIcon, StreakIcon } from "../../components/icons/GameIcon";
 
 const MAX_FREEZES = 2;
 
@@ -122,8 +122,8 @@ export function StatsPanel() {
       )}
       {hearts.enabled && (
         <div>
-          <p className="font-semibold">
-            ❤️ {hearts.current} de {hearts.max}
+          <p className="flex items-center gap-2 font-semibold">
+            <HeartIcon size={28} /> {hearts.current} de {hearts.max}
           </p>
           {countdown && <p className="text-sm text-[#45606A]">Próxima vida en {countdown}</p>}
         </div>

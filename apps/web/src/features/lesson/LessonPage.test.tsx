@@ -120,7 +120,7 @@ describe("LessonPage — encabezado (R4.1, §9.3)", () => {
     expect(screen.queryByLabelText(/^Vidas:/)).not.toBeInTheDocument();
   });
 
-  it("en Reconoce muestra «❤️ 5» con aria-label «Vidas: 5»", async () => {
+  it("en Reconoce muestra el corazón y «5» con aria-label «Vidas: 5»", async () => {
     const fixture = lessonFixture(LESSON_INFO.L2, [
       observe("M1-N1-L2-E01", 1, 0, "hola"),
       videoToMeaning("M1-N1-L2-E02", 2, 0, "hola", ["gracias", "buenos días", "hasta luego"]),
@@ -131,7 +131,8 @@ describe("LessonPage — encabezado (R4.1, §9.3)", () => {
 
     expect(screen.getByText(containingText("MÓDULO 1 · NODO 1 — LECCIÓN 2 · RECONOCE"))).toBeInTheDocument();
     const hearts = screen.getByLabelText("Vidas: 5");
-    expect(hearts).toHaveTextContent(/❤️\s*5/);
+    expect(hearts).toHaveTextContent(/^\s*5\s*$/);
+    expect(hearts.querySelector('img[data-icon="vida"]')).not.toBeNull();
     expect(screen.queryByText(containingText("Sin vidas en juego"))).not.toBeInTheDocument();
     expect(screen.getByText(containingText("Seña 1 de 1"))).toBeInTheDocument();
   });

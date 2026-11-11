@@ -16,7 +16,7 @@ import { useSessionStore } from "../../lib/session-store";
 import { streakLabel, useStats } from "../../features/gamification/gamification-api";
 import { AvatarImage } from "../../features/profile/AvatarImage";
 import { TomiSvg } from "../mascot/Tomi";
-import { NectarIcon, StreakIcon } from "../icons/GameIcon";
+import { HeartIcon, NectarIcon, StreakIcon } from "../icons/GameIcon";
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/aprender", label: "Aprender", icon: Home },
@@ -96,7 +96,9 @@ export function AppLayout({ children, aside }: { children: ReactNode; aside?: Re
                 <NectarIcon size={24} /> {stats.nectar}
               </span>
               {stats.hearts.enabled && (
-                <span data-testid="hearts" aria-label={`Vidas: ${stats.hearts.current}`}>❤️ {stats.hearts.current}</span>
+                <span data-testid="hearts" aria-label={`Vidas: ${stats.hearts.current}`} className="inline-flex items-center gap-1">
+                  <HeartIcon size={24} /> {stats.hearts.current}
+                </span>
               )}
             </div>
           )}

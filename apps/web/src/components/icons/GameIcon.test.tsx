@@ -1,7 +1,7 @@
-// Iconos de la racha y el néctar (reemplazan a los emojis 🔥 y 🌸).
+// Iconos de la racha, el néctar y las vidas (reemplazan a los emojis 🔥, 🌸 y ❤️).
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { NectarIcon, StreakIcon } from "./GameIcon";
+import { HeartIcon, NectarIcon, StreakIcon } from "./GameIcon";
 
 describe("iconos del juego", () => {
   it("la racha es una imagen decorativa: el texto de al lado ya dice «racha»", () => {
@@ -18,6 +18,13 @@ describe("iconos del juego", () => {
     const image = container.querySelector("img");
     expect(image?.getAttribute("alt")).toBe("");
     expect(image?.dataset.icon).toBe("nectar");
+  });
+
+  it("la vida es una imagen decorativa", () => {
+    const { container } = render(<HeartIcon />);
+    const image = container.querySelector("img");
+    expect(image?.getAttribute("alt")).toBe("");
+    expect(image?.dataset.icon).toBe("vida");
   });
 
   it("tiene ancho y alto fijos para que el texto no salte al cargar", () => {
