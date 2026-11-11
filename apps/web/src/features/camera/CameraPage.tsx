@@ -22,6 +22,7 @@ import { StatsPanel } from "../gamification/StatsPanel";
 import { GesturePractice } from "./GesturePractice";
 
 const REPORT_EVERY_MS = 10_000; // el servidor tampoco cuenta la misma seña antes de 10 s
+const STATS_EVERY_MS = 500; // el contador de FPS se actualiza 2 veces por segundo (D-038)
 
 /** Solo números al servidor (R8.3): la seña, si fue correcta y la confianza. */function reportRecognition(signId: string, confidence: number) {
   const body: components["schemas"]["RecognitionIn"] = { signId, correct: true, confidence };
@@ -149,6 +150,13 @@ function AlphabetCamera() {
   const mounted = useRef(true);
   const lastShown = useRef("");
   const [statsText, setStatsText] = useState<string | null>(null);
+  // El contador solo existe para quien administra y se actualiza 2 veces por segundo: si cambiara
+  // en cada cuadro, la página se redibujaría 30 veces por segundo (justo lo que D-038 quiere evitar).
+  const showStats = useRef(isAdmin);
+  const statsShownAt = useRef(-Infinity);
+  useEffect(() => {
+    showStats.current = isAdmin;
+  }, [isAdmin]);
 
   // Cada seña detectada suma para «Ojo de colibrí» (máximo una vez cada 10 s).
   useEffect(() => {
@@ -167,6 +175,7 @@ function AlphabetCamera() {
     setDetected(null);
     setHandVisible(false);
     setStatsText(null);
+    statsShownAt.current = -Infinity;
   }, []);
 
   // R8.5: al salir de la pantalla la cámara se apaga (también si aún se estaba encendiendo).
@@ -186,8 +195,11 @@ function AlphabetCamera() {
       const started = await startCameraSession(video.current, ({ points, detected: found, stats }) => {
         if (canvas.current) drawHand(canvas.current, points);
         setHandVisible(points !== null);
-        // React descarta el cambio si el texto es igual: solo re-renderiza cuando cambia el número.
-        if (stats) setStatsText(statsLabel(stats));
+        const now = performance.now();
+        if (stats && showStats.current && now - statsShownAt.current >= STATS_EVERY_MS) {
+          statsShownAt.current = now;
+          setStatsText(statsLabel(stats));
+        }
         // Solo re-renderiza si cambia la etiqueta o el porcentaje mostrado (no 60 veces por segundo).
         const key = found ? `${found.label}:${Math.floor(found.confidence * 100)}` : "";
         if (key !== lastShown.current) {

@@ -120,6 +120,29 @@ describe("Smoother con tiempo (D-038: reconocer igual de rápido en equipos lent
     expect(smoother.push(a, 200 + WINDOW_MS + 1)).toBeNull();
   });
 
+  it("a 3 FPS también reconoce: la ventana se adapta al ritmo de la cámara", () => {
+    const smoother = new Smoother();
+    expect(smoother.push(a, 0)).toBeNull();
+    expect(smoother.push(a, 333)).toBeNull();
+    expect(smoother.push(a, 666)?.label).toBe("letra-a"); // 3 votos estables durante 666 ms
+  });
+
+  it("a 1,5 FPS también reconoce, con la ventana máxima de 2 s", () => {
+    const smoother = new Smoother();
+    expect(smoother.push(a, 0)).toBeNull();
+    expect(smoother.push(a, 650)).toBeNull();
+    expect(smoother.push(a, 1300)?.label).toBe("letra-a");
+  });
+
+  it("una pausa aislada (cambiar de pestaña) no hace contar votos viejos", () => {
+    const smoother = new Smoother();
+    smoother.push(a, 0);
+    smoother.push(a, 33);
+    smoother.push(a, 66);
+    // Intervalo típico 33 ms: tras 1,5 s sin cuadros, los votos anteriores ya no cuentan.
+    expect(smoother.push(a, 1566)).toBeNull();
+  });
+
   it("sigue respetando el umbral de 0,70 (R8.2)", () => {
     const smoother = new Smoother();
     const low = { label: "letra-a", confidence: THRESHOLD - 0.01 };

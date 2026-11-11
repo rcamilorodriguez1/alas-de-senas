@@ -10,12 +10,14 @@ export const SMOOTHING_WINDOW = 10;
 /** Votos mínimos de la misma etiqueta en la ventana: un cuadro aislado nunca basta (B37). */
 export const MIN_VOTES = 6;
 export const MODEL_DIR = "/models/lsc-alfabeto";
-/** tiempo que la seña debe mantenerse estable cuando hay pocos FPS. */
+/** Tiempo que la seña debe mantenerse estable cuando hay pocos FPS (D-038). */
 export const STABLE_MS = 250;
-/** votos mínimos para aceptar por tiempo (nunca un cuadro aislado, B37). */
+/** Votos mínimos para aceptar por tiempo (nunca un cuadro aislado, B37). */
 export const MIN_STABLE_VOTES = 3;
-/** los resultados más viejos que esto salen de la ventana. */
+/** Los resultados más viejos que esto salen de la ventana (con cámaras lentas se amplía, D-038). */
 export const WINDOW_MS = 600;
+/** Ventana máxima con pocos FPS: 4 cuadros del ritmo típico, hasta 2 s. */
+export const MAX_WINDOW_MS = 2000;
 
 export interface Prediction {
   label: string;
@@ -49,6 +51,8 @@ export class TfjsClassifier implements Classifier {
     private readonly tf: typeof tfType,
     private readonly model: tfType.LayersModel,
     readonly labels: readonly string[],
+    /** D-041: pares que se suman (B/4, 2/V, 3/W). Vacío = el máximo de siempre. */
+    private readonly equivalences: Equivalences = new Map(),
   ) {}
 
   classify(features: readonly number[]): Prediction {
@@ -56,9 +60,8 @@ export class TfjsClassifier implements Classifier {
       const output = this.model.predict(this.tf.tensor2d([Array.from(features)])) as tfType.Tensor;
       return output.dataSync();
     });
-    let best = 0;
-    for (let i = 1; i < scores.length; i += 1) if (scores[i] > scores[best]) best = i;
-    return { label: this.labels[best] ?? NONE, confidence: scores[best] ?? 0 };
+    const best = bestWithEquivalents(scores, this.labels, this.equivalences);
+    return { label: best.label || NONE, confidence: best.confidence };
   }
 
   dispose(): void {
@@ -66,7 +69,7 @@ export class TfjsClassifier implements Classifier {
   }
 }
 
-/** el mismo modelo calculado en JavaScript, sin tfjs en cada cuadro. */
+/** El mismo modelo calculado en JavaScript, sin tfjs en cada cuadro (D-038). */
 export class DenseClassifier implements Classifier {
   readonly simulated = false;
   constructor(
@@ -101,12 +104,17 @@ export async function loadClassifier(fetchFn: typeof fetch = fetch): Promise<Cla
       model.dispose();
       return new MockClassifier();
     }
-    const network = DenseNetwork.fromModel(model);
+    let network: DenseNetwork | null = null;
+    try {
+      network = DenseNetwork.fromModel(model);
+    } catch {
+      network = null; // p. ej. contexto WebGL perdido al leer los pesos: se sigue con tfjs
+    }
     if (network && network.inputSize === 63) {
       model.dispose(); // los pesos ya están copiados: tfjs no queda ocupando memoria
       return new DenseClassifier(network, labels as string[], CAMERA_EQUIVALENCES);
     }
-    return new TfjsClassifier(tf, model, labels as string[]);
+    return new TfjsClassifier(tf, model, labels as string[], CAMERA_EQUIVALENCES);
   } catch {
     return new MockClassifier();
   }
@@ -126,7 +134,8 @@ export class Smoother {
     this.window.push({ ...prediction, at: nowMs });
     if (this.window.length > SMOOTHING_WINDOW) this.window.shift();
     if (nowMs !== undefined) {
-      while (this.window.length > 0 && (this.window[0].at ?? nowMs) < nowMs - WINDOW_MS) this.window.shift();
+      const span = this.windowSpan();
+      while (this.window.length > 0 && (this.window[0].at ?? nowMs) < nowMs - span) this.window.shift();
     }
     const counts = new Map<string, { count: number; confidence: number }>();
     for (const item of this.window) {
@@ -155,6 +164,23 @@ export class Smoother {
 
   reset(): void {
     this.window.length = 0;
+  }
+
+  /**
+   * Duración de la ventana: 600 ms, o 4 cuadros del ritmo típico si la cámara va lenta (hasta 2 s).
+   * Se usa la mediana de los intervalos: una pausa aislada (cambiar de pestaña) no la amplía.
+   */
+  private windowSpan(): number {
+    const intervals: number[] = [];
+    for (let i = 1; i < this.window.length; i += 1) {
+      const previous = this.window[i - 1].at;
+      const current = this.window[i].at;
+      if (previous !== undefined && current !== undefined) intervals.push(current - previous);
+    }
+    if (intervals.length === 0) return WINDOW_MS;
+    intervals.sort((x, y) => x - y);
+    const typical = intervals[Math.floor(intervals.length / 2)];
+    return Math.min(MAX_WINDOW_MS, Math.max(WINDOW_MS, typical * (MIN_STABLE_VOTES + 1)));
   }
 
   /** Votos suficientes, mayoría y la misma seña durante `STABLE_MS` (B37: nunca un cuadro aislado). */

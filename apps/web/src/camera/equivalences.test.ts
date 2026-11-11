@@ -42,6 +42,14 @@ describe("equivalencias de la cámara (D-027)", () => {
   describe("bestWithEquivalents: suma las probabilidades de cada par (D-041)", () => {
     const labels = ["NINGUNA", "letra-a", "letra-w", "numero-3"];
 
+    it("la suma nunca pasa de 1 aunque el redondeo de float32 dé 1,00000003 (el servidor exige ≤ 1)", () => {
+      const scores = Float32Array.from([0, 0, 0.6, 0.4]);
+      expect(scores[2] + scores[3]).toBeGreaterThan(1); // el problema existe
+      const best = bestWithEquivalents(scores, labels, CAMERA_EQUIVALENCES);
+      expect(best.confidence).toBeLessThanOrEqual(1);
+      expect(best.confidence).toBeCloseTo(1, 6);
+    });
+
     it("3 (0,45) y W (0,40) juntas pasan el umbral aunque ninguna lo pase sola", () => {
       const best = bestWithEquivalents(Float32Array.from([0.05, 0.1, 0.4, 0.45]), labels, CAMERA_EQUIVALENCES);
       expect(best.confidence).toBeCloseTo(0.85, 5);

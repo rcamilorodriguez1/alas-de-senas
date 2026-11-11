@@ -422,3 +422,80 @@
   - Las cuentas anteriores quedan en NULL: aceptaron la casilla, pero no se registró cuándo, y no se inventa una fecha.
 - Consecuencias: tipos de la API regenerados; pruebas en `test_auth.py`, `test_account.py` y `tests/unit/test_privacy.py`. Si cambia el texto de la política, hay que cambiar la versión en los dos lugares. Si algún día se pide volver a aceptar una política nueva, se pasa a la opción 2.
 - Secciones afectadas de la especificación: amplía §5 (modelo `User`) y §11 (privacidad, Ley 1581). No contradice nada.
+
+## D-038 · Optimizar la cámara beta para señas estáticas · 09/11/2026 (integrada el 11/11/2026)
+- Estado: **implementada e integrada en `main`** por decisión del usuario (11/11/2026). Ver «Decisión» al final de esta entrada.
+- Contexto / problema: la cámara beta tarda en reconocer las señas estáticas y se ve con pocos FPS. Quien la usa siente que va lenta.
+- Objetivo: reconocer las señas estáticas más rápido y subir los FPS, **sin afectar el resto del proyecto**: mismo modelo y contrato de clasificación, mismas pruebas en verde y el Grupo 10B intacto.
+- Primer paso propuesto: **medir antes de cambiar.** Hay que saber en qué se va el tiempo de cada cuadro (captura, `HandLandmarker`, normalización, clasificador de TensorFlow.js o dibujo en pantalla) y probarlo en 2 portátiles, uno de gama media. La meta de referencia es ≥ 12 FPS (anexo, H7 y 10B.5).
+- Opciones a evaluar (sin decidir):
+  1. Procesar en un *Web Worker* para no bloquear el dibujo de la interfaz.
+  2. Bajar la resolución de entrada solo para la detección (`getUserMedia` 640×480 o menos) y saltar cuadros si el anterior sigue en proceso.
+  3. Backend WebGL/WebGPU de TensorFlow.js y calentar el modelo al abrir la cámara.
+  4. Para señas estáticas: decidir con pocos cuadros estables (umbral + ventana corta) en lugar de esperar una secuencia larga.
+  5. Degradación escalonada si los FPS caen (anexo A.8.1).
+- Restricciones: `@tensorflow/tfjs` exacto 4.22.0; no cambiar `ml/fixtures/` ni los nombres de los archivos del conversor; textos en español de Colombia.
+- Secciones afectadas de la especificación: por definir. Probablemente §cámara (HandLandmarker) y anexo A.8.1, para ampliarlos, sin contradecirlos.
+- Decisión (11/11/2026), solo para la cámara del alfabeto (`hand-v1`); la de gestos del 10B no cambia:
+  1. **Un cuadro de la cámara = un análisis:** `requestVideoFrameCallback` en `camera/frame-loop.ts`, con respaldo a `requestAnimationFrame` si el navegador no lo tiene. Antes MediaPipe analizaba a veces dos veces la misma imagen.
+  2. **Modelo calculado en JavaScript** (`camera/dense.ts`): copia los pesos del modelo denso y lo calcula sin tfjs en cada cuadro. Misma salida que TensorFlow.js con el modelo real (diferencia < 1e-5, `dense.test.ts`). **No** cambia el backend global de tfjs, que sigue usando el modelo de gestos en la misma página. Si el modelo no es solo de capas densas, se usa tfjs como antes.
+  3. **Reconocer por tiempo además de por cuadros:** el `Smoother` también acepta la seña si se mantiene 250 ms con al menos 3 votos y mayoría (ventana de 600 ms). A 30 FPS se comporta igual que antes (6 de 10). B37 se mantiene: nunca basta un cuadro aislado.
+  4. Dibujo de la mano en un solo trazo.
+  5. **Contador de FPS y ms por cuadro**, visible solo para quien administra.
+- Pendiente: medir en vivo en 2 portátiles (meta ≥ 12 FPS) y anotar las cifras aquí.
+
+## D-039 · PROPUESTA (pendiente) · Animaciones tipo GIF para módulos, diccionario y repaso · 09/11/2026
+- Estado: **idea registrada, sin implementar.** No se toca código hasta que el equipo la apruebe.
+- Contexto / problema: grabar un video real por seña limita cuántas señas se pueden mostrar, y los videos ocupan espacio en el repositorio y en el despliegue.
+- Propuesta: en **módulos, diccionario y repaso**, mostrar las señas como animaciones en bucle (tipo GIF). Eso amplía el repertorio y consume menos espacio. **Para entrenar la cámara se siguen usando videos de personas reales** (`ml/` y `video-extract.ts` no cambian).
+- Advertencia técnica, a revisar antes de decidir: un GIF suele pesar **más** que un MP4 H.264 de la misma duración, por limitaciones del formato (256 colores y compresión débil). Para ahorrar espacio de verdad conviene evaluar:
+  1. **MP4 corto en bucle** (`<video autoplay muted loop playsinline>`): se ve igual que un GIF y pesa menos. Ya encaja con D7/D19; bastaría bajar la resolución o subir el CRF.
+  2. **WebP o AVIF animado:** formatos de imagen animada mucho más livianos que el GIF.
+  3. **GIF clásico:** el más compatible, pero el más pesado.
+- Puntos por resolver:
+  - origen y **licencia** de las animaciones si no son propias;
+  - validación de cada seña con el intérprete (`docs/validacion-interprete.md`);
+  - cambios en `alas content videos` y en `media/manifest.json` (nuevo `source`);
+  - accesibilidad: con «movimiento reducido» (R10.5) la animación debe poder pausarse.
+- Secciones afectadas de la especificación: **cambiaría D7 y D19** (formato de los videos) y el §6.4 (procesamiento de contenido). La especificación está protegida: requiere aprobación del equipo.
+
+## D-040 · Cámara: 2 = V y 3 = W como señas equivalentes · 10/11/2026
+- Contexto: el usuario notó que la cámara del alfabeto a veces muestra «V» al hacer el 2 y «W» al hacer el 3, y que el 1 a veces se reconoce y a veces no.
+- Evidencia (modelo publicado sobre su propio dataset, LSC70 + LSC-54; en vivo es algo peor):
+
+  | Seña | Acierto | Con confianza ≥ 0,70 | Confusión principal |
+  |---|---|---|---|
+  | 3 | 56 % | 36 % | W 12,5 % (62 de las «W» son 3) |
+  | 2 | 65 % | 46 % | NINGUNA 8,6 %, R 6,4 %, V 4,9 % (24 de las «V» son 2) |
+  | 1 | 82 % | 73 % | sin una confusión dominante (NINGUNA 4 %) |
+  | B (referencia, D-027) | 81 % | 67 % | 4 en el 12,2 % |
+
+- Decisión: mismo mecanismo que B = 4 (D-027). Se añaden `numero-2,letra-v` y `numero-3,letra-w` a `content/camera-equivalences.csv`. En una lección cuenta cualquiera del par; en `/camara` se muestran las dos («2 / V», «3 / W»). No hace falta reentrenar.
+- El 1 **no** recibe un par: no se confunde con otra seña, sino que su confianza queda cerca del umbral de 0,70. La solución es reentrenar con más muestras de los números (grabar al equipo en `/admin/dataset`), como ya pedía D-024.
+- Pendiente con el intérprete: confirmar los dos pares. 2 y V tienen la misma forma de mano. El 3 y la W pueden diferir en LSC según el dedo (pulgar o anular): si el intérprete dice que no son iguales, se quita la fila y se reentrena con más datos del 3.
+- Secciones afectadas de la especificación: ninguna; amplía D-027.
+
+## D-041 · Cámara: sumar las probabilidades de las señas equivalentes · 10/11/2026
+- Contexto: el usuario pidió mejorar el reconocimiento con los datos que ya hay, sin grabar nuevas muestras.
+- Experimento 1, reentrenar (validación cruzada por persona, 5 pliegues, 40 épocas, misma semilla; con TensorFlow.js 4.22.0 en Node, porque TensorFlow no instala en Windows, D-020):
+
+  | Configuración | Acierto | Pasan 0,70 | Seña equivocada | NINGUNA como seña |
+  |---|---|---|---|---|
+  | A · como hoy | 82,3 % | 75,7 % | 7,2 % | 3,4 % |
+  | B · clases equilibradas | 81,5 % | 76,2 % | 8,0 % | 7,4 % |
+  | C · aumento (rotación ±20°, ruido) | 82,4 % | 74,6 % | 6,7 % | 2,9 % |
+  | D · B + C | 80,9 % | 74,1 % | 7,4 % | 5,5 % |
+
+  Ninguna mejora de forma clara: las diferencias son de alrededor de 1 punto. B duplica las falsas alarmas y C empeora el 2. **El modelo publicado se queda.** El límite está en los datos: 2, 3 y NINGUNA solo los hicieron 18 personas (LSC-54).
+- Experimento 2, sin reentrenar: sumar las probabilidades de cada par de `camera-equivalences.csv` antes de aplicar el umbral. Medido con el modelo publicado sobre su dataset (cifras absolutas optimistas; la comparación es justa):
+  - pasan 0,70: 3 de 40,8 % a 60,0 %; B de 74,1 % a 88,8 %; 2 de 48,0 % a 58,3 %; V, W y 4 suben entre 7 y 10 puntos;
+  - total de 76,1 % a 78,6 %; seña equivocada de 3,6 % a 3,7 %; NINGUNA como seña de 2,9 % a 3,8 %.
+- Decisión (integrada en `main` el 11/11/2026 por decisión del usuario): `bestWithEquivalents` en `equivalences.ts`. El `DenseClassifier` suma cada par y lo devuelve siempre con la misma etiqueta (la primera en orden alfabético), para que los votos del suavizado no se repartan entre las dos. El umbral sigue en 0,70 (R8.2), pero se aplica a la suma del par.
+- Consecuencias: en `/camara` se ve «W / 3» en lugar de «3 / W». El registro de reconocimientos (Ojo de colibrí) guarda la etiqueta del par.
+- Secciones afectadas de la especificación: interpretación de R8.2 (la confianza es la del par cuando hay equivalencias). La especificación está protegida: **el equipo debe ratificar esta interpretación**.
+
+## D-042 · Iconos propios para la racha, el néctar y las vidas · 11/11/2026
+- Contexto: el usuario entregó tres ilustraciones (llama, flor y corazón) para reemplazar los emojis 🔥, 🌸 y ❤️, que se ven distintos en cada sistema operativo.
+- Decisión: PNG de 128 px con fondo transparente en `apps/web/src/assets/icons/` (`racha.png`, `nectar.png`, `vida.png`), sacados de las ilustraciones originales sin el fondo crema ni los destellos. Se muestran con `StreakIcon`, `NectarIcon` y `HeartIcon` (`components/icons/GameIcon.tsx`): son decorativos (`alt=""`) porque el texto de al lado ya dice qué son, y los `aria-label` («Racha: 5 días», «Vidas: 4») no cambian. Vite les agrega un hash al nombre (12–16 KB cada uno).
+- Dónde: barra superior, panel «Tu día», celebración de la lección, resultado del repaso y contador de vidas de la lección (conserva el latido de D-036).
+- Secciones afectadas de la especificación: ninguna contradicha. Ajusta lo visual de §9.5 y de los mockups.

@@ -105,7 +105,11 @@ export async function startCameraSession(
   const onVisibility = () => {
     scheduler.cancel();
     meter.reset();
-    if (!document.hidden && !stopped) scheduler.request(tick);
+    if (document.hidden || stopped) return;
+    // `requestVideoFrameCallback` solo avisa si el video avanza: si el navegador lo pausó mientras
+    // la pestaña estaba oculta, se reanuda para que el bucle no quede congelado.
+    if (video.paused) void video.play().catch(() => undefined);
+    scheduler.request(tick);
   };
   document.addEventListener("visibilitychange", onVisibility);
   scheduler.request(tick);

@@ -246,3 +246,16 @@ Para retomar (en este orden):
   - ~~`--forwarded-allow-ips='*'`~~ **Resuelto (D-035):** la IP del límite de inicio de sesión y de registro sale del valor que agrega el proxy de confianza (`TRUSTED_PROXY_HOPS`), nunca del que escribe el cliente; la imagen arranca con `--no-proxy-headers`. Cambia el comando de §17.1: **el equipo debe aprobarlo**. Al desplegar, comprobar en Render que dos personas distintas reciben IP distintas.
   - **`alas e2e` y `alas check`:** no deben correr a la vez, porque comparten `alas_test`.
   - **Docker:** la red dentro del contenedor cortó `npm ci` una vez; se agregaron reintentos.
+
+## Mejoras posteriores al cierre (11/11/2026)
+- **Cámara del alfabeto** (D-038, D-040, D-041), integrada desde la rama `prueba/optimizacion-camara`. El punto de guardado anterior es la etiqueta `antes-prueba-camara`.
+  - Un análisis por cuadro de la cámara (`requestVideoFrameCallback`), modelo denso calculado en JavaScript y reconocimiento por tiempo (250 ms estables). Contador de FPS solo para quien administra.
+  - 2 = V y 3 = W como señas equivalentes, igual que B = 4.
+  - Suma de probabilidades de los pares equivalentes: con el modelo publicado, el 3 pasa el umbral del 41 % al 60 % de las veces, la B del 74 % al 89 % y el 2 del 48 % al 58 %, sin más errores.
+  - Reentrenar con aumento de datos o con clases equilibradas **no** mejoró (validación cruzada por persona): el modelo publicado se queda.
+- **Iconos** propios para la racha, el néctar y las vidas (D-042), en lugar de los emojis.
+- Verificación manual pendiente (usuario):
+  - En `/camara` con una cuenta de administrador: anotar FPS y ms por cuadro en 2 portátiles (meta ≥ 12 FPS); el 2 debe mostrar «V / 2» y el 3 «W / 3».
+  - Con una cuenta de estudiante: no debe aparecer el contador de FPS.
+  - Barra superior, panel «Tu día» y una lección: la llama, la flor y el corazón se ven bien, y el corazón late al perder una vida.
+- Pendiente del equipo: ratificar la interpretación de R8.2 de D-041; el intérprete confirma 2 = V y 3 = W.

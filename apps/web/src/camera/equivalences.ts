@@ -55,7 +55,8 @@ export function bestWithEquivalents(
       confidence = total;
     }
   }
-  return { label, confidence: Math.max(0, confidence) };
+  // La suma de dos float32 puede dar 1,00000003: el servidor exige 0 ≤ confidence ≤ 1.
+  return { label, confidence: Math.min(1, Math.max(0, confidence)) };
 }
 
 function canonical(label: string, equivalences: Equivalences): string {
