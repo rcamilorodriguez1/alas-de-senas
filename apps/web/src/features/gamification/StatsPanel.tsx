@@ -6,6 +6,7 @@ import { ApiError } from "../../lib/api";
 import { useSessionStore } from "../../lib/session-store";
 import { useReviewQueue } from "../review/review-api";
 import { buyStreakFreeze, statsKey, streakLabel, useCountdown, useStats } from "./gamification-api";
+import { HeartIcon, NectarIcon, StreakIcon } from "../../components/icons/GameIcon";
 
 const MAX_FREEZES = 2;
 
@@ -69,7 +70,9 @@ export function StatsPanel() {
         message={streak.atRisk ? "Tu racha está en riesgo: practica hoy" : greeting}
       />
       <div>
-        <p className="font-display text-lg font-extrabold">🔥 {streakLabel(streak.current)} de racha</p>
+        <p className="flex items-center gap-2 font-display text-lg font-extrabold">
+          <StreakIcon size={28} /> {streakLabel(streak.current)} de racha
+        </p>
         <p className="text-sm text-[#45606A]">
           Protectores: {streak.freezesAvailable} de {MAX_FREEZES}
         </p>
@@ -105,7 +108,9 @@ export function StatsPanel() {
           <div className="h-full bg-[#10B981]" style={{ width: `${percent}%` }} />
         </div>
       </div>
-      <p className="font-semibold">🌸 {stats.nectar} de néctar</p>
+      <p className="flex items-center gap-2 font-semibold">
+        <NectarIcon size={28} /> {stats.nectar} de néctar
+      </p>
       {queue && queue.due > 0 && (
         <div className="rounded-xl bg-emerald-50 p-3">
           <p className="font-semibold">Señas por repasar: {queue.due}</p>
@@ -117,8 +122,8 @@ export function StatsPanel() {
       )}
       {hearts.enabled && (
         <div>
-          <p className="font-semibold">
-            ❤️ {hearts.current} de {hearts.max}
+          <p className="flex items-center gap-2 font-semibold">
+            <HeartIcon size={28} /> {hearts.current} de {hearts.max}
           </p>
           {countdown && <p className="text-sm text-[#45606A]">Próxima vida en {countdown}</p>}
         </div>

@@ -171,7 +171,7 @@ describe("SelectMeaningActivity — VIDEO_TO_MEANING", () => {
     expect(options()[correct]).not.toHaveTextContent("Incorrecta");
     expect(tomiMessage("Casi. Mira de nuevo la seña.")).toBeInTheDocument();
     expect(screen.queryByText(/¡Exacto!/)).not.toBeInTheDocument();
-    await waitFor(() => expect(screen.getByLabelText("Vidas: 4")).toHaveTextContent(/❤️\s*4/));
+    await waitFor(() => expect(screen.getByLabelText("Vidas: 4")).toHaveTextContent(/^\s*4\s*$/));
   });
 
   it("tras responder, «Continuar» pasa al siguiente ejercicio", async () => {

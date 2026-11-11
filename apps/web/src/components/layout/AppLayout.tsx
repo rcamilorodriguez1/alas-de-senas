@@ -16,6 +16,7 @@ import { useSessionStore } from "../../lib/session-store";
 import { streakLabel, useStats } from "../../features/gamification/gamification-api";
 import { AvatarImage } from "../../features/profile/AvatarImage";
 import { TomiSvg } from "../mascot/Tomi";
+import { HeartIcon, NectarIcon, StreakIcon } from "../icons/GameIcon";
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/aprender", label: "Aprender", icon: Home },
@@ -88,12 +89,16 @@ export function AppLayout({ children, aside }: { children: ReactNode; aside?: Re
         <header className="flex items-center justify-end gap-4 border-b border-slate-200 bg-white px-6 py-3">
           {stats && (
             <div className="mr-auto flex items-center gap-4 font-semibold">
-              <span aria-label={`Racha: ${streakLabel(stats.streak.current)}`}>
-                🔥 {stats.streak.current}
+              <span aria-label={`Racha: ${streakLabel(stats.streak.current)}`} className="inline-flex items-center gap-1">
+                <StreakIcon size={24} /> {stats.streak.current}
               </span>
-              <span aria-label={`Néctar: ${stats.nectar}`}>🌸 {stats.nectar}</span>
+              <span aria-label={`Néctar: ${stats.nectar}`} className="inline-flex items-center gap-1">
+                <NectarIcon size={24} /> {stats.nectar}
+              </span>
               {stats.hearts.enabled && (
-                <span data-testid="hearts" aria-label={`Vidas: ${stats.hearts.current}`}>❤️ {stats.hearts.current}</span>
+                <span data-testid="hearts" aria-label={`Vidas: ${stats.hearts.current}`} className="inline-flex items-center gap-1">
+                  <HeartIcon size={24} /> {stats.hearts.current}
+                </span>
               )}
             </div>
           )}

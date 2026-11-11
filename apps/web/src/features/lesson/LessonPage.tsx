@@ -26,6 +26,7 @@ import {
   type LessonExercise,
   type LessonStart,
 } from "./lesson-api";
+import { HeartIcon } from "../../components/icons/GameIcon";
 
 const ACTIVITIES: { kind: LessonExercise["activity"]; title: string }[] = [
   { kind: "OBSERVE", title: "Actividad 1. Observa la seña" },
@@ -323,9 +324,9 @@ export function LessonPage() {
                 aria-label={`Vidas: ${hearts.current}`}
                 data-testid="hearts"
                 data-heartbeat={heartbeat ? "true" : undefined}
-                className={`inline-block font-semibold ${heartbeat ? "animate-heartbeat" : ""}`}
+                className={`inline-flex items-center gap-1 font-semibold ${heartbeat ? "animate-heartbeat" : ""}`}
               >
-                ❤️ {hearts.current}
+                <HeartIcon size={24} /> {hearts.current}
               </span>
             )
           )}

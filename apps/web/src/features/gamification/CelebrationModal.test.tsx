@@ -121,15 +121,16 @@ describe("CelebrationModal — contenido (R4.9)", () => {
     expect(within(dialog).getByText(containingText(PASSED.mascotMessage))).toBeInTheDocument();
   });
 
-  it("racha extendida: «🔥 Racha: 3 días» y «¡Racha extendida!»", () => {
+  it("racha extendida: «Racha: 3 días» con la llama y «¡Racha extendida!»", () => {
     const { dialog } = renderModal(PASSED);
-    expect(within(dialog).getByText(containingText("🔥 Racha: 3 días"))).toBeInTheDocument();
+    expect(within(dialog).getByText(containingText("Racha: 3 días"))).toBeInTheDocument();
+    expect(dialog.querySelector('img[data-icon="racha"]')).not.toBeNull();
     expect(within(dialog).getByText(containingText("¡Racha extendida!"))).toBeInTheDocument();
   });
 
   it("racha no extendida (segunda lección del día): muestra la racha sin «¡Racha extendida!»", () => {
     const { dialog } = renderModal(FAILED);
-    expect(within(dialog).getByText(containingText("🔥 Racha: 3 días"))).toBeInTheDocument();
+    expect(within(dialog).getByText(containingText("Racha: 3 días"))).toBeInTheDocument();
     expect(within(dialog).queryByText(containingText("¡Racha extendida!"))).not.toBeInTheDocument();
   });
 
