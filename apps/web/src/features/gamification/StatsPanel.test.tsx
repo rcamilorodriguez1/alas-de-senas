@@ -94,23 +94,24 @@ describe("StatsPanel — carga", () => {
 });
 
 describe("StatsPanel — racha (R5.5–R5.8, §7.5)", () => {
-  it("muestra «🔥 5 días de racha»", async () => {
+  it("muestra «5 días de racha» con el icono de la llama", async () => {
     serveStats(makeStats({ streak: { current: 5 } }));
     const panel = await renderPanel();
-    expect(within(panel).getByText(containingText("🔥 5 días de racha"))).toBeInTheDocument();
+    expect(within(panel).getByText(containingText("5 días de racha"))).toBeInTheDocument();
+    expect(panel.querySelector('img[data-icon="racha"]')).not.toBeNull();
   });
 
-  it("en singular: «🔥 1 día de racha»", async () => {
+  it("en singular: «1 día de racha»", async () => {
     serveStats(makeStats({ streak: { current: 1, longest: 1 } }));
     const panel = await renderPanel();
-    expect(within(panel).getByText(containingText("🔥 1 día de racha"))).toBeInTheDocument();
+    expect(within(panel).getByText(containingText("1 día de racha"))).toBeInTheDocument();
     expect(within(panel).queryByText(containingText("1 días"))).not.toBeInTheDocument();
   });
 
-  it("sin racha: «🔥 0 días de racha»", async () => {
+  it("sin racha: «0 días de racha»", async () => {
     serveStats(makeStats({ streak: { current: 0, longest: 0 } }));
     const panel = await renderPanel();
-    expect(within(panel).getByText(containingText("🔥 0 días de racha"))).toBeInTheDocument();
+    expect(within(panel).getByText(containingText("0 días de racha"))).toBeInTheDocument();
   });
 
   it("si la racha está en riesgo avisa «Tu racha está en riesgo: practica hoy»", async () => {
@@ -162,10 +163,11 @@ describe("StatsPanel — meta diaria (R5.11)", () => {
 });
 
 describe("StatsPanel — néctar", () => {
-  it("muestra «🌸 85 de néctar»", async () => {
+  it("muestra «85 de néctar» con el icono de la flor", async () => {
     serveStats(makeStats({ nectar: 85 }));
     const panel = await renderPanel();
-    expect(within(panel).getByText(containingText("🌸 85 de néctar"))).toBeInTheDocument();
+    expect(within(panel).getByText(containingText("85 de néctar"))).toBeInTheDocument();
+    expect(panel.querySelector('img[data-icon="nectar"]')).not.toBeNull();
   });
 });
 
@@ -247,8 +249,8 @@ describe("StatsPanel — protector de racha (R5.9)", () => {
     await user.click(within(panel).getByRole("button", { name: BUY }));
 
     await waitFor(() => expect(within(panel).getByText(containingText("Protectores: 1 de 2"))).toBeInTheDocument());
-    expect(within(panel).getByText(containingText("🌸 35 de néctar"))).toBeInTheDocument();
-    expect(within(panel).queryByText(containingText("🌸 85 de néctar"))).not.toBeInTheDocument();
+    expect(within(panel).getByText(containingText("35 de néctar"))).toBeInTheDocument();
+    expect(within(panel).queryByText(containingText("85 de néctar"))).not.toBeInTheDocument();
     expect(api.to(FREEZE, "POST")).toHaveLength(1);
     expect(bearer(api.to(FREEZE, "POST")[0])).toBe("Bearer t");
     expect(within(panel).queryByRole("alert")).not.toBeInTheDocument();
@@ -270,7 +272,7 @@ describe("StatsPanel — protector de racha (R5.9)", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("No tienes suficiente néctar");
     expect(within(panel).getByText(containingText("Protectores: 0 de 2"))).toBeInTheDocument();
-    expect(within(panel).getByText(containingText("🌸 20 de néctar"))).toBeInTheDocument();
+    expect(within(panel).getByText(containingText("20 de néctar"))).toBeInTheDocument();
   });
 });
 

@@ -19,6 +19,7 @@ import {
   type ReviewExercise,
   type ReviewStart,
 } from "./review-api";
+import { StreakIcon } from "../../components/icons/GameIcon";
 
 type Phase =
   | { kind: "idle" }
@@ -87,7 +88,9 @@ export function ReviewPage() {
         <p className="font-semibold">
           {result.correct} de {result.total} correctas
         </p>
-        <p className="font-semibold">🔥 Racha: {streakLabel(result.streak.current)}</p>
+        <p className="flex items-center gap-2 font-semibold">
+          <StreakIcon size={24} /> Racha: {streakLabel(result.streak.current)}
+        </p>
         {result.heartsGained > 0 && <p className="font-semibold">❤️ +1 vida</p>}
         {result.newAchievements.map((achievement) => (
           <p key={achievement.id} className="rounded-xl bg-amber-50 p-3 font-semibold">

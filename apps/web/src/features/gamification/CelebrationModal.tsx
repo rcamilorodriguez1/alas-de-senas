@@ -4,6 +4,7 @@ import { Mascot } from "../../components/mascot/Mascot";
 import { usePrefersReducedMotion } from "../../lib/motion";
 import type { LessonCompletion } from "../lesson/lesson-api";
 import { streakLabel } from "./gamification-api";
+import { StreakIcon } from "../../components/icons/GameIcon";
 
 /** Celebración al terminar una lección (R4.9): puntaje, XP, néctar, racha y logros nuevos. */
 export function CelebrationModal({
@@ -53,7 +54,9 @@ export function CelebrationModal({
           <p className="text-[#047857]">+{result.xpEarned} XP</p>
           <p className="text-[#45606A]">+{result.nectarEarned} de néctar</p>
         </div>
-        <p className="font-semibold">🔥 Racha: {streakLabel(result.streak.current)}</p>
+        <p className="flex items-center gap-2 font-semibold">
+          <StreakIcon size={24} /> Racha: {streakLabel(result.streak.current)}
+        </p>
         {result.streak.extended && (
           <p className="font-bold text-orange-600">
             {result.streak.current === 1 ? "¡Empezaste una racha!" : "¡Racha extendida!"}
