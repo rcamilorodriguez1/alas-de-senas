@@ -71,6 +71,41 @@ describe("/admin/importar", () => {
     expect(await screen.findByText(/3 se importarán/)).toBeInTheDocument();
   });
 
+  it("también acepta una carpeta arrastrada (el navegador no la expande solo)", async () => {
+    renderImport();
+    const zone = await screen.findByTestId("zona-soltar");
+    const folder = {
+      isFile: false,
+      isDirectory: true,
+      createReader: () => {
+        let read = false;
+        return {
+          readEntries: (ok: (entries: unknown[]) => void) => {
+            ok(read ? [] : FILES.map((file) => ({ isFile: true, isDirectory: false, file: (cb: (f: File) => void) => cb(file) })));
+            read = true;
+          },
+        };
+      },
+    };
+    fireEvent.drop(zone, { dataTransfer: { files: [], items: [{ kind: "file", webkitGetAsEntry: () => folder }] } });
+    expect(await screen.findByText(/5 archivos · 3 se importarán/)).toBeInTheDocument();
+  });
+
+  it("si se suelta fuera de la zona, el navegador no abre el video", async () => {
+    renderImport();
+    await screen.findByTestId("zona-soltar");
+    const drop = new Event("drop", { bubbles: true, cancelable: true });
+    window.dispatchEvent(drop);
+    expect(drop.defaultPrevented).toBe(true);
+  });
+
+  it("avisa si lo soltado no trae videos ni fotos", async () => {
+    renderImport();
+    const zone = await screen.findByTestId("zona-soltar");
+    fireEvent.drop(zone, { dataTransfer: { files: [new File(["x"], "notas.txt")] } });
+    expect(await screen.findByText(/No se encontraron videos ni fotos/)).toBeInTheDocument();
+  });
+
   it("si hay una importación sin terminar, avisa y al volver a elegir los archivos continúa donde iba", async () => {
     await store.current?.start({ source: "LSC-54", license: "CC BY-NC 4.0", faceFeatures: false, total: 3 });
     await store.current?.add({ item: "Chao__lsc54-s2-01__1.mp4", sample: null, reason: "Tu mano salió del cuadro" });

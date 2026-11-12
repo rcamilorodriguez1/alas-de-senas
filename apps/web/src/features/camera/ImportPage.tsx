@@ -5,6 +5,7 @@ import mappingCsv from "../../../../../content/dataset-mapping.csv?raw";
 import { AppLayout } from "../../components/layout/AppLayout";
 import { buildHolisticDataset, countByLabel, downloadJson, type HolisticSample } from "../../camera/holistic/dataset-v2";
 import { DATASETS, licenseFor } from "../../camera/holistic/datasets";
+import { droppedFiles } from "../../camera/holistic/drop-files";
 import { planImport, type ImportPlan, type SavedOutcome } from "../../camera/holistic/import-plan";
 import { progressStore, type SavedProgress } from "../../camera/holistic/import-progress";
 import { groupFiles, importItems, parseMapping } from "../../camera/holistic/importer";
@@ -58,6 +59,17 @@ export function ImportPage() {
       .catch(() => undefined);
     return () => {
       active = false;
+    };
+  }, []);
+
+  // Si se suelta un archivo fuera de la zona, el navegador abriría el video y se perdería la página.
+  useEffect(() => {
+    const block = (event: Event) => event.preventDefault();
+    window.addEventListener("dragover", block);
+    window.addEventListener("drop", block);
+    return () => {
+      window.removeEventListener("dragover", block);
+      window.removeEventListener("drop", block);
     };
   }, []);
 
@@ -131,7 +143,10 @@ export function ImportPage() {
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragging(false);
-    if (!running) choose([...event.dataTransfer.files]);
+    if (running) return;
+    droppedFiles(event.dataTransfer)
+      .then(choose)
+      .catch(() => choose([]));
   };
 
   const total = plan?.importable.length ?? 0;
@@ -273,6 +288,12 @@ export function ImportPage() {
         />
       </div>
       {summary && <p className="mt-3 font-semibold">{summary}</p>}
+      {plan && chosen.files === 0 && (
+        <p role="alert" className="mt-2 text-amber-900">
+          No se encontraron videos ni fotos (mp4, webm, mov, m4v, jpg, png o webp). Si arrastraste una carpeta y no
+          funcionó, usa «Elegir carpeta».
+        </p>
+      )}
 
       <div className="mt-3 flex gap-2">
         <button
