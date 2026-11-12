@@ -235,6 +235,10 @@ describe("dataset holistic-v2 (A.6)", () => {
   });
 
   it("rechaza tamaños incorrectos, fuente o licencia vacías y alias vacío", () => {
+    // Origen del archivo (D-044): se conserva para poder filtrar después; es opcional.
+    expect(makeSample(base).origin).toBeUndefined();
+    const withOrigin = makeSample({ ...base, origin: { file: "Ayudar__lsc54-s2-01__1.mp4", sourceLabel: "Ayudar" } });
+    expect(withOrigin.origin).toEqual({ file: "Ayudar__lsc54-s2-01__1.mp4", sourceLabel: "Ayudar" });
     expect(() => makeSample({ ...base, frames: frames.slice(1) })).toThrow();
     expect(() => makeSample({ ...base, license: " " })).toThrow(/licencia/);
     expect(() => makeSample({ ...base, collector: "" })).toThrow(/alias/);

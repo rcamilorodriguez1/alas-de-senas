@@ -1,0 +1,6 @@
+fuente,licencia,enlace,cita
+# Datasets externos usados por la cámara (D-044): cada fuente de dataset-mapping.csv debe estar aquí.
+# La página /admin/importar toma de aquí la licencia y /creditos muestra la atribución.
+# Pon la cita entre comillas si tiene comas.
+LSC-54,CC BY-NC 4.0,https://doi.org/10.57760/sciencedb.25639,"Mora-Zarate, Garzón-Castro y Castellanos-Rivillas (2025), «LSC-54: A landmark-based dataset for Colombian Sign Language», Data in Brief 63, 112145. Universidad de La Sabana."
+LSC70,CC BY 4.0,https://data.mendeley.com/datasets/9ssyn8tff5/2,"Muñoz Galindez, Villota Coral y Vargas-Canas (2024), «Speak in Colombian Sign Language: A Dynamic LSC70 Database», Mendeley Data V2, DOI 10.17632/9ssyn8tff5.2. Universidad del Cauca."

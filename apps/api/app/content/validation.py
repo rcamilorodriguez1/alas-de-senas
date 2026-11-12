@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 import re
 import unicodedata
@@ -43,6 +44,8 @@ REQUIRED_TEXT = ("word", "meaning", "usage_example")
 DEFAULT_LABELS = Path("models") / "lsc-alfabeto" / "labels.json"  # relativo a public/
 DATASET_MAPPING = "dataset-mapping.csv"  # señas de datasets externos → slugs (anexo A.7)
 MAPPING_HEADER = ["fuente", "etiqueta_fuente", "slug"]
+DATASETS = "datasets.csv"  # fuente, licencia, enlace y cita de cada dataset externo (D-044)
+DATASETS_HEADER = ["fuente", "licencia", "enlace", "cita"]
 CAMERA_EQUIVALENCES = "camera-equivalences.csv"  # señas con la misma forma de mano (D-027)
 EQUIVALENCES_HEADER = ["slug", "equivalente", "nota"]
 
@@ -114,7 +117,8 @@ def check_content(
     _check_node_sizes(bundle.signs, nodes, published_nodes, report)
     _check_motion(bundle.signs, report)
     _check_labels(bundle.signs, labels_path or media_dir.parent / DEFAULT_LABELS, report)
-    _check_dataset_mapping(bundle.signs, content_dir / DATASET_MAPPING, report)
+    sources = _check_dataset_mapping(bundle.signs, content_dir / DATASET_MAPPING, report)
+    _check_datasets(sources, content_dir / DATASETS, report)
     _check_equivalences(bundle.signs, content_dir / CAMERA_EQUIVALENCES, report)
     _check_conversations(bundle, published_nodes, report)
     _check_spelling(bundle, published_nodes, report)
@@ -243,9 +247,10 @@ def _source_key(text: str) -> str:
     return "-".join("".join(c if c.isalnum() else " " for c in plain).split())
 
 
-def _check_dataset_mapping(rows: Sequence[SignRow], path: Path, report: Report) -> None:
+def _check_dataset_mapping(rows: Sequence[SignRow], path: Path, report: Report) -> set[str]:
+    """Valida el mapeo y devuelve sus fuentes (cada una debe estar en `datasets.csv`)."""
     if not path.is_file():
-        return
+        return set()
     lines = [
         (n, line)
         for n, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), start=1)
@@ -255,9 +260,10 @@ def _check_dataset_mapping(rows: Sequence[SignRow], path: Path, report: Report) 
         report.errors.append(
             f"{DATASET_MAPPING}: la cabecera debe ser «{','.join(MAPPING_HEADER)}»."
         )
-        return
+        return set()
     slugs = {row.slug for row in rows} | {NONE_LABEL}
     seen: set[tuple[str, str]] = set()
+    sources: set[str] = set()
     for n, line in lines[1:]:
         cells = [c.strip() for c in line.split(",")]
         if len(cells) != len(MAPPING_HEADER) or not all(cells):
@@ -266,6 +272,7 @@ def _check_dataset_mapping(rows: Sequence[SignRow], path: Path, report: Report) 
             )
             continue
         source, label, slug = cells
+        sources.add(source)
         if slug not in slugs:
             report.errors.append(
                 f"{DATASET_MAPPING}, línea {n}: «{slug}» no es una seña de signs.csv."
@@ -276,6 +283,44 @@ def _check_dataset_mapping(rows: Sequence[SignRow], path: Path, report: Report) 
                 f"{DATASET_MAPPING}, línea {n}: etiqueta «{label}» repetida en {source}."
             )
         seen.add(key)
+    return sources
+
+
+def _check_datasets(sources: set[str], path: Path, report: Report) -> None:
+    """`datasets.csv`: cada fuente del mapeo con licencia, enlace y cita (atribución, D-044)."""
+    if not path.is_file():
+        for source in sorted(sources):
+            report.errors.append(
+                f"{DATASETS}: falta el archivo; la fuente «{source}» no tiene licencia."
+            )
+        return
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        lines = [
+            (n, [cell.strip() for cell in row])
+            for n, row in enumerate(csv.reader(handle), start=1)
+            if row and any(cell.strip() for cell in row) and not row[0].startswith("#")
+        ]
+    if not lines or lines[0][1] != DATASETS_HEADER:
+        report.errors.append(f"{DATASETS}: la cabecera debe ser «{','.join(DATASETS_HEADER)}».")
+        return
+    registered: set[str] = set()
+    for n, cells in lines[1:]:
+        if len(cells) != len(DATASETS_HEADER) or not all(cells):
+            report.errors.append(
+                f"{DATASETS}, línea {n}: se esperaban cuatro columnas no vacías "
+                "(pon la cita entre comillas si tiene comas)."
+            )
+            continue
+        source, _license, link, _citation = cells
+        if not link.startswith("https://"):
+            report.errors.append(f"{DATASETS}, línea {n}: el enlace debe empezar por https://.")
+        if source in registered:
+            report.errors.append(f"{DATASETS}, línea {n}: fuente «{source}» repetida.")
+        registered.add(source)
+    for source in sorted(sources - registered):
+        report.errors.append(
+            f"{DATASETS}: la fuente «{source}» del mapeo no tiene licencia registrada."
+        )
 
 
 def _data_lines(path: Path) -> list[tuple[int, list[str]]]:

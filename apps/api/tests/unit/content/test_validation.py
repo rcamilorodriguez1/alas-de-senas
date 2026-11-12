@@ -767,8 +767,20 @@ def test_labels_acepta_ninguna(content_dir: Path, media_dir: Path, tmp_path: Pat
 # ---------- content/dataset-mapping.csv (anexo A.7, regla 3) ------------------------------------
 
 
-def _mapping(content_dir: Path, text: str) -> None:
+DATASETS_HEADER = "fuente,licencia,enlace,cita\n"
+LSC54_ROW = (
+    'LSC-54,CC BY-NC 4.0,https://doi.org/10.57760/sciencedb.25639,"Mora-Zarate et al., 2025"\n'
+)
+
+
+def _datasets(content_dir: Path, text: str) -> None:
+    (content_dir / "datasets.csv").write_text(text, encoding="utf-8", newline="\n")
+
+
+def _mapping(content_dir: Path, text: str, *, datasets: str = DATASETS_HEADER + LSC54_ROW) -> None:
+    """El mapeo siempre va con su registro de fuentes y licencias (`datasets.csv`, D-044)."""
     (content_dir / "dataset-mapping.csv").write_text(text, encoding="utf-8", newline="\n")
+    _datasets(content_dir, datasets)
 
 
 def test_mapeo_de_datasets_valido(content_dir: Path, media_dir: Path) -> None:
@@ -793,6 +805,53 @@ def test_mapeo_con_cabecera_o_fila_invalida(content_dir: Path, media_dir: Path) 
 def test_mapeo_con_etiqueta_repetida(content_dir: Path, media_dir: Path) -> None:
     _mapping(content_dir, "fuente,etiqueta_fuente,slug\nLSC-54,Hola,hola\nLSC-54,hola,adios\n")
     _assert_error(_check(content_dir, media_dir), "dataset-mapping.csv", "repetida")
+
+
+# ---------- content/datasets.csv: fuente y licencia de cada dataset externo (D-044) ---------------
+
+
+def test_cada_fuente_del_mapeo_debe_tener_licencia_registrada(
+    content_dir: Path, media_dir: Path
+) -> None:
+    _mapping(
+        content_dir,
+        "fuente,etiqueta_fuente,slug\nLSC-54,Hola,hola\nLSC70,Hola,hola\n",
+    )
+    _assert_error(_check(content_dir, media_dir), "datasets.csv", "LSC70")
+
+
+def test_mapeo_sin_datasets_csv_es_error(content_dir: Path, media_dir: Path) -> None:
+    _mapping(content_dir, "fuente,etiqueta_fuente,slug\nLSC-54,Hola,hola\n")
+    (content_dir / "datasets.csv").unlink()
+    _assert_error(_check(content_dir, media_dir), "datasets.csv", "LSC-54")
+
+
+def test_datasets_csv_valido_con_cita_entre_comillas(content_dir: Path, media_dir: Path) -> None:
+    _mapping(
+        content_dir,
+        "fuente,etiqueta_fuente,slug\nLSC-54,Hola,hola\n",
+        datasets=DATASETS_HEADER
+        + LSC54_ROW
+        + "LSC70,CC BY 4.0,https://data.mendeley.com/datasets/9ssyn8tff5/2,"
+        + '"Muñoz Galindez, Villota Coral y Vargas-Canas, 2024"\n',
+    )
+    assert _check(content_dir, media_dir).errors == []
+
+
+@pytest.mark.parametrize(
+    ("text", "fragment"),
+    [
+        ("fuente,licencia\nLSC-54,CC BY-NC 4.0\n", "cabecera"),
+        (DATASETS_HEADER + "LSC-54,,https://x.org,cita\n", "línea 2"),
+        (DATASETS_HEADER + "LSC-54,CC BY-NC 4.0,ftp://x.org,cita\n", "https"),
+        (DATASETS_HEADER + LSC54_ROW + LSC54_ROW, "repetida"),
+    ],
+)
+def test_datasets_csv_invalido(
+    content_dir: Path, media_dir: Path, text: str, fragment: str
+) -> None:
+    _mapping(content_dir, "fuente,etiqueta_fuente,slug\nLSC-54,Hola,hola\n", datasets=text)
+    _assert_error(_check(content_dir, media_dir), "datasets.csv", fragment)
 
 
 # ---------- content/camera-equivalences.csv (D-027) ---------------------------------------------

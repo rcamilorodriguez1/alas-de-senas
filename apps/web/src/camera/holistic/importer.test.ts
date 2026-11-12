@@ -44,8 +44,18 @@ describe("mapeo de datasets externos (A.7 regla 3)", () => {
     }
   });
 
+  it("NINGUNA: señas de LSC-54 fuera del currículo, nunca una que el currículo enseña (D-044)", () => {
+    for (const fileLabel of ["Bien", "Mal", "Sentarse", "Esperar", "Tranquilo", "Lo-siento", "Mas-o-menos"]) {
+      expect(resolveLabel(fileLabel, "LSC-54", mapping), fileLabel).toBe("NINGUNA");
+    }
+    // «Ayudar» ≈ «Ayuda» (M3-N4) y «Baño» (M3-N2) están en el currículo; «Muchas gracias» contiene «gracias».
+    for (const fileLabel of ["Ayudar", "Bano", "Muchas-gracias"]) {
+      expect(resolveLabel(fileLabel, "LSC-54", mapping), fileLabel).toBeNull();
+    }
+  });
+
   it("las señas que no están en el mapeo se ignoran (null)", () => {
-    expect(resolveLabel("sentarse", "LSC-54", mapping)).toBeNull();
+    expect(resolveLabel("bano", "LSC-54", mapping)).toBeNull();
     expect(resolveLabel("hola", "otra-fuente", mapping)).toBeNull();
     expect(resolveLabel("NINGUNA", "LSC-54", mapping)).toBe("NINGUNA");
   });

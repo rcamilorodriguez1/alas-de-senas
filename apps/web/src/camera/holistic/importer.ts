@@ -218,6 +218,7 @@ export async function importItems(
         quality: chosen.quality,
         // Sin rostro (caras pixeladas): no se exporta lo que depende de la cara (minimización, H9).
         frames: options.faceFeatures ? chosen.frames : chosen.frames.map(maskFace),
+        origin: { file: item.key, sourceLabel: item.label },
       });
       onOutcome({ item: item.key, sample, reason: null }, index);
     }

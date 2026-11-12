@@ -14,6 +14,8 @@ export interface HolisticSample {
   license: string;
   quality: SequenceQuality;
   data: number[][];
+  /** Archivo y etiqueta originales (D-044): permite filtrar después, p. ej. quitar una seña de NINGUNA. */
+  origin?: { file: string; sourceLabel: string };
 }
 
 export interface HolisticDataset {
@@ -42,6 +44,7 @@ export function makeSample(input: {
   quality: SequenceQuality;
   frames: readonly Float32Array[];
   id?: string;
+  origin?: { file: string; sourceLabel: string };
 }): HolisticSample {
   if (input.frames.length !== SEQUENCE_FRAMES || input.frames.some((f) => f.length !== HOLISTIC_V2_SIZE)) {
     throw new Error(`Cada muestra debe tener ${SEQUENCE_FRAMES} cuadros de ${HOLISTIC_V2_SIZE} valores.`);
@@ -57,6 +60,7 @@ export function makeSample(input: {
     license: input.license.trim(),
     quality: input.quality,
     data: compact(input.frames),
+    ...(input.origin ? { origin: { ...input.origin } } : {}),
   };
 }
 

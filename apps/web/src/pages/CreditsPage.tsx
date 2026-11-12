@@ -1,3 +1,4 @@
+import { DATASETS } from "../camera/holistic/datasets";
 import { AppLayout } from "../components/layout/AppLayout";
 
 // Señas con video del dataset LSC-54 (D-018). Si se reemplaza un video por uno propio, quitarlo aquí.
@@ -110,6 +111,34 @@ export function CreditsPage() {
           modelo no usa la expresión facial. La correspondencia entre sus señas y las de la aplicación está en{" "}
           <code>content/dataset-mapping.csv</code>.
         </p>
+      </section>
+      <section aria-labelledby="datasets-camara" className="mt-6 rounded-2xl bg-white p-5 shadow">
+        <h2 id="datasets-camara" className="font-display text-xl font-extrabold">
+          Datasets de la cámara
+        </h2>
+        <p className="mt-2">
+          Conjuntos de datos externos registrados en <code>content/datasets.csv</code> (D-044). De ellos solo se usan
+          los puntos extraídos en el navegador; no se publican sus fotos ni sus videos.
+        </p>
+        <ul className="mt-3 flex flex-col gap-3">
+          {DATASETS.map((dataset) => (
+            <li key={dataset.source} aria-label={dataset.source} className="rounded-xl bg-emerald-50 p-3">
+              <p className="font-display font-extrabold">{dataset.source}</p>
+              <p className="mt-1">{dataset.citation}</p>
+              <p className="mt-1 text-sm">
+                Licencia <span className="font-semibold">{dataset.license}</span> ·{" "}
+                <a
+                  href={dataset.link}
+                  className="font-semibold text-[#047857] underline"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Ver el dataset
+                </a>
+              </p>
+            </li>
+          ))}
+        </ul>
       </section>
       <section aria-labelledby="proyecto" className="mt-6 rounded-2xl bg-white p-5 shadow">
         <h2 id="proyecto" className="font-display text-xl font-extrabold">
