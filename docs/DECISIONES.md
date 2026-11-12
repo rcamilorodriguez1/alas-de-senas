@@ -499,3 +499,17 @@
 - Decisión: PNG de 128 px con fondo transparente en `apps/web/src/assets/icons/` (`racha.png`, `nectar.png`, `vida.png`), sacados de las ilustraciones originales sin el fondo crema ni los destellos. Se muestran con `StreakIcon`, `NectarIcon` y `HeartIcon` (`components/icons/GameIcon.tsx`): son decorativos (`alt=""`) porque el texto de al lado ya dice qué son, y los `aria-label` («Racha: 5 días», «Vidas: 4») no cambian. Vite les agrega un hash al nombre (12–16 KB cada uno).
 - Dónde: barra superior, panel «Tu día», celebración de la lección, resultado del repaso y contador de vidas de la lección (conserva el latido de D-036).
 - Secciones afectadas de la especificación: ninguna contradicha. Ajusta lo visual de §9.5 y de los mockups.
+
+## D-043 · Ampliar la cámara de movimiento con más señas de LSC-54 · 12/11/2026
+- Contexto: el modelo de gestos (`lsc-gestos`) usa 5 señas de LSC-54 (409 muestras, 18 personas). El inventario de LSC-54 S2 tiene 1.740 videos de 43 señas, y 13 de ellas están en el currículo y hoy se practican solo con autoevaluación. Análisis de factibilidad del plan `docs/plan-mejora-camara-movimiento.md` (12/11/2026): el límite es de personas y datos, no de herramientas.
+- Datos: LSC-54 V4 (Science Data Bank, DOI 10.57760/sciencedb.25639, **CC BY-NC 4.0**). Se descargaron `Videos Courtesy.zip` y `Videos Numbers.zip` (MD5 verificado) a `Downloads\LSC-54\`, **fuera del repositorio** (la licencia no permite redistribuirlos). Se convirtieron de AVI a MP4 (H.264, misma resolución, 30 FPS) con nombres `Etiqueta__lsc54-s2-NN__toma.mp4` y un `_manifiesto.csv` con el origen de cada archivo. Se excluyó `Videos Courtesy/*/Números/*`, copia de `Videos Numbers.zip`, como en el repositorio de LSC-54. Resultado: 1.740 videos, 0 errores, 43 señas, 18 personas.
+- Decisión: `content/dataset-mapping.csv` agrega Como esta → `como-estas`, Si → `si`, No → `no`, Permiso → `con-permiso` y Seis…Diez → `numero-6`…`numero-10`. Con el mapeo, el importador toma **1.005 videos de 19 clases**:
+  - **18 personas:** hola, adiós, de nada, perdón, por favor, buenos días, buenas tardes, buenas noches y números 6–10 (51–57 videos cada una);
+  - **9 personas:** gracias, ¿cómo estás?, sí, no, con permiso (26–29 videos cada una);
+  - NINGUNA: 159.
+
+  Los números 1–5 quedan fuera, porque son del modelo del alfabeto.
+- Regla para publicar: se entrena con todas. Una seña entra al modelo publicado solo si alcanza la meta del anexo con **personas no vistas** (≥ 80 %, A.8 y 10B.10). Las que no la alcancen siguen con autoevaluación, sin empeorar a las demás. El modelo actual se conserva para poder revertir.
+- Pendiente (humano): importar en `/admin/importar` (MediaPipe corre en el navegador), reentrenar en Colab y comparar por seña contra el modelo actual con validación por persona.
+- LSC70W (70 personas, secuencias de 6 fotos) y LSC50 quedan sin usar por ahora: el primero solo se probaría para «hola», y del segundo falta confirmar el vocabulario antes de descargar 6,2 GB.
+- Secciones afectadas de la especificación: ninguna contradicha. Amplía el anexo A (de 3–5 señas a más) siguiendo su regla A.7.

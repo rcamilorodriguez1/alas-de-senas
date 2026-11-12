@@ -16,6 +16,34 @@ describe("mapeo de datasets externos (A.7 regla 3)", () => {
     expect(resolveLabel("bien", "LSC-54", mapping)).toBe("NINGUNA");
   });
 
+  it("traduce las señas de LSC-54 S2 que están en el currículo, con el nombre de archivo preparado", () => {
+    const expected: Record<string, string> = {
+      Denada: "de-nada",
+      "Buenos-dias": "buenos-dias",
+      "Buenas-tardes": "buenas-tardes",
+      "Buenas-noches": "buenas-noches",
+      Gracias: "gracias",
+      "Como-esta": "como-estas",
+      Si: "si",
+      No: "no",
+      Permiso: "con-permiso",
+      Seis: "numero-6",
+      Siete: "numero-7",
+      Ocho: "numero-8",
+      Nueve: "numero-9",
+      Diez: "numero-10",
+    };
+    for (const [fileLabel, slug] of Object.entries(expected)) {
+      expect(resolveLabel(fileLabel, "LSC-54", mapping), fileLabel).toBe(slug);
+    }
+  });
+
+  it("los números estáticos 1–5 no entran al modelo de movimiento (son del alfabeto)", () => {
+    for (const fileLabel of ["Uno", "Dos", "Tres", "Cuatro", "Cinco"]) {
+      expect(resolveLabel(fileLabel, "LSC-54", mapping), fileLabel).toBeNull();
+    }
+  });
+
   it("las señas que no están en el mapeo se ignoran (null)", () => {
     expect(resolveLabel("sentarse", "LSC-54", mapping)).toBeNull();
     expect(resolveLabel("hola", "otra-fuente", mapping)).toBeNull();
