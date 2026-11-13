@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { HAND_CONNECTIONS } from "../../camera/hand-connections";
 import type { DominantHand } from "../../camera/holistic/frame";
-import { startGestureSession, type GestureFrame, type GestureSession, type RecordedSample } from "../../camera/holistic/gesture-session";
+import { CAPTURE_MESSAGES, FIXED_CAPTURE, MANUAL_CAPTURE } from "../../camera/holistic/capture";
+import {
+  startGestureSession,
+  type CaptureHandle,
+  type GestureFrame,
+  type GestureSession,
+  type RecordedSample,
+} from "../../camera/holistic/gesture-session";
 import type { QualityOptions } from "../../camera/holistic/sequencer";
 import type { Overlay, Point2 } from "../../camera/recognizer";
 import { CAMERA_ERRORS, cameraErrorKind, type CameraErrorKind } from "../../camera/session";
@@ -10,7 +17,7 @@ export const COUNTDOWN_S = 3;
 export const PRIVACY_NOTICE =
   "Usaremos la cámara para ver tus manos y tu expresión facial. El análisis ocurre en tu computador; no guardamos ni enviamos tu imagen.";
 
-type Phase = { kind: "off" } | { kind: "starting" } | { kind: "ready" } | { kind: "countdown"; left: number } | { kind: "recording" };
+type Phase = { kind: "off" } | { kind: "starting" } | { kind: "ready" } | { kind: "countdown"; left: number } | { kind: "recording"; manual: boolean };
 
 function drawPoints(context: CanvasRenderingContext2D, points: readonly Point2[], w: number, h: number, color: string) {
   context.strokeStyle = color;
@@ -63,9 +70,16 @@ export interface GestureCameraProps {
   requireFace?: boolean;
   /** Se llama al pulsar «Grabar» (p. ej. para fijar la etiqueta de la muestra en ese momento). */
   onRecordStart?: () => void;
+  /** true: la persona pulsa «Terminar» al acabar la seña (máximo 4 s) en vez de la ventana fija de 2 s (D-045). */
+  manual?: boolean;
 }
 
-/** Cámara holística con guía visual, cuenta regresiva «3, 2, 1… ¡haz la seña!» y grabación de 2 s. */
+const MANUAL_MAX_S = MANUAL_CAPTURE.maxMs / 1000;
+
+/**
+ * Cámara holística con guía visual, cuenta regresiva «3, 2, 1… ¡haz la seña!» y grabación de 2 s, o con
+ * «Terminar» y «Cancelar» en el modo manual.
+ */
 export function GestureCamera({
   dominantHand,
   quality,
@@ -75,10 +89,18 @@ export function GestureCamera({
   disabled,
   requireFace = true,
   onRecordStart,
+  manual = false,
 }: GestureCameraProps) {
   const video = useRef<HTMLVideoElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const session = useRef<GestureSession | null>(null);
+  const capture = useRef<CaptureHandle | null>(null);
+  const cancelled = useRef<CaptureHandle | null>(null);
+  const finishButton = useRef<HTMLButtonElement>(null);
+  const recordButton = useRef<HTMLButtonElement>(null);
+  const returnFocus = useRef(false);
+  // El modo se fija al empezar: cambiarlo a mitad de la grabación no la altera (revisión de D-045).
+  const manualRef = useRef(manual);
   const mounted = useRef(true);
   const onSampleRef = useRef(onSample);
   // En una ref: un objeto `quality` nuevo en cada render del padre no reinicia la cuenta regresiva.
@@ -86,7 +108,8 @@ export function GestureCamera({
   useEffect(() => {
     onSampleRef.current = onSample;
     qualityRef.current = quality;
-  }, [onSample, quality]);
+    manualRef.current = manual;
+  }, [onSample, quality, manual]);
   const [phase, setPhase] = useState<Phase>({ kind: "off" });
   const [frame, setFrame] = useState<Pick<GestureFrame, "guidance" | "ready" | "fps" | "extractMs">>({
     guidance: [],
@@ -95,6 +118,7 @@ export function GestureCamera({
     extractMs: 0,
   });
   const [error, setError] = useState<CameraErrorKind | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const lastUi = useRef(0);
 
   useEffect(() => {
@@ -154,15 +178,40 @@ export function GestureCamera({
       }
       const current = session.current;
       if (!current) return;
-      setPhase({ kind: "recording" });
-      void current.record(qualityRef.current).then((sample) => {
+      const isManual = manualRef.current;
+      setPhase({ kind: "recording", manual: isManual });
+      const handle = current.capture(qualityRef.current, isManual ? MANUAL_CAPTURE : FIXED_CAPTURE);
+      capture.current = handle;
+      void handle.result.then((sample) => {
+        if (capture.current === handle) capture.current = null;
+        const discarded = cancelled.current === handle;
+        if (discarded) cancelled.current = null;
         if (!mounted.current || session.current !== current) return;
+        returnFocus.current = true;
         setPhase({ kind: "ready" });
-        onSampleRef.current(sample);
+        if (!discarded) onSampleRef.current(sample);
       });
     }, 1000);
     return () => window.clearTimeout(timer);
   }, [phase]);
+
+  // Modo manual: el foco pasa a «Terminar» para acabar con Enter o espacio, sin buscar el botón; al
+  // terminar vuelve al botón de grabar (si no, cae en <body> al desaparecer «Terminar»).
+  useEffect(() => {
+    if (phase.kind === "recording" && phase.manual) finishButton.current?.focus();
+    if (phase.kind === "ready" && returnFocus.current) {
+      returnFocus.current = false;
+      recordButton.current?.focus();
+    }
+  }, [phase]);
+
+  const cancelRecording = () => {
+    const handle = capture.current;
+    if (!handle) return;
+    cancelled.current = handle;
+    setNotice(CAPTURE_MESSAGES.cancelled);
+    handle.cancel();
+  };
 
   const status =
     phase.kind === "countdown"
@@ -204,6 +253,9 @@ export function GestureCamera({
           )}
         </ul>
       )}
+      <p aria-live="polite" className="min-h-0 text-sm font-semibold text-[#45606A]">
+        {notice ?? ""}
+      </p>
       {error && (
         <p role="alert" className="rounded-xl bg-red-50 p-2 text-sm text-red-800">
           {CAMERA_ERRORS[error]}
@@ -219,12 +271,31 @@ export function GestureCamera({
           >
             Activar cámara
           </button>
+        ) : phase.kind === "recording" && phase.manual ? (
+          <>
+            <button
+              ref={finishButton}
+              type="button"
+              onClick={() => capture.current?.end()}
+              className="rounded-xl bg-[#047857] px-4 py-2 font-bold text-white"
+            >
+              Terminar
+            </button>
+            <button type="button" onClick={cancelRecording} className="rounded-xl border border-slate-300 px-4 py-2 font-semibold">
+              Cancelar
+            </button>
+            <p className="self-center text-sm font-semibold text-[#45606A]">
+              Pulsa «Terminar» al acabar (máximo {MANUAL_MAX_S} s).
+            </p>
+          </>
         ) : (
           <>
             <button
               type="button"
               disabled={phase.kind !== "ready" || !frame.ready || disabled}
+              ref={recordButton}
               onClick={() => {
+                setNotice(null);
                 onRecordStart?.();
                 setPhase({ kind: "countdown", left: COUNTDOWN_S });
               }}

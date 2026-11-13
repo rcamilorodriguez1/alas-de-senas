@@ -27,6 +27,8 @@ export function GesturePractice() {
   const courtesy = useSignSearch("", "cortesia", 1);
   const [model, setModel] = useState<SequenceClassifier | null | undefined>(undefined);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
+  // D-045: el modo de 2 s sigue siendo el predeterminado mientras se evalúa el manual.
+  const [manual, setManual] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -86,10 +88,14 @@ export function GesturePractice() {
     outcome?.kind === "recognized"
       ? `¡Eso es «${wordOf(outcome.prediction.label)}»!`
       : outcome?.kind === "none"
-        ? "No reconocí ninguna de las señas que conozco. Prueba una de la lista, completa y en 2 segundos."
+        ? manual
+          ? "No reconocí ninguna de las señas que conozco. Prueba una de la lista, completa, y pulsa «Terminar» al acabar."
+          : "No reconocí ninguna de las señas que conozco. Prueba una de la lista, completa y en 2 segundos."
         : outcome?.kind === "rejected"
           ? `${outcome.reason} Inténtalo otra vez.`
-          : "Pulsa «Hacer la seña»: cuento 3, 2, 1 y miro 2 segundos.";
+          : manual
+            ? "Pulsa «Hacer la seña»: cuento 3, 2, 1, haces la seña a tu ritmo y pulsas «Terminar» (máximo 4 segundos)."
+            : "Pulsa «Hacer la seña»: cuento 3, 2, 1 y miro 2 segundos.";
 
   return (
     <div className="mt-4 space-y-4">
@@ -105,7 +111,22 @@ export function GesturePractice() {
           ))}
         </ul>
       </div>
+      <fieldset className="rounded-2xl bg-white p-4 shadow">
+        <legend className="sr-only">Cómo grabar</legend>
+        <p className="font-semibold">Cómo grabar</p>
+        <div className="mt-2 flex flex-wrap gap-4">
+          <label className="flex items-center gap-2">
+            <input type="radio" name="modo-captura" checked={!manual} onChange={() => setManual(false)} />
+            2 segundos (automático)
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="radio" name="modo-captura" checked={manual} onChange={() => setManual(true)} />
+            Yo marco el inicio y el fin (máximo 4 s)
+          </label>
+        </div>
+      </fieldset>
       <GestureCamera
+        manual={manual}
         dominantHand={dominantHand}
         requireFace={model.meta.faceFeatures}
         quality={model.meta.faceFeatures ? FACE_REQUIRED : FACE_OPTIONAL}

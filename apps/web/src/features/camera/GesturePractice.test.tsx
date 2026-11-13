@@ -24,9 +24,18 @@ const sample = (ok: boolean): RecordedSample => ({
   switchedHand: false,
 });
 vi.mock("./GestureCamera", () => ({
-  GestureCamera: ({ onSample, requireFace }: { onSample: (s: RecordedSample) => void; requireFace: boolean }) => (
+  GestureCamera: ({
+    onSample,
+    requireFace,
+    manual,
+  }: {
+    onSample: (s: RecordedSample) => void;
+    requireFace: boolean;
+    manual?: boolean;
+  }) => (
     <div>
       <p>cara exigida: {String(requireFace)}</p>
+      <p>captura manual: {String(Boolean(manual))}</p>
       <button type="button" onClick={() => onSample(sample(true))}>
         simular seña
       </button>
@@ -121,6 +130,18 @@ describe("GesturePractice", () => {
     await userEvent.click(await screen.findByRole("button", { name: "simular seña mala" }));
     expect(await screen.findByText(/Tu mano salió del cuadro/)).toBeInTheDocument();
     expect(classify).not.toHaveBeenCalled();
+  });
+
+  it("por defecto graba 2 s; se puede elegir marcar el inicio y el fin (D-045)", async () => {
+    loadSequenceClassifier.mockResolvedValue(model);
+    renderPractice();
+    const fixed = await screen.findByRole("radio", { name: /2 segundos/ });
+    expect(fixed).toBeChecked();
+    expect(screen.getByText("captura manual: false")).toBeInTheDocument();
+    expect(screen.getByText(/miro 2 segundos/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: /Yo marco el inicio y el fin/ }));
+    expect(screen.getByText("captura manual: true")).toBeInTheDocument();
+    expect(screen.getByText(/pulsas «Terminar» \(máximo 4 segundos\)/)).toBeInTheDocument();
   });
 
   it("sin modelo de gestos publicado, avisa y no ofrece la cámara", async () => {

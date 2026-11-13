@@ -3,13 +3,13 @@
 import { MonotonicTimestamps } from "../classifier";
 import { CAMERA_ERRORS } from "../session";
 import type { Overlay } from "../recognizer";
+import { captureCheck, FIXED_CAPTURE, type CaptureEnd, type CaptureLimits } from "./capture";
 import { HolisticExtractorV2, type Delegate } from "./extractor";
 import type { DominantHand } from "./frame";
 import { FpsMeter, FrameThrottle, GUIDE_INTERVAL_MS, guidanceMessages, guideInputOf, meanLuminance, readyToRecord } from "./guide";
 import {
   chooseSigningHand,
   FrameSequencer,
-  SEQUENCE_DURATION_MS,
   type QualityCheck,
   type QualityOptions,
   type SequenceQuality,
@@ -32,10 +32,21 @@ export interface RecordedSample {
   switchedHand: boolean;
 }
 
+/** Una grabación en curso: se cierra sola al llegar al máximo, o antes con `end` (D-045). */
+export interface CaptureHandle {
+  readonly result: Promise<RecordedSample>;
+  /** «Terminar»: la persona acabó la seña. */
+  end(): void;
+  /** «Cancelar»: la muestra se descarta. */
+  cancel(): void;
+}
+
 export interface GestureSession {
   readonly delegate: Delegate;
   /** Graba 2 s y devuelve los 30 cuadros (recortados al tramo con mano) con su control de calidad. */
   record(options?: QualityOptions): Promise<RecordedSample>;
+  /** Graba hasta `limits.maxMs` o hasta `end()`; el resultado es la misma secuencia de 30 cuadros. */
+  capture(options?: QualityOptions, limits?: CaptureLimits): CaptureHandle;
   stop(): void;
 }
 
@@ -109,21 +120,44 @@ export async function startGestureSession(
   let guidance: string[] = [];
   let ready = false;
   let recording: {
+    token: object;
     sequencer: FrameSequencer;
     alternate: FrameSequencer;
     startedAt: number;
     options: QualityOptions;
+    limits: CaptureLimits;
     resolve: (sample: RecordedSample) => void;
   } | null = null;
 
-  const finish = () => {
+  const finish = (end: CaptureEnd) => {
     if (!recording) return;
-    const { sequencer, alternate, options, resolve, startedAt } = recording;
+    const { sequencer, alternate, options, limits, resolve, startedAt } = recording;
     recording = null;
     const chosen = chooseSigningHand(sequencer, alternate, options);
-    // Interrumpida (pestaña oculta o cámara apagada): una muestra corta nunca se clasifica.
-    const complete = performance.now() - startedAt >= SEQUENCE_DURATION_MS;
-    resolve(complete ? chosen : { ...chosen, check: { ok: false, reason: "La grabación se interrumpió." } });
+    // Interrumpida, cancelada o demasiado corta: una captura incompleta nunca se clasifica.
+    const complete = captureCheck(performance.now() - startedAt, end, limits);
+    resolve(complete.ok ? chosen : { ...chosen, check: complete });
+  };
+
+  const capture = (options: QualityOptions = {}, limits: CaptureLimits = FIXED_CAPTURE): CaptureHandle => {
+    finish("interrupted"); // nunca dos grabaciones a la vez
+    const token = {};
+    const result = new Promise<RecordedSample>((resolve) => {
+      recording = {
+        token,
+        sequencer: new FrameSequencer(),
+        alternate: new FrameSequencer(),
+        startedAt: performance.now(),
+        options,
+        limits,
+        resolve,
+      };
+    });
+    // Solo cierra la grabación que abrió este handle (no una posterior).
+    const close = (end: CaptureEnd) => {
+      if (recording?.token === token) finish(end);
+    };
+    return { result, end: () => close("user"), cancel: () => close("cancelled") };
   };
 
   const tick = () => {
@@ -140,7 +174,7 @@ export async function startGestureSession(
       const features = extracted?.features;
       recording.sequencer.push(features instanceof Float32Array ? features : null, timestamp);
       recording.alternate.push(extracted?.alternate ?? null, timestamp);
-      if (timestamp - recording.startedAt >= SEQUENCE_DURATION_MS) finish();
+      if (timestamp - recording.startedAt >= recording.limits.maxMs) finish("limit");
     }
     if (now - lastGuide >= GUIDE_INTERVAL_MS) {
       lastGuide = now;
@@ -153,7 +187,7 @@ export async function startGestureSession(
 
   const onVisibility = () => {
     cancelAnimationFrame(raf);
-    if (document.hidden) finish(); // pestaña oculta: la muestra se cierra (y el control de calidad decide)
+    if (document.hidden) finish("interrupted"); // pestaña oculta: la muestra se cierra (y el control de calidad decide)
     else if (!stopped) raf = requestAnimationFrame(tick);
   };
   document.addEventListener("visibilitychange", onVisibility);
@@ -164,21 +198,13 @@ export async function startGestureSession(
       return extractor.delegate;
     },
     record(options: QualityOptions = {}) {
-      finish(); // nunca dos grabaciones a la vez
-      return new Promise<RecordedSample>((resolve) => {
-        recording = {
-          sequencer: new FrameSequencer(),
-          alternate: new FrameSequencer(),
-          startedAt: performance.now(),
-          options,
-          resolve,
-        };
-      });
+      return capture(options, FIXED_CAPTURE).result;
     },
+    capture,
     stop() {
       if (stopped) return;
       stopped = true;
-      finish();
+      finish("interrupted");
       cancelAnimationFrame(raf);
       document.removeEventListener("visibilitychange", onVisibility);
       stopTracks(); // R8.5: la cámara se apaga al salir

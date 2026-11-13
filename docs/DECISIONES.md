@@ -524,3 +524,27 @@
   5. **NINGUNA** (`dataset-mapping.csv`): sale «Ayudar», que ≈ «Ayuda» del currículo (M3-N4). Entran 15 señas de LSC-54 fuera del currículo: apoyar, bienvenido, con gusto, esperar, excelente, invitar, lo siento, más o menos, muy bien, muy mal, necesitar, perfecto, presentar, sentarse y tranquilo (más bien y mal). «Baño» (M3-N2) y «Muchas gracias» (contiene «gracias») quedan fuera. Resultado: 516 videos de 17 señas. **Al entrenar hay que equilibrar NINGUNA**, que queda unas 10 veces más grande que cada seña.
 - Consecuencia: el `dataset-lsc-54-holistic-v2.json` exportado el 12/11/2026 (946 muestras) se hizo con el mapeo anterior. Su NINGUNA incluye «Ayudar» y sus muestras no tienen `origin`. Para aplicar este cambio hay que volver a importar.
 - Secciones afectadas de la especificación: ninguna contradicha. Amplía el anexo A.7 (importador y licencias).
+
+## D-045 · Cámara de movimiento: versión reducida del plan de mejora (captura manual, guía de grabación y evaluación con el umbral) · 12/11/2026
+- Contexto: el usuario pidió ejecutar `docs/plan-mejora-camara-movimiento.md`, pero solo los puntos más factibles. El análisis previo le dio al plan completo 52/100 y a esta versión reducida 80/100. Lo que limita la mejora son las personas (unos 18 a 20 señantes, todos de LSC-54), no las herramientas. Además, TensorFlow no instala en Windows (D-020).
+- Decisión:
+  1. **Captura manual (etapa 6, primera parte)** en Cámara beta (`GesturePractice`) y en el colector `/admin/gestos`: «Yo marco el inicio y el fin», con «Terminar» (recibe el foco, así que funciona con Enter o espacio) y «Cancelar». Dura entre 0,5 y 4 s (`camera/holistic/capture.ts`, `MANUAL_CAPTURE`). El modo de 2 s sigue siendo el **predeterminado**, y las lecciones (`GestureCheck`) no cambian. Las dos capturas terminan en la misma secuencia de 30 cuadros recortada al tramo con mano, igual que en el importador, así que **el modelo publicado no cambia y no hace falta un contrato nuevo**. Si se pulsa «Terminar» antes de 0,5 s, el mensaje es «captura incompleta», distinto de «no reconocida». Una captura cancelada o interrumpida nunca se clasifica. El inicio y el final automáticos quedan **fuera** del alcance: hay que validarlos antes.
+  2. **Guía de grabación (etapa 4, herramientas):** `docs/guia-grabacion-gestos.md`. Cubre la autorización y el alias fijo; las prioridades: hola/adiós y NINGUNA primero, luego sí, no, gracias, ¿cómo estás? y con permiso, que tienen pocas muestras; las variaciones; qué es y qué no es NINGUNA; y una tabla de balance. Además, el colector ofrece ahora todas las señas del mapeo, no solo saludos y cortesía. **Las grabaciones dependen de personas y no se inventan.**
+  3. **Evaluación con la decisión real de la aplicación (etapa 5, procedimiento):**
+     - `train_sequence.py` mide, en la validación cruzada por persona, el acierto **con el umbral 0,70**: igual que `decide`, por debajo pasa a NINGUNA («no reconocida»).
+     - Reporta por seña el acierto, la precisión, las no reconocidas y las confusiones, y las falsas detecciones de NINGUNA.
+     - Calcula las señas **publicables**: ≥ 80 % y ≥ 10 muestras (D-043). Opciones `--min-recall` y `--min-samples`.
+     - Todo queda en `reporte-gestos.json`.
+     - `--balance` aplica pesos por clase, calculados solo con el entrenamiento de cada pliegue.
+     - Sin opciones nuevas, el entrenamiento es el de antes; `cvAccuracy` sigue siendo el *argmax*, para poder comparar.
+  4. **Cuaderno `ml/notebooks/entrenamiento-gestos.ipynb`:**
+     - Entrena dos candidatos en carpetas aparte: las 5 señas actuales, para comparar seña por seña, y todas las señas.
+     - Nunca escribe sobre `apps/web/public/models/lsc-gestos/`.
+     - La publicación es manual: se guarda una copia del modelo anterior, se publican solo las señas publicables y se prueba con personas no vistas.
+- Ajustes tras la revisión de código:
+  - en cada pliegue, la **parada temprana** usa personas del propio entrenamiento y nunca las evaluadas (`fold_split`); antes, el acierto «con personas no vistas» salía optimista, también en el modelo publicado (89,7 %);
+  - `--out` es **obligatorio** en `train_sequence.py`, para que un entrenamiento de prueba no sobrescriba el modelo publicado;
+  - el umbral se compara en doble precisión, como en TypeScript.
+- Fuera de alcance por ahora: el visor de fotogramas y el recorte editable (etapas 2 y 3), que solo valen la pena si el reentrenamiento muestra que el problema son los datos; y una representación nueva (`holistic-v3`, etapa 5b).
+- Pendiente (personas): grabar al equipo, entrenar en Colab y probar con personas que no grabaron. **No hay un modelo nuevo entrenado ni una mejora de precisión medida**: la interfaz por sí sola no lo demuestra.
+- Secciones afectadas de la especificación: ninguna contradicha. El anexo A.4 fija ventanas de 2 s para la captura, y ese modo sigue siendo el predeterminado; el manual es una alternativa en Cámara beta y en el colector. **El equipo debe aprobar** esta interpretación.

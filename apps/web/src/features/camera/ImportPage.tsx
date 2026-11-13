@@ -31,7 +31,12 @@ export function ImportPage() {
   const [running, setRunning] = useState(false);
   const [saved, setSaved] = useState<SavedProgress | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [reading, setReading] = useState(false);
+  const [readError, setReadError] = useState(false);
   const pause = useRef(false);
+  // Leer una carpeta soltada es asíncrono: solo cuenta la última y nunca durante una importación.
+  const dropSeq = useRef(0);
+  const runningRef = useRef(false);
   const processed = useRef(new Set<string>());
   const filesInput = useRef<HTMLInputElement>(null);
   const folderInput = useRef<HTMLInputElement>(null);
@@ -114,6 +119,7 @@ export function ImportPage() {
   const run = async () => {
     if (!plan) return;
     pause.current = false;
+    runningRef.current = true;
     setRunning(true);
     const pending = plan.importable.filter((item) => !processed.current.has(item.key));
     try {
@@ -131,8 +137,17 @@ export function ImportPage() {
         () => pause.current,
       );
     } finally {
+      runningRef.current = false;
       setRunning(false);
     }
+  };
+
+  /** Lo elegido con los botones gana sobre una carpeta soltada que aún se está leyendo. */
+  const chooseFromInput = (files: FileList | null) => {
+    dropSeq.current += 1;
+    setReading(false);
+    setReadError(false);
+    choose(files ? [...files] : []);
   };
 
   const discard = () => {
@@ -143,10 +158,22 @@ export function ImportPage() {
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragging(false);
-    if (running) return;
+    if (runningRef.current) return;
+    dropSeq.current += 1;
+    const mine = dropSeq.current;
+    setReading(true);
+    setReadError(false);
     droppedFiles(event.dataTransfer)
-      .then(choose)
-      .catch(() => choose([]));
+      .then((files) => {
+        if (mine !== dropSeq.current || runningRef.current) return; // llegó otra después
+        setReading(false);
+        choose(files);
+      })
+      .catch(() => {
+        if (mine !== dropSeq.current) return;
+        setReading(false);
+        setReadError(true);
+      });
   };
 
   const total = plan?.importable.length ?? 0;
@@ -269,7 +296,7 @@ export function ImportPage() {
           aria-hidden="true"
           className="sr-only"
           onChange={(event) => {
-            choose(event.target.files ? [...event.target.files] : []);
+            chooseFromInput(event.target.files);
             event.target.value = ""; // permite volver a elegir lo mismo
           }}
         />
@@ -282,11 +309,21 @@ export function ImportPage() {
           aria-hidden="true"
           className="sr-only"
           onChange={(event) => {
-            choose(event.target.files ? [...event.target.files] : []);
+            chooseFromInput(event.target.files);
             event.target.value = "";
           }}
         />
       </div>
+      {reading && (
+        <p role="status" className="mt-3 font-semibold text-[#45606A]">
+          Leyendo lo que soltaste…
+        </p>
+      )}
+      {readError && (
+        <p role="alert" className="mt-3 text-amber-900">
+          No se pudo leer lo que soltaste. Prueba con «Elegir carpeta» o «Elegir archivos».
+        </p>
+      )}
       {summary && <p className="mt-3 font-semibold">{summary}</p>}
       {plan && chosen.files === 0 && (
         <p role="alert" className="mt-2 text-amber-900">

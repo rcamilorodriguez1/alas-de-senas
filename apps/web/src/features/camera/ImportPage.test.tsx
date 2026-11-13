@@ -99,6 +99,64 @@ describe("/admin/importar", () => {
     expect(drop.defaultPrevented).toBe(true);
   });
 
+  it("al salir de la página, soltar archivos vuelve a comportarse como siempre", async () => {
+    const router = createMemoryRouter(appRoutes, { initialEntries: ["/admin/importar"] });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = render(
+      <QueryClientProvider client={client}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+    await screen.findByTestId("zona-soltar");
+    view.unmount();
+    const drop = new Event("drop", { bubbles: true, cancelable: true });
+    window.dispatchEvent(drop);
+    expect(drop.defaultPrevented).toBe(false);
+  });
+
+  it("si no se puede leer la carpeta soltada, lo dice (no «no hay videos»)", async () => {
+    renderImport();
+    const zone = await screen.findByTestId("zona-soltar");
+    const broken = {
+      isFile: false,
+      isDirectory: true,
+      createReader: () => ({
+        readEntries: (_ok: unknown, fail: (error: DOMException) => void) => fail(new DOMException("x")),
+      }),
+    };
+    fireEvent.drop(zone, { dataTransfer: { files: [], items: [{ kind: "file", webkitGetAsEntry: () => broken }] } });
+    expect(await screen.findByText(/No se pudo leer lo que soltaste/)).toBeInTheDocument();
+    expect(screen.queryByText(/No se encontraron videos ni fotos/)).not.toBeInTheDocument();
+  });
+
+  it("si se sueltan dos cosas seguidas, gana la última aunque la primera termine después", async () => {
+    renderImport();
+    const zone = await screen.findByTestId("zona-soltar");
+    let release: () => void = () => undefined;
+    const slow = {
+      isFile: false,
+      isDirectory: true,
+      createReader: () => {
+        let read = false;
+        return {
+          readEntries: (ok: (entries: unknown[]) => void) => {
+            if (read) return ok([]);
+            read = true;
+            release = () =>
+              ok([{ isFile: true, isDirectory: false, file: (cb: (f: File) => void) => cb(FILES[0]) }]);
+          },
+        };
+      },
+    };
+    fireEvent.drop(zone, { dataTransfer: { files: [], items: [{ kind: "file", webkitGetAsEntry: () => slow }] } });
+    expect(await screen.findByText("Leyendo lo que soltaste…")).toBeInTheDocument();
+    fireEvent.drop(zone, { dataTransfer: { files: FILES } });
+    expect(await screen.findByText(/5 archivos · 3 se importarán/)).toBeInTheDocument();
+    release();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.getByText(/5 archivos · 3 se importarán/)).toBeInTheDocument();
+  });
+
   it("avisa si lo soltado no trae videos ni fotos", async () => {
     renderImport();
     const zone = await screen.findByTestId("zona-soltar");

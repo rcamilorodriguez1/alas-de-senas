@@ -25,9 +25,14 @@ from train_sequence import (
     NON_DOMINANT,
     PRESENCE,
     SHAPE,
+    THRESHOLD,
     DatasetError,
+    app_decision,
     augment,
+    balanced_weights,
     change_speed,
+    class_report,
+    fold_split,
     label_order,
     load_datasets,
     mask_face,
@@ -229,3 +234,76 @@ def test_resumen_para_tomi() -> None:
     summary = summarize(x)
     assert summary is not None
     assert summary["handFace"] == pytest.approx(5)
+
+
+# ---------- Evaluación con la decisión real de la app (plan de mejora, etapa 5; D-045) ----------
+
+
+def test_la_decision_de_la_app_pasa_a_ninguna_por_debajo_del_umbral() -> None:
+    probs = np.array(
+        [
+            [0.1, 0.9, 0.0],  # «hola» seguro
+            [0.2, 0.69, 0.11],  # «hola» por debajo de 0,70 → NINGUNA
+            # float32(0,7) = 0,69999998…: TypeScript (en double) lo rechaza; Python también.
+            [0.0, 0.3, 0.7],
+            [0.0, 0.29, 0.71],  # por encima del umbral → se acepta
+            [0.8, 0.1, 0.1],  # NINGUNA
+        ],
+        dtype=np.float32,
+    )
+    assert THRESHOLD == 0.7
+    assert app_decision(probs, THRESHOLD, none_index=0).tolist() == [1, 0, 0, 2, 0]
+
+
+def test_reporte_por_clase_con_falsas_detecciones_y_senas_publicables() -> None:
+    classes = ["NINGUNA", "adios", "hola"]
+    #          NINGUNA: 4         adios: 5           hola: 5
+    real = np.array([0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2])
+    decided = np.array([0, 0, 0, 2, 1, 1, 1, 1, 0, 2, 2, 2, 1, 0])
+    report = class_report(real, decided, classes, min_recall=0.8, min_samples=5)
+    by_label = {row["label"]: row for row in report["classes"]}
+    assert by_label["adios"]["recall"] == pytest.approx(0.8)
+    assert by_label["adios"]["rejected"] == 1  # pasó a NINGUNA: «no reconocida»
+    assert by_label["hola"]["recall"] == pytest.approx(0.6)
+    assert by_label["hola"]["confusedWith"] == {"adios": 1}
+    assert by_label["hola"]["precision"] == pytest.approx(3 / 4)
+    # NINGUNA reconocida como seña = falsa detección (la cámara «ve» una seña que nadie hizo).
+    assert report["falseDetections"] == pytest.approx(1 / 4)
+    assert report["accuracy"] == pytest.approx(10 / 14)
+    # D-043: se publica solo la seña con ≥ 80 % y suficientes muestras; NINGUNA no cuenta.
+    assert report["publishable"] == ["adios"]
+
+
+def test_una_sena_con_pocas_muestras_no_es_publicable_aunque_acierte_todo() -> None:
+    real = np.array([0, 1, 1])
+    report = class_report(real, real.copy(), ["NINGUNA", "no"], min_recall=0.8, min_samples=5)
+    assert report["publishable"] == []
+    assert report["classes"][1]["recall"] == pytest.approx(1)
+
+
+def test_pesos_equilibrados_igualan_la_contribucion_de_cada_clase() -> None:
+    y = np.array([0] * 6 + [1] * 2 + [2] * 4)
+    weights = balanced_weights(y, 3)
+    assert weights == pytest.approx({0: 12 / 18, 1: 12 / 6, 2: 12 / 12})  # n / (clases · muestras)
+    # Cada clase aporta lo mismo: muestras por peso.
+    assert {c: (y == c).sum() * w for c, w in weights.items()} == pytest.approx({0: 4, 1: 4, 2: 4})
+
+
+def test_pesos_sin_huecos_aunque_una_clase_falte_en_el_pliegue() -> None:
+    # Keras exige claves de 0 a n-1: una clase sin muestras en este pliegue no puede faltar.
+    weights = balanced_weights(np.array([0, 0, 2, 2]), 3)
+    assert sorted(weights) == [0, 1, 2]
+    assert weights[1] == 0.0
+
+
+def test_la_parada_temprana_nunca_mira_a_las_personas_evaluadas() -> None:
+    people = [f"p{i}" for i in range(12)]
+    collectors = np.array([p for p in people for _ in range(3)])
+    held = {"p0", "p5", "p9"}
+    fit, stop, val = fold_split(collectors, held, 6)
+    assert set(collectors[val]) == held
+    assert not set(collectors[stop]) & held
+    assert not set(collectors[fit]) & held
+    assert not set(collectors[fit]) & set(collectors[stop])
+    assert stop.any()
+    assert (fit | stop | val).all()

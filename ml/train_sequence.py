@@ -23,6 +23,7 @@ from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypedDict
 
 import numpy as np
 
@@ -329,6 +330,106 @@ def person_folds(collectors: list[str], k: int) -> list[set[str]]:
     return [set(people[i::folds]) for i in range(folds)]
 
 
+def fold_split(
+    collectors: np.ndarray, held: set[str], k: int
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Máscaras (ajuste, parada temprana, evaluación) de un pliegue, con personas disjuntas.
+
+    La parada temprana elige la época con personas del propio entrenamiento: si mirara a las
+    evaluadas, el acierto «con personas no vistas» saldría optimista (revisión de D-045).
+    """
+    val = np.isin(collectors, list(held))
+    inner = person_folds([str(c) for c in collectors[~val]], k)[0]
+    stop = ~val & np.isin(collectors, list(inner))
+    return ~val & ~stop, stop, val
+
+
+def balanced_weights(y: np.ndarray, classes: int) -> dict[int, float]:
+    """Peso por clase: cada una aporta lo mismo a la pérdida (NINGUNA suele tener más).
+
+    Keras exige todas las claves de 0 a n-1: una clase ausente en el pliegue lleva peso 0.
+    """
+    counts = np.bincount(y, minlength=classes)
+    total = float(counts.sum())
+    return {c: total / (classes * float(n)) if n else 0.0 for c, n in enumerate(counts)}
+
+
+# ---------- Evaluación con la decisión real de la app (plan de mejora, etapa 5; D-045) ----------
+
+
+def app_decision(probs: np.ndarray, threshold: float, none_index: int) -> np.ndarray:
+    """Igual que `decide` en sequence-classifier.ts: bajo el umbral, NINGUNA («no reconocida»)."""
+    # En double, como JavaScript lee los Float32Array: float32(0,7) queda bajo 0,7 en ambos.
+    wide = probs.astype(np.float64)
+    best = wide.argmax(axis=1)
+    confident = wide.max(axis=1) + 1e-9 >= threshold
+    return np.where(confident, best, none_index)
+
+
+class ClassRow(TypedDict):
+    label: str
+    samples: int
+    recall: float
+    precision: float
+    rejected: int
+    confusedWith: dict[str, int]  # clave del JSON en camelCase
+
+
+class EvaluationReport(TypedDict):
+    accuracy: float
+    falseDetections: float
+    minRecall: float
+    minSamples: int
+    classes: list[ClassRow]
+    publishable: list[str]
+
+
+def class_report(
+    real: np.ndarray,
+    decided: np.ndarray,
+    classes: list[str],
+    min_recall: float,
+    min_samples: int,
+) -> EvaluationReport:
+    """Acierto (recall) y precisión por clase, confusiones, rechazos y falsas detecciones.
+
+    «Publicable» (D-043): una seña llega a `min_recall` con personas no vistas y tiene al menos
+    `min_samples` muestras. NINGUNA nunca se publica como seña.
+    """
+    none = classes.index(NONE_LABEL) if NONE_LABEL in classes else -1
+    rows: list[ClassRow] = []
+    publishable: list[str] = []
+    for i, label in enumerate(classes):
+        mine = real == i
+        support = int(mine.sum())
+        hits = int((decided[mine] == i).sum())
+        predicted = int((decided == i).sum())
+        recall = hits / support if support else 0.0
+        confused = Counter(classes[int(g)] for g in decided[mine] if g != i and g != none)
+        rows.append(
+            {
+                "label": label,
+                "samples": support,
+                "recall": recall,
+                "precision": hits / predicted if predicted else 0.0,
+                "rejected": int((decided[mine] == none).sum()) if i != none else 0,
+                "confusedWith": dict(sorted(confused.items())),
+            }
+        )
+        if i != none and support >= min_samples and recall + 1e-9 >= min_recall:
+            publishable.append(label)
+    nothing = real == none
+    false_detections = float((decided[nothing] != none).mean()) if nothing.any() else 0.0
+    return {
+        "accuracy": float((real == decided).mean()) if len(real) else 0.0,
+        "falseDetections": false_detections,
+        "minRecall": min_recall,
+        "minSamples": min_samples,
+        "classes": rows,
+        "publishable": publishable,
+    }
+
+
 def feature_stats(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     flat = x.reshape(-1, FEATURE_SIZE).astype(np.float64)
     return flat.mean(axis=0), flat.std(axis=0)
@@ -364,6 +465,7 @@ def _fit(
     classes: int,
     face: bool,
     copies: int,
+    balance: bool = False,
 ) -> tuple[object, np.ndarray, np.ndarray]:
     import tensorflow as tf
 
@@ -371,6 +473,7 @@ def _fit(
     augmented = [x] + [np.stack([augment(s, rng, face) for s in x]) for _ in range(copies)]
     x_train = np.concatenate(augmented)
     y_train = np.concatenate([y] * (copies + 1))
+    # Normalización y pesos solo con el entrenamiento del pliegue: la validación no se filtra.
     mean, std = feature_stats(x)
     model = _build_model(classes)
     model.fit(  # type: ignore[attr-defined]  # modelo de Keras sin tipos
@@ -381,13 +484,14 @@ def _fit(
         batch_size=32,
         shuffle=True,
         verbose=0,
+        class_weight=balanced_weights(y, classes) if balance else None,
         callbacks=[tf.keras.callbacks.EarlyStopping(patience=15, restore_best_weights=True)],
     )
     return model, mean, std
 
 
-def _predict(model: object, x: np.ndarray, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
-    return model.predict(normalize(x, mean, std), verbose=0).argmax(axis=1)  # type: ignore[attr-defined]  # Keras
+def _probs(model: object, x: np.ndarray, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
+    return np.asarray(model.predict(normalize(x, mean, std), verbose=0))  # type: ignore[attr-defined]  # Keras
 
 
 def set_seeds() -> None:
@@ -399,7 +503,16 @@ def set_seeds() -> None:
     tf.random.set_seed(SEED)
 
 
-def train(seqs: Sequences, out: Path, reports: Path, folds: int, copies: int) -> float:
+def train(
+    seqs: Sequences,
+    out: Path,
+    reports: Path,
+    folds: int,
+    copies: int,
+    balance: bool = False,
+    min_recall: float = 0.8,
+    min_samples: int = 10,
+) -> float:
     os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
     set_seeds()
     classes = label_order(seqs.labels)
@@ -407,34 +520,48 @@ def train(seqs: Sequences, out: Path, reports: Path, folds: int, copies: int) ->
     x = seqs.data
     y = np.array([index[label] for label in seqs.labels], dtype=np.int32)
     collectors = np.array(seqs.collectors)
+    none_index = index.get(NONE_LABEL, -1)
 
     # Validación cruzada por persona: cada persona se evalúa sin haberla visto (A.8).
     groups = person_folds(seqs.collectors, folds)
     matrix = np.zeros((len(classes), len(classes)), dtype=int)
+    real_all: list[np.ndarray] = []
+    decided_all: list[np.ndarray] = []
     hits = 0
     for n, held in enumerate(groups, start=1):
-        val = np.isin(collectors, list(held))
+        fit, stop, val = fold_split(collectors, held, folds)
         model, mean, std = _fit(
-            x[~val], y[~val], x[val], y[val], len(classes), seqs.face_features, copies
+            x[fit], y[fit], x[stop], y[stop], len(classes), seqs.face_features, copies, balance
         )
-        guess = _predict(model, x[val], mean, std)
+        probs = _probs(model, x[val], mean, std)
+        guess = probs.argmax(axis=1)
         hits += int((guess == y[val]).sum())
         for real, g in zip(y[val], guess, strict=True):
             matrix[real, g] += 1
+        real_all.append(y[val])
+        decided_all.append(app_decision(probs, THRESHOLD, none_index))
         print(f"  pliegue {n}/{len(groups)}: {(guess == y[val]).mean():.1%} con {sorted(held)}")
     accuracy = hits / len(y)
-    print(f"Precisión con personas no vistas: {accuracy:.1%}")
-    for i, label in enumerate(classes):
-        total = matrix[i].sum()
+    print(f"Precisión con personas no vistas (argmax): {accuracy:.1%}")
+    # Lo que vería quien practica: con el umbral de la aplicación, lo dudoso es «no reconocida».
+    report = class_report(
+        np.concatenate(real_all), np.concatenate(decided_all), classes, min_recall, min_samples
+    )
+    print(
+        f"Con el umbral {THRESHOLD:.2f} de la aplicación: acierto {report['accuracy']:.1%}, "
+        f"falsas detecciones de NINGUNA {report['falseDetections']:.1%}"
+    )
+    for row in report["classes"]:
         print(
-            f"  {label:>14}: {matrix[i, i] / total if total else float('nan'):.1%}",
-            f"({total} muestras)",
+            f"  {row['label']:>14}: {row['recall']:.1%} ({row['samples']} muestras, "
+            f"{row['rejected']} no reconocidas, confusiones {row['confusedWith']})"
         )
+    print(f"Publicables (≥ {min_recall:.0%} y ≥ {min_samples} muestras): {report['publishable']}")
 
     # Modelo final con todas las personas (la parada temprana mira un pliegue).
     held = groups[0]
     val = np.isin(collectors, list(held))
-    model, mean, std = _fit(x, y, x[val], y[val], len(classes), seqs.face_features, copies)
+    model, mean, std = _fit(x, y, x[val], y[val], len(classes), seqs.face_features, copies, balance)
     out.mkdir(parents=True, exist_ok=True)
     export_tfjs(model, out)
     (out / "labels.json").write_text(json.dumps(classes, ensure_ascii=False), encoding="utf-8")
@@ -468,6 +595,14 @@ def train(seqs: Sequences, out: Path, reports: Path, folds: int, copies: int) ->
         json.dumps({"classes": classes, "matrix": matrix.tolist(), "accuracy": accuracy}),
         encoding="utf-8",
     )
+    (reports / "reporte-gestos.json").write_text(
+        json.dumps(
+            {**report, "threshold": THRESHOLD, "balance": balance, "argmaxAccuracy": accuracy},
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     try:
         save_confusion(matrix, classes, reports / "confusion-gestos.png")
     except Exception as exc:  # un reporte no puede tumbar el entrenamiento
@@ -481,7 +616,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--data", nargs="+", required=True, help="Archivos dataset.json holistic-v2"
     )
-    parser.add_argument("--out", type=Path, default=ROOT / "apps/web/public/models/lsc-gestos")
+    # Obligatoria (D-045): sin ella, un entrenamiento de prueba sobrescribía el modelo publicado.
+    parser.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+        help="Carpeta del modelo (para publicar: apps/web/public/models/lsc-gestos)",
+    )
     parser.add_argument("--signs", type=Path, default=ROOT / "content/signs.csv")
     parser.add_argument("--reports", type=Path, default=ROOT / "ml/reports")
     parser.add_argument("--labels", nargs="*", help="Señas a entrenar (además de NINGUNA)")
@@ -490,6 +631,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--cv", type=int, default=6, help="Pliegues por persona")
     parser.add_argument("--augment", type=int, default=4, help="Copias aumentadas por muestra")
+    parser.add_argument(
+        "--balance", action="store_true", help="Pesos por clase (NINGUNA suele tener más muestras)"
+    )
+    parser.add_argument(
+        "--min-recall",
+        type=float,
+        default=0.8,
+        help="Acierto mínimo para publicar una seña (D-043)",
+    )
+    parser.add_argument(
+        "--min-samples", type=int, default=10, help="Muestras mínimas para publicar una seña"
+    )
     args = parser.parse_args(argv)
     try:
         seqs = select_labels(
@@ -502,7 +655,16 @@ def main(argv: list[str] | None = None) -> int:
         f"{len(seqs.labels)} muestras de {len(set(seqs.collectors))} personas · "
         f"clases: {dict(Counter(seqs.labels))} · expresión facial: {seqs.face_features}"
     )
-    train(seqs, args.out, args.reports, args.cv, args.augment)
+    train(
+        seqs,
+        args.out,
+        args.reports,
+        args.cv,
+        args.augment,
+        args.balance,
+        args.min_recall,
+        args.min_samples,
+    )
     return 0
 
 

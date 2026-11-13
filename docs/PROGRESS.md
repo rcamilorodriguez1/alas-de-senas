@@ -259,3 +259,48 @@ Para retomar (en este orden):
   - Con una cuenta de estudiante: no debe aparecer el contador de FPS.
   - Barra superior, panel «Tu día» y una lección: la llama, la flor y el corazón se ven bien, y el corazón late al perder una vida.
 - Pendiente del equipo: ratificar la interpretación de R8.2 de D-041; el intérprete confirma 2 = V y 3 = W.
+
+## Plan de mejora de la cámara de movimiento, versión reducida (12/11/2026, D-045)
+Rama `feat/camara-movimiento-lsc54`. Se hicieron solo los pasos más factibles del plan (`docs/plan-mejora-camara-movimiento.md`): 80/100 en el análisis, frente a 52/100 del plan completo.
+- **Hecho:**
+  - **Paso A, captura manual** en Cámara beta y en `/admin/gestos`: «Yo marco el inicio y el fin», con «Terminar» y «Cancelar», entre 0,5 y 4 s. El modo de 2 s sigue siendo el predeterminado y las lecciones no cambian. Funciona con el modelo publicado sin reentrenar, porque la secuencia es la misma de 30 cuadros.
+  - **Paso B:**
+    - Guía de grabación en `docs/guia-grabacion-gestos.md`.
+    - El colector ofrece las 18 señas del mapeo, más NINGUNA.
+  - **Paso C, procedimiento:**
+    - `train_sequence.py` evalúa con el umbral 0,70 de la aplicación y reporta por seña el acierto, las no reconocidas, las confusiones y las falsas detecciones.
+    - Calcula las señas publicables (≥ 80 %, D-043).
+    - `--balance` aplica pesos por clase.
+    - Cuaderno de Colab `ml/notebooks/entrenamiento-gestos.ipynb`, con dos candidatos en carpetas aparte.
+  - **Importador:** arrastrar carpetas, y si se suelta fuera de la zona el navegador ya no abre el video.
+- **No hecho, por decisión:** el visor de fotogramas y el recorte editable (etapas 2 y 3), el inicio y el final automáticos, y una representación nueva (`holistic-v3`).
+- **Verificación:**
+  - Vitest: 20 pruebas nuevas en `capture.test.ts`, `lifecycle.test.ts`, `GestureCamera.test.tsx`, `GesturePractice.test.tsx`, `GestureDatasetPage.test.tsx` y `drop-files.test.ts`, más 3 en `ImportPage.test.tsx`.
+  - `ml/tests`: 45 en verde, 6 nuevas, en un entorno temporal con NumPy y sin TensorFlow.
+  - ESLint, tsc y ruff sin errores.
+- **Revisión de `revisor-codigo`:** sin bloqueantes. Corregidos:
+  - **Importantes:**
+    - La parada temprana elegía la época con las mismas personas que se evaluaban; ahora usa otras personas del entrenamiento (`fold_split`).
+    - `--balance` devuelve pesos para todas las clases, porque Keras falla si falta una.
+    - Pruebas nuevas: un «Terminar» viejo no cierra la grabación siguiente; salir a mitad de una captura apaga la cámara (R8.5); al salir del importador se quitan los listeners.
+    - Al arrastrar, solo cuenta lo último que se soltó y nada se aplica durante una importación. Aparece «Leyendo lo que soltaste…», y un error de lectura tiene su propio mensaje.
+  - **Menores:**
+    - El umbral se compara en doble precisión, igual que en TypeScript.
+    - El modo de captura queda fijo durante la grabación.
+    - El foco vuelve al botón de grabar y «Cancelar» muestra un aviso.
+    - El alias del colector se fija al empezar a grabar.
+    - `--out` ahora es obligatorio en `train_sequence.py`, para que un entrenamiento de prueba no sobrescriba el modelo publicado.
+    - Textos del cuaderno.
+  - Descartado: el cursor «no se puede soltar» fuera de la zona, que es solo cosmético.
+- **No hay modelo nuevo entrenado ni mejora de precisión medida.**
+- **Verificar a mano:**
+  1. En `/camara` → «Señas con movimiento», elige «Yo marco el inicio y el fin», haz «hola» y pulsa «Terminar»: debe reconocerla igual que en el modo de 2 s.
+  2. Pulsa «Terminar» enseguida: debe decir que la grabación fue muy corta.
+  3. «Cancelar» no evalúa nada.
+  4. Una lección con cámara de gestos sigue con 2 s.
+- **Pendiente (personas):**
+  - Grabar al equipo con la guía.
+  - Entrenar en Colab con LSC-54 más esas grabaciones.
+  - Publicar solo las señas publicables, con una copia del modelo anterior.
+  - Probar con personas que no grabaron.
+  - El equipo aprueba D-045, porque el anexo A.4 habla de ventanas de 2 s.
